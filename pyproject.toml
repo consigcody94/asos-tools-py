@@ -40,6 +40,9 @@ Homepage = "https://github.com/dmhuehol/ASOS-Tools"
 [tool.setuptools.packages.find]
 include = ["asos_tools*"]
 
+[tool.setuptools.package-data]
+"asos_tools" = ["data/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra -q"

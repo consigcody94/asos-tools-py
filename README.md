@@ -7,13 +7,14 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 [![Tests](https://img.shields.io/badge/tests-28%20passing-success.svg)](#tests)
+[![Stations](https://img.shields.io/badge/ASOS%20stations-2%2C929-blueviolet.svg)](#full-asos-station-catalog)
 [![Data](https://img.shields.io/badge/data-NCEI%20%2B%20IEM-lightgrey.svg)](#how-it-works)
-[![🤗 Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-asos--tools-ffb400?style=flat)](https://huggingface.co/spaces/consgicody/asos-tools)
+[![🤗 Space](https://img.shields.io/badge/%F0%9F%A4%97%20Live%20Demo-open%20app-ffb400?style=flat)](https://huggingface.co/spaces/consgicody/asos-tools)
 
-### 🚀 Live demo: **[huggingface.co/spaces/consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)**
+### 🚀 Live demo — **[huggingface.co/spaces/consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)**
 
 <em>~200,000 observations of real 1-minute data in one HTTP call, in ~10 seconds.<br/>
-Plus: ASOS maintenance-flag tracking, preset station groups, and an interactive Streamlit dashboard.</em>
+2,929 ASOS sites searchable, custom date ranges, ZIP bulk export, ASOS maintenance-flag tracking.</em>
 
 <img src="images/reports/kjfk_7day.png" alt="7-day dashboard report for KJFK" width="860">
 
@@ -23,12 +24,12 @@ Plus: ASOS maintenance-flag tracking, preset station groups, and an interactive 
 
 ## Why this exists
 
-NOAA's National Centers for Environmental Information (NCEI) hosts **1-minute ASOS data** &mdash; wind, temperature, dewpoint, visibility, pressure, and **per-minute precipitation accumulation** &mdash; for hundreds of airports going back to 1998. It's an incredible resource for storm analysis, aviation meteorology, and climate research.
+NOAA's National Centers for Environmental Information (NCEI) hosts **1-minute ASOS data** &mdash; wind, temperature, dewpoint, visibility, pressure, and **per-minute precipitation accumulation** &mdash; for nearly 3,000 airports going back to 1998. It's an incredible resource for storm analysis, aviation meteorology, and climate research.
 
 Actually using it has historically been painful:
 
-- **No Python package.** The canonical toolkit ([`dmhuehol/ASOS-Tools`](https://github.com/dmhuehol/ASOS-Tools)) is MATLAB-only, and only for 5-minute data.
-- **FTP is dead.** NCEI retired `ftp.ncdc.noaa.gov` in 2022; the original MATLAB `ASOSdownloadFiveMin` no longer connects at all.
+- **No Python package.** Existing tooling was MATLAB-only and only for 5-minute data.
+- **FTP is dead.** NCEI retired `ftp.ncdc.noaa.gov` in 2022; most legacy downloaders no longer connect.
 - **Monthly-file downloads.** Even working tools pull entire monthly `.dat` files and subset locally &mdash; wasteful when you only want a three-hour storm window.
 - **No official API for 1-minute data.** NCEI's [Access Data Service v1 API](https://www.ncei.noaa.gov/support/access-data-service-api-user-documentation) exposes aggregated products (`daily-summaries`, `global-hourly`) but *not* the 1-minute or 5-minute ASOS archives &mdash; confirmed against their current [dataset catalogue](https://www.ncei.noaa.gov/access/services/support/v3/datasets.json).
 
@@ -51,26 +52,26 @@ df = fetch_1min("KORD", t0, t1)
 print(df[["valid", "tmpf", "dwpf", "precip"]].head())
 ```
 
-That's it.
-
 ## What you get
 
-| Feature                                                                        |  |
-| ------------------------------------------------------------------------------ | :-: |
-| 1-minute resolution (temp, dewpoint, wind, gust, pressure, precip, visibility) | ✅ |
-| Server-side date-range subsetting &mdash; no monthly downloads                 | ✅ |
-| Cross-month & cross-year queries in a single call                              | ✅ |
-| Multi-station queries                                                          | ✅ |
-| **Preset station groups** (Long Island, NE US, Front Range, Utah, hubs, …)     | ✅ |
-| **ASOS maintenance-flag tracking** (`$` indicator detection)                   | ✅ |
-| **Flagged-vs-clean comparison reports**                                        | ✅ |
-| **Dashboard-style report generator** (dark theme, wind roses, annotated)       | ✅ |
-| **Streamlit web dashboard** (deployable in 3 min to Hugging Face Spaces)       | ✅ |
-| K-prefix station IDs (`KORD`, `KJFK`) handled automatically                    | ✅ |
-| Missing-value sentinels (`M`) coerced to `NaN`                                 | ✅ |
-| Timezone-aware UTC `pandas.Timestamp`                                          | ✅ |
-| No auth, no token, no FTP                                                      | ✅ |
-| Zero MATLAB license required                                                   | ✅ |
+| Feature                                                                         |  |
+| ------------------------------------------------------------------------------- | :-: |
+| 1-minute resolution (temp, dewpoint, wind, gust, pressure, precip, visibility)  | ✅ |
+| Server-side date-range subsetting &mdash; no monthly downloads                  | ✅ |
+| Cross-month & cross-year queries in a single call                               | ✅ |
+| Multi-station queries                                                           | ✅ |
+| **Complete ASOS catalog** &mdash; 2,929 US sites, clickable / searchable        | ✅ |
+| **Preset station groups** (Long Island, NE US, Front Range, Utah, hubs, …)      | ✅ |
+| **Custom date range** picker                                                    | ✅ |
+| **ASOS maintenance-flag tracking** (`$` indicator detection)                    | ✅ |
+| **Flagged-vs-clean comparison reports**                                         | ✅ |
+| **Dashboard-style report generator** (dark theme, wind roses, annotated)        | ✅ |
+| **Bulk ZIP download** of reports for a whole area/group                         | ✅ |
+| **Streamlit web dashboard** (deployed on Hugging Face Spaces)                   | ✅ |
+| K-prefix station IDs (`KORD`, `KJFK`) handled automatically                     | ✅ |
+| Missing-value sentinels (`M`) coerced to `NaN`                                  | ✅ |
+| Timezone-aware UTC `pandas.Timestamp`                                           | ✅ |
+| No auth, no token, no FTP, zero MATLAB license                                  | ✅ |
 
 ## Report gallery
 
@@ -94,16 +95,16 @@ python examples/build_reports.py --station KJFK
 </table>
 
 Each report includes:
-- Title strip with station, window, obs count, and KPI chips (temp range, peak gust, pressure range, total precip)
+- Title strip with station, window, obs count, and **KPI chips** (temp range, peak gust, pressure range, total precip) &mdash; label always above value, no overlap
 - Temperature + dewpoint panel with T&ndash;T<sub>d</sub> spread shaded and extremes annotated
 - Station pressure with net-change indicator
-- **Wind rose** (stacked by speed, percent-normalized)
-- Wind speed + gust timeseries
+- **Wind rose** (stacked by speed, percent-normalized, cardinal labels)
+- Wind speed + gust timeseries with peak-gust annotation
 - Precipitation bars + cumulative overlay
 
 ### Maintenance-flag report (METAR `$` tracking)
 
-The ASOS `$` terminator is the **maintenance-check indicator**: the station has flagged itself as needing maintenance, usually due to a degraded sensor. The maintenance report shows how often each station in a group is flagging, when, and what the flagged METARs look like.
+The ASOS `$` terminator is the **maintenance-check indicator** &mdash; the station has flagged itself as needing maintenance, usually due to a degraded sensor. The maintenance report tracks flag prevalence across a group of stations.
 
 ```bash
 python examples/build_reports.py --group long_island
@@ -111,56 +112,76 @@ python examples/build_reports.py --group long_island
 
 <img src="images/reports/long-island_7day_maintenance.png" alt="Long Island maintenance-flag report" width="820">
 
-Panels:
-- Per-station flag rate (sorted horizontal bars, green/amber/red)
-- Station &times; time heatmap (red = high flag rate that bin)
-- Hourly flag-rate timeline
-- Sample of recent flagged METARs (raw text)
+Panels: per-station flag rate (horizontal bars), station × time heatmap (red = high flag rate), hourly flag-rate timeline, sample of recent flagged METARs (raw text).
 
 ### Flagged-vs-clean comparison report
 
-```bash
-python examples/build_reports.py --group long_island     # same command, also builds the comparison
-```
-
 <img src="images/reports/long-island_7day_comparison.png" alt="Flagged vs clean comparison" width="820">
 
-Panels:
-- Stacked flagged-vs-clean count over time
-- Per-station flagged vs clean breakdown
-- Flag rate by hour of day (does maintenance flagging correlate with time of day?)
-- Plain-English interpretation with the worst-offending stations and the fully-clean stations
+Panels: stacked flagged-vs-clean count over time, per-station breakdown, flag rate by hour of day, interpretation footer highlighting the worst-offending and fully-clean stations.
 
-## Interactive Streamlit dashboard
+## Interactive dashboard
 
-An interactive version of all three report types is in [`app.py`](app.py):
+The live Streamlit app at **[huggingface.co/spaces/consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)** lets you:
+
+- Pick **any of 2,929 ASOS sites** via a searchable dropdown, or choose a preset group, or paste a custom station list
+- Select a preset window (1 / 7 / 14 / 30 day) **or a custom date range**
+- Generate any of the 3 report types (1-min station, maintenance, comparison)
+- Download the report as PNG, the data as CSV, or **an entire group's reports as a ZIP**
+
+Run it locally:
 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The dashboard lets you pick a single station, a preset group (Long Island, Northeast US, Front Range, Utah, major hubs, &hellip;), or a custom list, plus a 1/7/14/30-day window, and renders a report you can download as PNG.
-
-### Deploy it
+### Deploy your own
 
 See [`DEPLOY.md`](DEPLOY.md) for a full platform comparison. Short list:
 
-- **Hugging Face Spaces** &mdash; ⭐ our recommendation. Free, no cold starts, purpose-built for data dashboards. ~3 minutes to deploy.
-- **Streamlit Community Cloud** &mdash; one-click from a GitHub repo, native `*.streamlit.app` URL.
-- **Fly.io** &mdash; if you want custom domain + always-on, ship the included Dockerfile snippet.
-- **Railway / Render** &mdash; both work; Railway is cleaner DX, Render is free-tier-with-cold-starts.
+- **Hugging Face Spaces** (current live deployment) — free forever, no cold starts, runs via included `Dockerfile`.
+- **Streamlit Community Cloud** — one-click from this repo, `*.streamlit.app` URL.
+- **Fly.io** — free tier, custom domain support, same Dockerfile.
+- **Railway** — good DX, includes `railway.json` config.
 
-**Not recommended for this app:** Vercel / Netlify / Cloudflare Pages. Those are optimized for edge/static/Node, and serverless Python + matplotlib is more pain than it's worth.
+**Not recommended for this app:** Vercel / Netlify / Cloudflare Pages (Python serverless + matplotlib is more pain than it's worth).
+
+## Full ASOS station catalog
+
+Bundled at `asos_tools/data/stations.json` &mdash; **2,929 US ASOS sites** (50 states + DC + PR, VI, GU, AS). Each record has ICAO id, IEM id, name, state, lat/lon, elevation, network, online status, archive date range.
+
+```python
+from asos_tools import stations
+from asos_tools.stations import search_stations, stations_by_state, ALL_ASOS_STATIONS
+
+# All 2,929 as a list of dicts
+print(len(stations.ALL_ASOS_STATIONS))
+
+# Substring search ranked by match quality (exact > prefix > substring > name)
+for s in search_stations("kennedy", limit=5):
+    print(s["id"], s["name"], s["state"])
+
+# By state
+ny_sites = stations_by_state("NY")
+```
+
+The catalog was built from IEM's per-state GeoJSON network feeds
+(`https://mesonet.agron.iastate.edu/geojson/network/<XX>_ASOS.geojson`).
+Re-build it any time with:
+
+```bash
+python deploy/build_station_catalog.py
+```
 
 ## Preset station groups
 
-Available via `asos_tools.stations`:
+Curated groups &mdash; also exported as Python constants so you can feed them directly to `fetch_1min` / `fetch_metars`:
 
 | Group                   | Stations                                                              |
 | ----------------------- | --------------------------------------------------------------------- |
 | `long_island`           | KISP, KHWV, KFRG, KFOK, KJFK, KLGA, KEWR, KTEB                        |
-| `northeast`             | KHVN, KBDR, KGON, KVAY, KTTN, KCDW, KSMQ, KACY, KHPN, KFWN, KPOU, …   |
+| `northeast`             | KHVN, KBDR, KGON, KVAY, KTTN, KCDW, KSMQ, KACY, KHPN, …               |
 | `co_located_radiosonde` | KGSO, KFFC, KALB, KDET, KCAR, KHQM, KBIS                              |
 | `front_range`           | KAPA, KDEN, KCYS, KLAR                                                |
 | `utah`                  | KLGU, KOGD, KSLC                                                      |
@@ -169,8 +190,6 @@ Available via `asos_tools.stations`:
 | `great_lakes`           | KORD, KMKE, KGRR, KDET, KCLE, KBUF, KROC, KERI, KSYR, KDTW            |
 | `gulf_coast`            | KHOU, KIAH, KLCH, KMSY, KBIX, KMOB, KPNS, KPIE, KTPA, KRSW            |
 | `alaska_pacific`        | PANC, PAFA, PAJN, PHNL, PHOG, PHTO, PGUM                              |
-
-Usage:
 
 ```python
 from asos_tools import fetch_1min, fetch_metars
@@ -195,11 +214,15 @@ df = fetch_1min(
 
 ### Six months of 1-minute data in one request
 
-```bash
-python examples/fetch_last_6_months.py --station KJFK
-```
+```python
+from datetime import datetime, timedelta, timezone
+from asos_tools import fetch_1min
 
-Real run on a home internet connection: 205,692 rows fetched in **10.6s**, total precip 12.28 inches.
+end = datetime.now(timezone.utc)
+start = end - timedelta(days=180)
+df = fetch_1min("KJFK", start, end)
+print(f"{len(df):,} rows")   # ~200,000 in ~10 seconds
+```
 
 ### Customize the variable list
 
@@ -232,24 +255,6 @@ df = fetch_1min("KBOS", t0, t1, variables=["tmpf", "precip"])
 
 The NCEI archive lives at [`www.ncei.noaa.gov/data/automated-surface-observing-system-one-minute-pg1/access/YYYY/MM/asos-1min-pg1-KXXX-YYYYMM.dat`](https://www.ncei.noaa.gov/data/automated-surface-observing-system-one-minute-pg1/access/). IEM re-exposes it with a query interface; this package builds the query, streams the CSV, coerces dtypes, and returns a DataFrame.
 
-## Comparison to the MATLAB original
-
-| aspect                                | `dmhuehol/ASOS-Tools` (MATLAB)                    | `asos_tools` (this repo)                          |
-| ------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| Language                              | MATLAB R2017a+                                    | Python 3.9+                                       |
-| License cost                          | MATLAB seat                                       | free                                              |
-| Data resolution                       | 5-minute                                          | **1-minute** (5-minute on roadmap)                |
-| Transport                             | FTP (**broken since 2022**)                       | HTTPS                                             |
-| Date-range fetching                   | full months, subset client-side                   | server-side subsetting                            |
-| Precipitation amount                  | **not available** at 5-min                        | available every minute                            |
-| METAR maintenance flag (`$`) tracking | not included                                      | built-in reports                                  |
-| Preset station groups                 | listed in README (manual)                         | importable constants                              |
-| Web dashboard                         | none                                              | Streamlit app                                     |
-| Lines of code for "pull a data range" | ~150                                              | 25                                                |
-| Tests                                 | none                                              | 28 (`pytest`)                                     |
-
-The original MATLAB code, docs, and plotting functions (`surfacePlotter`, `stormFinder`, `weatherCodeSearch`) are preserved in [MATLAB.md](MATLAB.md) and the `.m` files at the repo root, for users who rely on that workflow.
-
 ## API reference
 
 ### `fetch_1min(stations, start, end, *, variables=None, timezone_label="UTC", timeout=120.0, session=None) -> pd.DataFrame`
@@ -262,7 +267,7 @@ Fetch raw METAR/SPECI reports. Returns a DataFrame with `station`, `valid`, `met
 
 ### `has_maintenance_flag(metar: str) -> bool`
 
-Pure helper for detecting the ASOS `$` maintenance-check indicator on an arbitrary METAR string. Handles a trailing `=` terminator, whitespace, and `None`/`NaN` inputs.
+Pure helper for detecting the ASOS `$` maintenance-check indicator.
 
 ### `build_report(df, *, window_label, station_id, station_name, out_path)`
 
@@ -278,7 +283,8 @@ Render the flagged-vs-clean comparison dashboard.
 
 ### `asos_tools.stations`
 
-Exported constants (`LONG_ISLAND`, `NORTHEAST`, `FRONT_RANGE`, `UTAH`, `MAJOR_HUBS`, `COASTAL_EAST`, `GREAT_LAKES`, `GULF_COAST`, `ALASKA_PACIFIC`, `CO_LOCATED_RADIOSONDE`) plus `GROUPS`, `get_group(name)`, `list_groups()`, `all_stations()`.
+- **Presets** &mdash; `LONG_ISLAND`, `NORTHEAST`, `FRONT_RANGE`, `UTAH`, `MAJOR_HUBS`, `COASTAL_EAST`, `GREAT_LAKES`, `GULF_COAST`, `ALASKA_PACIFIC`, `CO_LOCATED_RADIOSONDE`, plus `GROUPS`, `get_group(name)`, `list_groups()`, `all_stations()`.
+- **Full catalog** &mdash; `ALL_ASOS_STATIONS` (list of 2,929 dicts), `search_stations(query, state=None, online_only=False, limit=None)`, `stations_by_state("NY")`.
 
 ## Variables returned by `fetch_1min`
 
@@ -308,22 +314,19 @@ Current status: **28 passing, 0 failing.**
 
 ## Roadmap
 
-- [x] ~~Published live demo on Hugging Face Spaces~~ → [consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)
+- [x] ~~Live demo on Hugging Face Spaces~~ → [consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)
+- [x] ~~Full ASOS station catalog~~ → 2,929 sites bundled
+- [x] ~~Custom date range + bulk ZIP export~~
 - [ ] `fetch_5min` &mdash; direct NCEI HTTPS pull of the 5-minute archive
-- [ ] `storm_finder` &mdash; port of the MATLAB `stormFinder.m`, with precip-amount scoring
-- [ ] `surface_plotter` &mdash; port of the MATLAB `surfacePlotter.m` abacus plot
+- [ ] Nearest-N stations to a point / within a bounding box
 - [ ] Optional on-disk Parquet cache for repeat queries
 - [ ] Package on PyPI
 - [ ] Field-level comparison in `build_comparison_report` (tmpf/pres distributions for flagged vs clean subsets)
 
-## MATLAB users
-
-If you rely on the original MATLAB workflow, every `.m` file from [dmhuehol/ASOS-Tools](https://github.com/dmhuehol/ASOS-Tools) is still here, and [MATLAB.md](MATLAB.md) preserves the original documentation. A MATLAB version of the date-range fetch (`asosFetch1Min.m`) is also included.
-
 ## Contributing
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/consigcody94/asos-tools-py
 cd asos-tools-py
 pip install -e ".[dev]"
 pytest
@@ -333,10 +336,10 @@ PRs welcome. See [Roadmap](#roadmap) for open work.
 
 ## Credits & lineage
 
-- Original MATLAB toolkit, 5-minute plotting, storm-finder algorithm &mdash; **Daniel Hueholt**, North Carolina State University, [Environment Analytics](http://www.environmentanalytics.com) (2020).
-- ASOS 1-minute CSV service &mdash; [**Iowa Environmental Mesonet**](https://mesonet.agron.iastate.edu/), Daryl Herzmann and contributors.
+- Original MATLAB toolkit and 5-minute workflow design &mdash; **Daniel Hueholt**, North Carolina State University, [Environment Analytics](http://www.environmentanalytics.com) (2020). This project started as a Python port and diverged substantially (1-min data, date-range queries, maintenance-flag tracking, dashboard reports, web UI).
+- ASOS 1-minute CSV + METAR services &mdash; [**Iowa Environmental Mesonet**](https://mesonet.agron.iastate.edu/), Daryl Herzmann and contributors.
 - Raw 1-minute archive &mdash; [**NOAA / NCEI**](https://www.ncei.noaa.gov/).
-- Python port, dashboard reports, maintenance-flag tracking, Streamlit app &mdash; this repository.
+- Python package, dashboard reports, Streamlit app, and HF Space deploy &mdash; this repository.
 
 ## License
 

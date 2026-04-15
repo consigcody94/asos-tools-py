@@ -181,39 +181,53 @@ def _draw_header(fig, ax, *, station_id: str, station_name: str,
                       f"{_stat(df['precip'].sum(),'{:.2f}')} in",
                       C_PRECIP))
 
+    _draw_chip_strip(ax, chips)
+
+
+def _draw_chip_strip(ax, chips: list[tuple[str, str, str]]) -> None:
+    """Render a horizontal strip of KPI chips along the bottom of ``ax``.
+
+    Each chip is a tuple ``(label, value, accent_color)``. The label sits
+    in the upper third of the chip; the value sits in the lower two-thirds.
+    Chip height is chosen so neither element can visually overlap the other
+    at the fontsizes we use below.
+    """
     if not chips:
         return
 
     n = len(chips)
-    chip_y = 0.04
-    chip_h = 0.38
     gap = 0.012
     chip_w = (1.0 - gap * (n - 1)) / n
+    chip_y = 0.035
+    chip_h = 0.44  # taller than before so label + value never touch
+
+    # Vertical zones inside the chip, as fractions of chip_h.
+    label_y = chip_y + chip_h * 0.78   # upper strip
+    value_y = chip_y + chip_h * 0.30   # lower strip
 
     for i, (label, value, accent) in enumerate(chips):
         x_left = i * (chip_w + gap)
-        # Background chip.
-        chip = FancyBboxPatch((x_left, chip_y), chip_w, chip_h,
-                              transform=ax.transAxes,
-                              boxstyle="round,pad=0.0,rounding_size=0.04",
-                              facecolor=BG_CHIP, edgecolor=BORDER,
-                              linewidth=0.9, clip_on=False)
-        ax.add_patch(chip)
+        # Background.
+        ax.add_patch(FancyBboxPatch(
+            (x_left, chip_y), chip_w, chip_h,
+            transform=ax.transAxes,
+            boxstyle="round,pad=0.0,rounding_size=0.035",
+            facecolor=BG_CHIP, edgecolor=BORDER, linewidth=0.9,
+            clip_on=False,
+        ))
         # Left accent stripe.
-        stripe_w = 0.005
-        stripe = Rectangle((x_left, chip_y + 0.04),
-                           stripe_w, chip_h - 0.08,
-                           transform=ax.transAxes,
-                           color=accent, clip_on=False)
-        ax.add_patch(stripe)
-        # Label (top, small, muted).
-        ax.text(x_left + 0.020, chip_y + chip_h - 0.06, label,
-                transform=ax.transAxes, fontsize=7.4, color=MUTED,
-                ha="left", va="top")
-        # Value (bottom, big, bright).
-        ax.text(x_left + 0.020, chip_y + 0.07, value,
-                transform=ax.transAxes, fontsize=16, fontweight="bold",
-                color=FG_HI, ha="left", va="bottom")
+        ax.add_patch(Rectangle(
+            (x_left, chip_y + 0.04), 0.005, chip_h - 0.08,
+            transform=ax.transAxes, color=accent, clip_on=False,
+        ))
+        # Label (upper third, small, uppercase, muted).
+        ax.text(x_left + 0.022, label_y, label,
+                transform=ax.transAxes, fontsize=8, color=SOFT,
+                ha="left", va="center")
+        # Value (lower two-thirds, big, bright).
+        ax.text(x_left + 0.022, value_y, value,
+                transform=ax.transAxes, fontsize=15, fontweight="bold",
+                color=FG_HI, ha="left", va="center")
 
 
 def _annotate_extreme(ax, x, y, *, label: str, color: str, above: bool) -> None:
@@ -576,32 +590,12 @@ def _draw_maint_header(ax, *, group_label: str, window_label: str,
             f"{metars_df['valid'].max():%Y-%m-%d %H:%M}Z",
             fontsize=9.2, color=SOFT, transform=ax.transAxes, va="center")
 
-    chips = [
-        ("FLAG RATE", f"{rate:.1f}%", C_FLAG),
-        ("FLAGGED METARS", f"{n_flagged:,}", C_FLAG),
-        ("CLEAN METARS", f"{n_total - n_flagged:,}", C_CLEAN),
-        ("STATIONS", f"{n_stations}", ACCENT),
-    ]
-    n = len(chips)
-    chip_y, chip_h, gap = 0.04, 0.38, 0.012
-    chip_w = (1.0 - gap * (n - 1)) / n
-    for i, (label, value, accent) in enumerate(chips):
-        x_left = i * (chip_w + gap)
-        chip = FancyBboxPatch((x_left, chip_y), chip_w, chip_h,
-                              transform=ax.transAxes,
-                              boxstyle="round,pad=0.0,rounding_size=0.04",
-                              facecolor=BG_CHIP, edgecolor=BORDER,
-                              linewidth=0.9, clip_on=False)
-        ax.add_patch(chip)
-        stripe = Rectangle((x_left, chip_y + 0.04), 0.005, chip_h - 0.08,
-                           transform=ax.transAxes, color=accent, clip_on=False)
-        ax.add_patch(stripe)
-        ax.text(x_left + 0.020, chip_y + chip_h - 0.06, label,
-                transform=ax.transAxes, fontsize=7.4, color=MUTED,
-                ha="left", va="top")
-        ax.text(x_left + 0.020, chip_y + 0.07, value,
-                transform=ax.transAxes, fontsize=16, fontweight="bold",
-                color=FG_HI, ha="left", va="bottom")
+    _draw_chip_strip(ax, [
+        ("FLAG RATE",      f"{rate:.1f}%",          C_FLAG),
+        ("FLAGGED METARS", f"{n_flagged:,}",        C_FLAG),
+        ("CLEAN METARS",   f"{n_total - n_flagged:,}", C_CLEAN),
+        ("STATIONS",       f"{n_stations}",         ACCENT),
+    ])
 
 
 def _panel_flag_rate_per_station(ax, metars_df: pd.DataFrame) -> None:
@@ -781,31 +775,12 @@ def _draw_cmp_header(ax, *, group_label: str, window_label: str,
             f"({n_clean:,} CLEAN  +  {n_flag:,} FLAGGED)",
             fontsize=9.2, color=SOFT, transform=ax.transAxes, va="center")
 
-    chips = [
-        ("CLEAN $ FREE",  f"{n_clean:,}",      C_CLEAN),
-        ("FLAGGED  $",    f"{n_flag:,}",       C_FLAG),
-        ("FLAG RATE",     f"{rate:.1f}%",      C_FLAG),
-        ("DELTA RATIO",   f"{(n_flag/max(n_clean,1)):.2f}x",  ACCENT),
-    ]
-    n = len(chips)
-    chip_y, chip_h, gap = 0.04, 0.38, 0.012
-    chip_w = (1.0 - gap * (n - 1)) / n
-    for i, (label, value, accent) in enumerate(chips):
-        x_left = i * (chip_w + gap)
-        ax.add_patch(FancyBboxPatch((x_left, chip_y), chip_w, chip_h,
-                                    transform=ax.transAxes,
-                                    boxstyle="round,pad=0.0,rounding_size=0.04",
-                                    facecolor=BG_CHIP, edgecolor=BORDER,
-                                    linewidth=0.9, clip_on=False))
-        ax.add_patch(Rectangle((x_left, chip_y + 0.04), 0.005, chip_h - 0.08,
-                               transform=ax.transAxes,
-                               color=accent, clip_on=False))
-        ax.text(x_left + 0.020, chip_y + chip_h - 0.06, label,
-                transform=ax.transAxes, fontsize=7.4, color=MUTED,
-                ha="left", va="top")
-        ax.text(x_left + 0.020, chip_y + 0.07, value,
-                transform=ax.transAxes, fontsize=16, fontweight="bold",
-                color=FG_HI, ha="left", va="bottom")
+    _draw_chip_strip(ax, [
+        ("CLEAN (NO $)",  f"{n_clean:,}",                   C_CLEAN),
+        ("FLAGGED ($)",   f"{n_flag:,}",                    C_FLAG),
+        ("FLAG RATE",     f"{rate:.1f}%",                   C_FLAG),
+        ("DELTA RATIO",   f"{(n_flag/max(n_clean,1)):.2f}x", ACCENT),
+    ])
 
 
 def _panel_cmp_stacked_over_time(ax, metars_df: pd.DataFrame) -> None:

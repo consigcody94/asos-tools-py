@@ -68,6 +68,18 @@ def main() -> int:
         ignore_patterns=["__pycache__", "*.pyc"],
     )
 
+    # Upload the .streamlit/ theme config.
+    if (root / ".streamlit").exists():
+        print("Uploading .streamlit/ ...")
+        api.upload_folder(
+            folder_path=str(root / ".streamlit"),
+            path_in_repo=".streamlit",
+            repo_id=repo_id,
+            repo_type="space",
+            commit_message="Upload Streamlit theme config",
+            token=token,
+        )
+
     # Upload top-level single files.
     for local, remote, msg in [
         ("app.py", "app.py", "Upload Streamlit app"),

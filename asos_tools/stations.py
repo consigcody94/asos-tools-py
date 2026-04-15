@@ -17,6 +17,10 @@ from __future__ import annotations
 
 from typing import Tuple
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
 __all__ = [
     "LONG_ISLAND",
     "NORTHEAST",
@@ -32,6 +36,9 @@ __all__ = [
     "get_group",
     "list_groups",
     "all_stations",
+    "ALL_ASOS_STATIONS",
+    "search_stations",
+    "stations_by_state",
 ]
 
 
@@ -176,3 +183,94 @@ def all_stations() -> Tuple[str, ...]:
         for s in stations:
             seen[s] = None
     return tuple(sorted(seen))
+
+
+# ---------------------------------------------------------------------------
+# Bundled full ASOS catalog (2,900+ US sites + territories)
+# ---------------------------------------------------------------------------
+
+_DATA_DIR = Path(__file__).resolve().parent / "data"
+_CATALOG_PATH = _DATA_DIR / "stations.json"
+
+
+@lru_cache(maxsize=1)
+def _load_catalog() -> list[dict]:
+    """Load the bundled ASOS station catalog. Empty list if not built yet."""
+    if not _CATALOG_PATH.exists():
+        return []
+    try:
+        return json.loads(_CATALOG_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+# Module-level constant — loaded once, immutable for callers' purposes.
+ALL_ASOS_STATIONS: list[dict] = _load_catalog()
+
+
+def search_stations(
+    query: str = "",
+    *,
+    state: str | None = None,
+    online_only: bool = False,
+    limit: int | None = None,
+) -> list[dict]:
+    """Search the bundled ASOS catalog.
+
+    Parameters
+    ----------
+    query
+        Case-insensitive substring match against ``id`` and ``name``.
+        Empty string matches everything.
+    state
+        Optional two-letter state / territory filter (e.g. ``"NY"``).
+    online_only
+        If True, only return stations IEM currently lists as online.
+    limit
+        Optional maximum number of results to return.
+
+    Returns
+    -------
+    list of dict
+        Station records ordered so exact-``id`` matches come first, then
+        prefix matches, then substring matches.
+    """
+    rows = ALL_ASOS_STATIONS
+    if not rows:
+        return []
+
+    if state:
+        state_u = state.upper()
+        rows = [r for r in rows if (r.get("state") or "").upper() == state_u]
+    if online_only:
+        rows = [r for r in rows if r.get("online")]
+
+    q = (query or "").strip().upper()
+    if not q:
+        return rows[:limit] if limit else list(rows)
+
+    def _score(r: dict) -> int:
+        rid = (r.get("id") or "").upper()
+        name = (r.get("name") or "").upper()
+        if rid == q:
+            return 0
+        if rid.startswith(q):
+            return 1
+        if q in rid:
+            return 2
+        if name.startswith(q):
+            return 3
+        if q in name:
+            return 4
+        return 99
+
+    matched = [(r, _score(r)) for r in rows]
+    matched = [(r, s) for r, s in matched if s < 99]
+    matched.sort(key=lambda x: (x[1], x[0].get("id", "")))
+    out = [r for r, _ in matched]
+    return out[:limit] if limit else out
+
+
+def stations_by_state(state: str) -> list[dict]:
+    """All catalog stations in a given state/territory (two-letter code)."""
+    return search_stations(state=state)
