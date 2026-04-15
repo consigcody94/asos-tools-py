@@ -24,6 +24,25 @@ except ImportError:
     ALL_ASOS_STATIONS = []
     _HAVE_CATALOG = False
 
+try:
+    from asos_tools.stations import AOMC_STATIONS, AOMC_IDS, is_aomc
+    _HAVE_AOMC = bool(AOMC_STATIONS)
+except ImportError:
+    AOMC_STATIONS = []
+    AOMC_IDS = frozenset()
+    _HAVE_AOMC = False
+
+
+# Cached data fetches so repeated queries in the same session are instant.
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_fetch_1min(station: str, start: datetime, end: datetime):
+    return fetch_1min(station, start, end)
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cached_fetch_metars(stations_key: tuple, start: datetime, end: datetime):
+    return fetch_metars(list(stations_key), start, end)
+
 
 # =============================================================================
 # Page + CSS
@@ -106,6 +125,26 @@ p, .stMarkdown { color: #cbd5e1 !important; font-size: 0.95rem; line-height: 1.5
     color: #e2e8f0 !important; font-weight: 600 !important;
 }
 [data-testid="stDataFrame"] { border: 1px solid #253356; border-radius: 6px; }
+
+/* Reserve image container height so async image load doesn't jolt the page. */
+[data-testid="stImage"] {
+    min-height: 680px;
+    background: #0f1729;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+    display: block;
+    overflow: hidden;
+}
+[data-testid="stImage"] img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Smooth expander open so it doesn't snap. */
+[data-testid="stExpander"] details[open] > summary ~ div {
+    animation: none;
+}
 [data-testid="stAlert"] {
     background: #111a2e; border-left: 4px solid #38bdf8; color: #e2e8f0 !important;
 }
@@ -176,16 +215,31 @@ stations_list: list[str] = []
 group_label: str = ""
 
 if station_mode == "Single station":
+    # AOMC-only toggle — federal ASOS list, ~920 stations.
+    aomc_only = False
+    if _HAVE_AOMC:
+        aomc_only = st.sidebar.toggle(
+            f"AOMC federal ASOS only ({len(AOMC_STATIONS):,} sites)",
+            value=True,
+            help="When ON, limit the picker to the official NCEI HOMR list "
+                 "of ~920 federal ASOS stations (run by NWS/FAA/DOD). "
+                 "Turn OFF to include every IEM-indexed site including AWOS.",
+        )
+
     if _HAVE_CATALOG:
-        all_ids = [s["id"] for s in ALL_ASOS_STATIONS]
+        if aomc_only and _HAVE_AOMC:
+            pool = [s for s in ALL_ASOS_STATIONS if s["id"] in AOMC_IDS]
+        else:
+            pool = ALL_ASOS_STATIONS
+        all_ids = [s["id"] for s in pool]
         default_idx = all_ids.index("KJFK") if "KJFK" in all_ids else 0
         sid = st.sidebar.selectbox(
-            "Pick any of 2,929 ASOS sites",
+            f"Pick a station ({len(all_ids):,} available)",
             all_ids,
             index=default_idx,
             format_func=lambda s: next(
                 (f"{s} — {r['name']} ({r.get('state','?')})"
-                 for r in ALL_ASOS_STATIONS if r["id"] == s), s),
+                 for r in pool if r["id"] == s), s),
         )
     else:
         sid = st.sidebar.text_input("ICAO station ID", "KJFK").strip().upper()
@@ -201,14 +255,25 @@ elif station_mode == "Preset group":
     stations_list = list(get_group(preset))
     group_label = preset.replace("_", " ").title()
 else:  # custom list
+    aomc_only_custom = False
+    if _HAVE_AOMC:
+        aomc_only_custom = st.sidebar.toggle(
+            "AOMC federal ASOS only",
+            value=True,
+            key="aomc_custom",
+        )
     if _HAVE_CATALOG:
-        all_ids = [s["id"] for s in ALL_ASOS_STATIONS]
+        if aomc_only_custom and _HAVE_AOMC:
+            pool = [s for s in ALL_ASOS_STATIONS if s["id"] in AOMC_IDS]
+        else:
+            pool = ALL_ASOS_STATIONS
+        all_ids = [s["id"] for s in pool]
         picked = st.sidebar.multiselect(
-            "Pick any stations",
+            f"Pick any stations ({len(all_ids):,} available)",
             all_ids,
             default=["KJFK", "KLGA", "KEWR"],
             format_func=lambda s: next(
-                (f"{s} — {r['name']}" for r in ALL_ASOS_STATIONS if r["id"] == s), s),
+                (f"{s} — {r['name']}" for r in pool if r["id"] == s), s),
         )
         stations_list = picked or ["KJFK"]
     else:
@@ -406,7 +471,7 @@ try:
         station = stations_list[0]
 
         with st.spinner(f"Fetching 1-minute data for {station}…"):
-            df = fetch_1min(station, start, end)
+            df = _cached_fetch_1min(station, start, end)
         if df.empty:
             st.error("No 1-minute data in this window. Try a different station or wider window.")
             st.stop()
@@ -421,11 +486,39 @@ try:
             f'</div>',
             unsafe_allow_html=True,
         )
+
+        # Official AOMC metadata, if we have it.
+        if _HAVE_AOMC and station in AOMC_IDS:
+            meta = next(s for s in AOMC_STATIONS if s["id"] == station)
+            with st.expander("Station metadata (NCEI HOMR)", expanded=False):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.markdown(f"**Call sign:** `{meta.get('call') or '—'}`")
+                    st.markdown(f"**WBAN:** `{meta.get('wban') or '—'}`")
+                    st.markdown(f"**COOP ID:** `{meta.get('coop_id') or '—'}`")
+                    st.markdown(f"**GHCN-D:** `{meta.get('ghcnd_id') or '—'}`")
+                with c2:
+                    st.markdown(f"**State:** {meta.get('state') or '—'}")
+                    st.markdown(f"**County:** {meta.get('county') or '—'}")
+                    st.markdown(f"**Country:** {meta.get('country') or '—'}")
+                    st.markdown(f"**UTC offset:** {meta.get('utc_offset_hr') or '—'}")
+                with c3:
+                    lat = meta.get("lat")
+                    lon = meta.get("lon")
+                    elev = meta.get("elev_ft")
+                    st.markdown(f"**Lat/Lon:** `{lat:.4f}, {lon:.4f}`"
+                                if lat and lon else "**Lat/Lon:** —")
+                    st.markdown(f"**Elevation:** {elev} ft" if elev else "**Elevation:** —")
+                    st.markdown(f"**Station types:** `{meta.get('station_types') or '—'}`")
+                    st.markdown(f"**Begin date:** {meta.get('begin_date') or '—'}")
+
         with st.spinner("Rendering report…"):
             png = _render_to_bytes(build_report, df=df,
                                    window_label=window_label,
                                    station_id=station, station_name=station_name)
-        st.image(png, use_container_width=True)
+        # Container with consistent aspect ratio so the page doesn't reflow
+        # when the image loads asynchronously.
+        st.image(png, use_container_width=True, output_format="PNG")
 
         c1, c2 = st.columns(2)
         with c1:
@@ -444,7 +537,7 @@ try:
     # Maintenance flags OR comparison — both use fetch_metars.
     else:
         with st.spinner("Fetching METARs…"):
-            metars = fetch_metars(stations_list, start, end)
+            metars = _cached_fetch_metars(tuple(stations_list), start, end)
         if metars.empty:
             st.error("No METARs in this window. Try a different station/window.")
             st.stop()
@@ -475,7 +568,7 @@ try:
             png = _render_to_bytes(builder, metars_df=metars,
                                    group_label=group_label,
                                    window_label=window_label)
-        st.image(png, use_container_width=True)
+        st.image(png, use_container_width=True, output_format="PNG")
 
         kind = "maintenance" if report_type.startswith("Maintenance") else "comparison"
         c1, c2 = st.columns(2)

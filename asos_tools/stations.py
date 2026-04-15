@@ -39,6 +39,9 @@ __all__ = [
     "ALL_ASOS_STATIONS",
     "search_stations",
     "stations_by_state",
+    "AOMC_STATIONS",
+    "AOMC_IDS",
+    "is_aomc",
 ]
 
 
@@ -274,3 +277,41 @@ def search_stations(
 def stations_by_state(state: str) -> list[dict]:
     """All catalog stations in a given state/territory (two-letter code)."""
     return search_stations(state=state)
+
+
+# ---------------------------------------------------------------------------
+# AOMC (ASOS Operations and Monitoring Center) — federal ASOS list
+# ---------------------------------------------------------------------------
+
+_AOMC_PATH = _DATA_DIR / "aomc_stations.json"
+
+
+@lru_cache(maxsize=1)
+def _load_aomc() -> dict:
+    """Load the bundled AOMC station list. Empty payload if file missing."""
+    if not _AOMC_PATH.exists():
+        return {"stations": [], "source": "", "fetched_utc": "", "record_count": 0}
+    try:
+        return json.loads(_AOMC_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {"stations": [], "source": "", "fetched_utc": "", "record_count": 0}
+
+
+_aomc_payload = _load_aomc()
+
+#: Full list of AOMC-certified ASOS stations (~920 sites) as dicts, from
+#: NCEI HOMR's authoritative asos-stations.txt. Each record has id, call,
+#: wban, coop_id, ghcnd_id, name, state, county, lat, lon, elev_ft,
+#: utc_offset_hr, station_types (e.g. "AIRWAYS,ASOS,COOP"), begin_date.
+AOMC_STATIONS: list[dict] = list(_aomc_payload.get("stations", []))
+
+#: Set of canonical ICAO ids for all AOMC ASOS stations — for quick O(1)
+#: membership checks against the broader IEM catalog.
+AOMC_IDS: frozenset[str] = frozenset(s["id"] for s in AOMC_STATIONS if s.get("id"))
+
+
+def is_aomc(station_id: str) -> bool:
+    """True if this ICAO id is on the federal AOMC ASOS list."""
+    if not station_id:
+        return False
+    return station_id.strip().upper() in AOMC_IDS
