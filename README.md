@@ -8,6 +8,9 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 [![Tests](https://img.shields.io/badge/tests-28%20passing-success.svg)](#tests)
 [![Data](https://img.shields.io/badge/data-NCEI%20%2B%20IEM-lightgrey.svg)](#how-it-works)
+[![🤗 Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-asos--tools-ffb400?style=flat)](https://huggingface.co/spaces/consgicody/asos-tools)
+
+### 🚀 Live demo: **[huggingface.co/spaces/consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)**
 
 <em>~200,000 observations of real 1-minute data in one HTTP call, in ~10 seconds.<br/>
 Plus: ASOS maintenance-flag tracking, preset station groups, and an interactive Streamlit dashboard.</em>
@@ -305,13 +308,13 @@ Current status: **28 passing, 0 failing.**
 
 ## Roadmap
 
+- [x] ~~Published live demo on Hugging Face Spaces~~ → [consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)
 - [ ] `fetch_5min` &mdash; direct NCEI HTTPS pull of the 5-minute archive
 - [ ] `storm_finder` &mdash; port of the MATLAB `stormFinder.m`, with precip-amount scoring
 - [ ] `surface_plotter` &mdash; port of the MATLAB `surfacePlotter.m` abacus plot
 - [ ] Optional on-disk Parquet cache for repeat queries
 - [ ] Package on PyPI
 - [ ] Field-level comparison in `build_comparison_report` (tmpf/pres distributions for flagged vs clean subsets)
-- [ ] Published live demo on Hugging Face Spaces
 
 ## MATLAB users
 
