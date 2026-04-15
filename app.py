@@ -125,6 +125,8 @@ p, .stMarkdown { color: #cbd5e1 !important; font-size: 0.95rem; line-height: 1.5
 .kpi-chip.flagged { border-left-color: #f87171; }
 .kpi-chip.clean   { border-left-color: #34d399; }
 .kpi-chip.recovered { border-left-color: #fbbf24; }
+.kpi-chip.missing { border-left-color: #ef4444; background: #1a0e0e; }
+.kpi-chip.missing .value { color: #fca5a5; }
 .kpi-chip .label {
     font-size: 0.66rem; color: #94a3b8; letter-spacing: 0.15em;
     text-transform: uppercase; font-weight: 600; margin-bottom: 0.15rem;
@@ -714,6 +716,7 @@ with tab_watchlist:
         else:
             counts = wl["status"].value_counts()
             total = len(wl)
+            missing = int(counts.get("MISSING", 0))
             flagged = int(counts.get("FLAGGED", 0))
             intermittent = int(counts.get("INTERMITTENT", 0))
             recovered = int(counts.get("RECOVERED", 0))
@@ -723,6 +726,7 @@ with tab_watchlist:
             st.markdown(
                 f'<div class="chip-row">'
                 f'{_chip("scanned", f"{total:,}")}'
+                f'{_chip("missing now", f"{missing:,}", "missing")}'
                 f'{_chip("flagged now", f"{flagged:,}", "flagged")}'
                 f'{_chip("intermittent", f"{intermittent:,}", "flagged")}'
                 f'{_chip("recovered", f"{recovered:,}", "recovered")}'
@@ -736,7 +740,9 @@ with tab_watchlist:
             show_all = st.checkbox("Show all statuses (including CLEAN and NO DATA)",
                                    value=False)
             if not show_all:
-                wl = wl[wl["status"].isin(["FLAGGED", "INTERMITTENT", "RECOVERED"])]
+                wl = wl[wl["status"].isin(
+                    ["MISSING", "FLAGGED", "INTERMITTENT", "RECOVERED"]
+                )]
 
             # Display-friendly frame.
             display = wl.copy()
@@ -749,8 +755,13 @@ with tab_watchlist:
             display["min_since_last_flag"] = display["minutes_since_last_flag"].apply(
                 lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—"
             )
+            display["min_since_last_report"] = display["minutes_since_last_report"].apply(
+                lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—"
+            )
             display = display[[
                 "station", "name", "state", "status",
+                "missing", "expected_hourly", "missing_hours_utc",
+                "min_since_last_report",
                 "flagged", "total", "flag_rate",
                 "latest_time", "latest_flag_time", "min_since_last_flag",
                 "latest_metar",
@@ -759,6 +770,10 @@ with tab_watchlist:
                 "name": "Name",
                 "state": "State",
                 "status": "Status",
+                "missing": "Missing",
+                "expected_hourly": "Expected",
+                "missing_hours_utc": "Missing Hours (UTC)",
+                "min_since_last_report": "Min since last report",
                 "flagged": "$",
                 "total": "Total",
                 "flag_rate": "Flag %",
@@ -779,6 +794,15 @@ with tab_watchlist:
                         min_value=0, max_value=100,
                         format="%.0f%%",
                     ),
+                    "Missing": st.column_config.NumberColumn(
+                        "Missing",
+                        help="Number of scheduled hourly METARs that did NOT come through.",
+                    ),
+                    "Missing Hours (UTC)": st.column_config.TextColumn(
+                        "Missing Hours (UTC)",
+                        help="Hour boundaries with no METAR filed.",
+                        width="medium",
+                    ),
                     "Latest METAR": st.column_config.TextColumn(
                         "Latest METAR", width="large",
                     ),
@@ -795,11 +819,14 @@ with tab_watchlist:
 
             with st.expander("Status definitions"):
                 st.markdown("""
+- **MISSING** — one or more scheduled hourly METARs did **not** come through in the window. A silent station is more serious than a flagged one: we have no idea what the weather is. The *Missing Hours* column lists the specific UTC hour boundaries that went unreported.
 - **FLAGGED** — the most recent METAR in the scan window ends with `$`. Sensor degraded *right now*.
 - **INTERMITTENT** — had `$` reports in the window; most recent is clean but the previous one was flagged. Unstable.
 - **RECOVERED** — had `$` reports earlier in the window; the **last two reports are clean**. Back online.
-- **CLEAN** — zero flagged METARs in the entire scan window.
-- **NO DATA** — IEM returned no METARs for this station in the window (offline, outside IEM's indexed range, or overseas).
+- **CLEAN** — every expected hourly report arrived, zero `$` flags. Healthy.
+- **NO DATA** — IEM returned no METARs for this station *and* the scan window is too short to have expected any (e.g. last 30 min).
+
+*ASOS schedule:* one routine METAR is filed per hour at approximately `HH:51Z`. The scanner skips the current in-progress hour until 15 minutes past its `:51` to avoid false missing flags.
                 """)
 
 
