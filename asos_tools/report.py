@@ -231,18 +231,51 @@ def _draw_chip_strip(ax, chips: list[tuple[str, str, str]]) -> None:
 
 
 def _annotate_extreme(ax, x, y, *, label: str, color: str, above: bool) -> None:
-    off = (0, 14) if above else (0, -14)
+    """Annotate an extreme data point. Adjusts horizontal anchor near edges
+    so the label never runs off the axis."""
+    off_y = 13 if above else -13
     va = "bottom" if above else "top"
-    ax.annotate(
+
+    # Detect proximity to axis edges using axes-fraction coords.
+    ax_xmin, ax_xmax = ax.get_xlim()
+    if ax_xmin != ax_xmax:
+        x_num = mdates.date2num(x) if isinstance(x, (pd.Timestamp, datetime)) else x
+        frac = (x_num - ax_xmin) / (ax_xmax - ax_xmin)
+    else:
+        frac = 0.5
+    if frac < 0.08:
+        ha = "left"
+        off_x = 4
+    elif frac > 0.92:
+        ha = "right"
+        off_x = -4
+    else:
+        ha = "center"
+        off_x = 0
+
+    t = ax.annotate(
         label,
-        (x, y), textcoords="offset points", xytext=off,
+        (x, y), textcoords="offset points", xytext=(off_x, off_y),
         fontsize=8, fontweight="bold", color=color,
-        ha="center", va=va,
+        ha=ha, va=va,
         arrowprops=dict(arrowstyle="-", color=color, lw=0.8, alpha=0.7),
         path_effects=[patheffects.withStroke(linewidth=2.2, foreground=BG_PANEL)],
+        annotation_clip=False,
     )
+    t.set_clip_on(False)
     ax.plot([x], [y], "o", markersize=3.5, color=color,
-            markeredgecolor=BG_PANEL, markeredgewidth=0.6, zorder=6)
+            markeredgecolor=BG_PANEL, markeredgewidth=0.6, zorder=6,
+            clip_on=False)
+
+
+def _pad_ylim(ax, top_frac: float = 0.18, bottom_frac: float = 0.10) -> None:
+    """Give the axis y-limits enough headroom so extreme-point annotations
+    above and below the data always fit inside the panel."""
+    lo, hi = ax.get_ylim()
+    span = hi - lo
+    if span <= 0:
+        return
+    ax.set_ylim(lo - span * bottom_frac, hi + span * top_frac)
 
 
 def _panel_temp_dew(ax, df: pd.DataFrame) -> None:
@@ -252,20 +285,33 @@ def _panel_temp_dew(ax, df: pd.DataFrame) -> None:
     d = df.get("dwpf")
 
     if t is not None and d is not None:
-        # Fill the T–Td spread (dewpoint depression).
         ax.fill_between(valid, d, t, color=C_SPREAD, alpha=0.22,
                         linewidth=0, zorder=1, label="T–Td spread")
     if t is not None:
-        ax.plot(valid, t, color=C_TEMP, lw=1.1, label="Temperature", zorder=3)
+        ax.plot(valid, t, color=C_TEMP, lw=1.3, label="Temperature", zorder=3)
     if d is not None:
-        ax.plot(valid, d, color=C_DEW, lw=1.1, label="Dewpoint", zorder=3)
+        ax.plot(valid, d, color=C_DEW, lw=1.3, label="Dewpoint", zorder=3)
 
-    # Freezing reference.
-    ax.axhline(32, color=C_FREEZE, lw=0.7, ls=(0, (4, 3)), alpha=0.7, zorder=2)
-    ax.text(valid.iloc[-1], 32, " 32°F", color=C_FREEZE,
-            fontsize=7.5, va="center", ha="left", alpha=0.9)
+    ax.set_ylabel("°F")
+    ax.grid(True, axis="y", alpha=0.5)
+    ax.margins(x=0.005)
+    _pad_ylim(ax, top_frac=0.22, bottom_frac=0.15)
+    _auto_time_axis(ax, valid)
 
-    # Annotate extremes on temp only (cleaner).
+    # Freezing reference — label anchored inside the axis on the LEFT
+    # so it can never clip off the right edge.
+    if t is not None and d is not None:
+        lo_y, hi_y = ax.get_ylim()
+        if lo_y < 32 < hi_y:
+            ax.axhline(32, color=C_FREEZE, lw=0.7, ls=(0, (4, 3)),
+                       alpha=0.7, zorder=2)
+            ax.text(0.01, 32, "32°F", transform=ax.get_yaxis_transform(),
+                    color=C_FREEZE, fontsize=7.5, va="center", ha="left",
+                    alpha=0.9,
+                    bbox=dict(facecolor=BG_PANEL, edgecolor="none",
+                              boxstyle="round,pad=0.15"))
+
+    # Annotate extremes AFTER ylim is padded so arrows stay inside.
     if t is not None and t.notna().any():
         i_hi = t.idxmax()
         i_lo = t.idxmin()
@@ -274,10 +320,8 @@ def _panel_temp_dew(ax, df: pd.DataFrame) -> None:
         _annotate_extreme(ax, valid.loc[i_lo], t.loc[i_lo],
                           label=f"{t.loc[i_lo]:.0f}°", color=C_TEMP, above=False)
 
-    ax.set_ylabel("°F")
-    ax.legend(loc="upper left", ncol=3, handlelength=1.6)
-    ax.grid(True, axis="y")
-    _auto_time_axis(ax, valid)
+    ax.legend(loc="lower left", ncol=3, handlelength=1.6,
+              fontsize=8, bbox_to_anchor=(0.0, -0.02))
 
 
 def _panel_pressure(ax, df: pd.DataFrame) -> None:
@@ -290,11 +334,15 @@ def _panel_pressure(ax, df: pd.DataFrame) -> None:
         return
 
     p = df["pres1"]
-    # Thin fill beneath for volume.
     ax.fill_between(valid, p.min(), p, color=C_PRES, alpha=0.12, linewidth=0)
-    ax.plot(valid, p, color=C_PRES, lw=1.1)
+    ax.plot(valid, p, color=C_PRES, lw=1.3)
 
-    # Extremes.
+    ax.set_ylabel("inHg")
+    ax.grid(True, axis="y", alpha=0.5)
+    ax.margins(x=0.005)
+    _pad_ylim(ax, top_frac=0.22, bottom_frac=0.18)
+    _auto_time_axis(ax, valid)
+
     i_lo = p.idxmin()
     i_hi = p.idxmax()
     if pd.notna(i_hi):
@@ -304,79 +352,100 @@ def _panel_pressure(ax, df: pd.DataFrame) -> None:
         _annotate_extreme(ax, valid.loc[i_lo], p.loc[i_lo],
                           label=f"{p.loc[i_lo]:.2f}", color=C_PRES, above=False)
 
-    # Net trend arrow in the top-right corner.
+    # Net-change pill inside the panel, clearly on-axis.
     valid_pres = p.dropna()
     if len(valid_pres) >= 2:
         delta = valid_pres.iloc[-1] - valid_pres.iloc[0]
         arrow = "↑" if delta > 0.02 else ("↓" if delta < -0.02 else "→")
         color = "#4ade80" if delta > 0.02 else ("#f87171" if delta < -0.02 else MUTED)
-        ax.text(0.985, 0.90, f"{arrow} {delta:+.2f}", transform=ax.transAxes,
-                fontsize=10, fontweight="bold", color=color,
-                ha="right", va="center")
-        ax.text(0.985, 0.76, "NET Δ (inHg)", transform=ax.transAxes,
-                fontsize=7, color=MUTED, ha="right", va="center")
+        ax.text(
+            0.985, 0.92,
+            f"{arrow} {delta:+.2f} inHg",
+            transform=ax.transAxes, fontsize=9.5, fontweight="bold",
+            color=color, ha="right", va="top",
+            bbox=dict(facecolor=BG_CHIP, edgecolor=BORDER,
+                      boxstyle="round,pad=0.3"),
+        )
 
-    ax.set_ylabel("inHg")
-    ax.grid(True, axis="y")
-    _auto_time_axis(ax, valid)
+
+SPEED_BINS = [0, 5, 10, 15, 20, 30, 100]
+SPEED_COLORS = ["#0ea5e9", "#22d3ee", "#4ade80", "#facc15",
+                "#f97316", "#ef4444"]
+SPEED_LABELS = ["0–5", "5–10", "10–15", "15–20", "20–30", ">30"]
 
 
-def _panel_wind_rose(ax, df: pd.DataFrame) -> None:
-    """Circular histogram of wind direction stacked by speed bin."""
-    ax.set_title("WIND ROSE", pad=18, loc="center")
-    ax.set_facecolor(BG_PANEL)
+def _panel_wind_rose(ax_polar, ax_legend, df: pd.DataFrame) -> None:
+    """Circular histogram of wind direction stacked by speed bin.
+
+    Takes two axes so the legend can live in its own dedicated strip
+    below the rose, avoiding overlap with adjacent panels.
+    """
+    ax_polar.set_title("WIND ROSE", pad=10, loc="center", fontsize=10)
+    ax_polar.set_facecolor(BG_PANEL)
+    ax_legend.set_axis_off()
 
     d = df[["drct", "sknt"]].dropna()
     d = d[(d["sknt"] > 0) & (d["drct"] >= 0)]
     if d.empty:
-        ax.text(0.5, 0.5, "no wind data", transform=ax.transAxes,
-                ha="center", va="center", color=MUTED)
+        ax_polar.text(0.5, 0.5, "no wind data", transform=ax_polar.transAxes,
+                      ha="center", va="center", color=MUTED)
         return
 
     dir_bins = np.arange(0, 361, 22.5)
-    speed_bins = [0, 5, 10, 15, 20, 30, 100]
-    speed_colors = ["#0ea5e9", "#22d3ee", "#4ade80", "#facc15",
-                    "#f97316", "#ef4444"]
-    speed_labels = ["0–5", "5–10", "10–15", "15–20", "20–30", ">30 kt"]
-
     theta = np.deg2rad(0.5 * (dir_bins[:-1] + dir_bins[1:]))
     width = np.deg2rad(22.5)
     bottom = np.zeros(len(theta))
-
     total = len(d)
-    for (lo, hi), color, label in zip(zip(speed_bins[:-1], speed_bins[1:]),
-                                      speed_colors, speed_labels):
+
+    for (lo, hi), color in zip(zip(SPEED_BINS[:-1], SPEED_BINS[1:]), SPEED_COLORS):
         mask = (d["sknt"] >= lo) & (d["sknt"] < hi)
         counts, _ = np.histogram(d.loc[mask, "drct"] % 360, bins=dir_bins)
         pct = counts / max(total, 1) * 100
-        ax.bar(theta, pct, width=width, bottom=bottom,
-               color=color, edgecolor=BG_PANEL, linewidth=0.6,
-               label=label, zorder=3)
+        ax_polar.bar(theta, pct, width=width, bottom=bottom,
+                     color=color, edgecolor=BG_PANEL, linewidth=0.5, zorder=3)
         bottom = bottom + pct
 
-    # Radial percent rings (labels at N/NE).
-    rmax = bottom.max()
-    ring_step = max(1, int(np.ceil(rmax / 5)))
+    # Cardinal labels — keep them close to the rose so they fit the cell.
+    ax_polar.set_theta_zero_location("N")
+    ax_polar.set_theta_direction(-1)
+    ax_polar.set_xticks(np.deg2rad(np.arange(0, 360, 45)))
+    ax_polar.set_xticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+                             color=FG, fontweight="bold", fontsize=8.5)
+    ax_polar.tick_params(axis="x", pad=2)
+
+    # Radial % rings — labels inside the rose.
+    rmax = bottom.max() if bottom.max() > 0 else 5
+    ring_step = max(1, int(np.ceil(rmax / 4)))
     rings = np.arange(ring_step, rmax + ring_step, ring_step)
-    ax.set_rticks(rings)
-    ax.set_yticklabels([f"{int(r)}%" for r in rings],
-                       fontsize=7, color=MUTED)
-    ax.tick_params(axis="y", pad=2)
+    ax_polar.set_rticks(rings)
+    ax_polar.set_yticklabels([f"{int(r)}%" for r in rings],
+                             fontsize=6.5, color=MUTED)
+    ax_polar.set_rlabel_position(135)  # move radial labels away from N/E
+    ax_polar.tick_params(axis="y", pad=0)
+    ax_polar.spines["polar"].set_color(BORDER)
+    ax_polar.grid(True, color=GRID, alpha=0.55, linewidth=0.55)
 
-    # Cardinal labels.
-    ax.set_theta_zero_location("N")
-    ax.set_theta_direction(-1)
-    ax.set_xticks(np.deg2rad(np.arange(0, 360, 45)))
-    ax.set_xticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
-                       color=FG, fontweight="bold", fontsize=9)
-    ax.tick_params(axis="x", pad=6)
-    ax.spines["polar"].set_color(BORDER)
-    ax.grid(True, color=GRID, alpha=0.6, linewidth=0.6)
-
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, -0.22),
-              ncol=3, title="SPEED  (knots)", title_fontsize=7.2,
-              fontsize=7.2, labelcolor=SOFT, columnspacing=1.0,
-              handlelength=1.2, handleheight=0.8)
+    # ---- Custom legend strip below the rose -----------------------------
+    ax_legend.set_xlim(0, 1)
+    ax_legend.set_ylim(0, 1)
+    ax_legend.text(0.5, 0.88, "WIND SPEED  (kt)",
+                   transform=ax_legend.transAxes, color=MUTED,
+                   fontsize=7, ha="center", va="top")
+    n = len(SPEED_LABELS)
+    slot_w = 0.92 / n
+    x_start = 0.04
+    for i, (color, label) in enumerate(zip(SPEED_COLORS, SPEED_LABELS)):
+        cx = x_start + (i + 0.5) * slot_w
+        # Color square.
+        ax_legend.add_patch(Rectangle(
+            (cx - 0.018, 0.38), 0.036, 0.22,
+            transform=ax_legend.transAxes,
+            facecolor=color, edgecolor="none",
+        ))
+        # Label below the square.
+        ax_legend.text(cx, 0.15, label,
+                       transform=ax_legend.transAxes,
+                       color=SOFT, fontsize=7, ha="center", va="center")
 
 
 def _panel_wind(ax, df: pd.DataFrame) -> None:
@@ -385,22 +454,27 @@ def _panel_wind(ax, df: pd.DataFrame) -> None:
     if "sknt" in df:
         ax.fill_between(valid, 0, df["sknt"], color=C_WIND,
                         alpha=0.22, linewidth=0, zorder=1)
-        ax.plot(valid, df["sknt"], color=C_WIND, lw=1.0,
+        ax.plot(valid, df["sknt"], color=C_WIND, lw=1.2,
                 label="Wind (2-min mean)", zorder=3)
     if "gust_sknt" in df:
-        ax.plot(valid, df["gust_sknt"], color=C_GUST, lw=0.7,
+        ax.plot(valid, df["gust_sknt"], color=C_GUST, lw=0.9,
                 alpha=0.95, label="Gust (1-min peak)", zorder=2)
-        # Annotate peak gust.
-        gs = df["gust_sknt"]
-        if gs.notna().any():
-            idx = gs.idxmax()
-            _annotate_extreme(ax, valid.loc[idx], gs.loc[idx],
-                              label=f"{gs.loc[idx]:.0f} kt",
-                              color=C_GUST, above=True)
+
     ax.set_ylabel("knots")
-    ax.legend(loc="upper left", ncol=2, handlelength=1.6)
-    ax.grid(True, axis="y")
+    ax.grid(True, axis="y", alpha=0.5)
+    ax.margins(x=0.005)
+    ax.set_ylim(bottom=0)
+    _pad_ylim(ax, top_frac=0.25, bottom_frac=0.0)
     _auto_time_axis(ax, valid)
+
+    # Annotate peak AFTER ylim padding.
+    if "gust_sknt" in df and df["gust_sknt"].notna().any():
+        idx = df["gust_sknt"].idxmax()
+        _annotate_extreme(ax, valid.loc[idx], df["gust_sknt"].loc[idx],
+                          label=f"{df['gust_sknt'].loc[idx]:.0f} kt",
+                          color=C_GUST, above=True)
+
+    ax.legend(loc="upper left", ncol=2, handlelength=1.6, fontsize=8)
 
 
 def _choose_precip_freq(span_seconds: float) -> tuple[str, str]:
@@ -429,41 +503,46 @@ def _panel_precip(ax, df: pd.DataFrame) -> None:
     series = df.set_index("valid")["precip"].resample(freq).sum(min_count=1)
     width_days = pd.Timedelta(freq).total_seconds() / 86400
 
-    # Per-interval bars.
+    # Per-interval bars on primary axis.
     ax.bar(series.index, series.values, width=width_days, align="edge",
-           color=C_PRECIP, edgecolor="none", alpha=0.9, label=unit)
-    ax.set_ylabel(unit, color=C_PRECIP)
-    ax.tick_params(axis="y", colors=C_PRECIP)
-    ax.grid(True, axis="y")
+           color=C_PRECIP, edgecolor="none", alpha=0.9)
+    ax.set_ylabel(unit, color=C_PRECIP, fontsize=8.5)
+    ax.tick_params(axis="y", colors=C_PRECIP, labelsize=8)
+    ax.grid(True, axis="y", alpha=0.5)
+    ax.margins(x=0.005)
+    # Reserve headroom so the bars don't kiss the top frame.
+    bar_max = float(series.max(skipna=True) or 0)
+    ax.set_ylim(0, bar_max * 1.25 if bar_max > 0 else 1.0)
 
-    # Cumulative overlay on twin axis.
+    # Cumulative overlay on twin axis, with its own headroom.
     cumulative = series.fillna(0).cumsum()
+    total = float(df["precip"].sum(skipna=True))
     ax2 = ax.twinx()
     ax2.plot(cumulative.index, cumulative.values, color=C_CUM, lw=1.6,
-             label="Cumulative total", zorder=5)
+             zorder=5)
     ax2.fill_between(cumulative.index, 0, cumulative.values,
                      color=C_CUM, alpha=0.10, linewidth=0)
-    ax2.set_ylabel("cumulative (in)", color=C_CUM)
-    ax2.tick_params(axis="y", colors=C_CUM)
+    ax2.set_ylabel("cumulative (in)", color=C_CUM, fontsize=8.5)
+    ax2.tick_params(axis="y", colors=C_CUM, labelsize=8)
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_color(BORDER)
     ax2.grid(False)
+    ax2.set_ylim(0, max(total * 1.15, 0.05))
 
-    # Unified legend.
+    # Unified legend, top-left.
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=C_PRECIP, alpha=0.9),
         plt.Line2D([0], [0], color=C_CUM, lw=1.6),
     ]
     ax.legend(handles, [unit, "cumulative"], loc="upper left",
-              ncol=2, handlelength=1.6)
+              ncol=2, handlelength=1.6, fontsize=8)
 
-    total = float(df["precip"].sum(skipna=True))
-    # Top-right callout with total precip.
-    ax.text(0.985, 0.90, f"{total:.2f} in", transform=ax.transAxes,
-            fontsize=13, fontweight="bold", color=FG_HI,
-            ha="right", va="center")
-    ax.text(0.985, 0.76, "TOTAL ACCUM.", transform=ax.transAxes,
-            fontsize=7, color=MUTED, ha="right", va="center")
+    # Total callout — styled pill at top-right (inside both axes).
+    ax.text(0.985, 0.92, f"{total:.2f} in",
+            transform=ax.transAxes, fontsize=11, fontweight="bold",
+            color=FG_HI, ha="right", va="top",
+            bbox=dict(facecolor=BG_CHIP, edgecolor=BORDER,
+                      boxstyle="round,pad=0.3"))
 
     _auto_time_axis(ax, valid)
 
@@ -508,11 +587,11 @@ def build_report(
     _apply_style()
     name = station_name or (df["station_name"].iloc[0] if "station_name" in df else station_id)
 
-    fig = plt.figure(figsize=(14, 10), dpi=120)
+    fig = plt.figure(figsize=(14, 11), dpi=120)
     gs = GridSpec(
-        5, 4,
-        height_ratios=[1.15, 1.6, 1.25, 1.25, 1.35],
-        hspace=0.55, wspace=0.35,
+        5, 12,
+        height_ratios=[1.1, 1.55, 1.25, 1.65, 1.35],
+        hspace=0.7, wspace=0.4,
         left=0.055, right=0.97, top=0.96, bottom=0.06,
     )
 
@@ -521,23 +600,24 @@ def build_report(
     _draw_header(fig, ax_head, station_id=station_id, station_name=name,
                  window_label=window_label, df=df)
 
-    # Rows 1–2, cols 0–2 — temperature + pressure.
-    ax_temp = fig.add_subplot(gs[1, 0:3])
-    ax_pres = fig.add_subplot(gs[2, 0:3], sharex=ax_temp)
+    # Row 1 — temperature + dewpoint (full width).
+    ax_temp = fig.add_subplot(gs[1, :])
     _panel_temp_dew(ax_temp, df)
+
+    # Row 2 — pressure (full width).
+    ax_pres = fig.add_subplot(gs[2, :])
     _panel_pressure(ax_pres, df)
-    # hide shared x-axis tick labels on the upper panel
-    plt.setp(ax_temp.get_xticklabels(), visible=False)
 
-    # Rows 1–2, col 3 — wind rose (polar) spanning both rows.
-    ax_rose = fig.add_subplot(gs[1:3, 3], projection="polar")
-    _panel_wind_rose(ax_rose, df)
-
-    # Row 3 full — wind speed/gust.
-    ax_wind = fig.add_subplot(gs[3, :])
+    # Row 3 — wind speed (left 8/12) + wind rose (right 4/12 split into rose+legend).
+    ax_wind = fig.add_subplot(gs[3, 0:8])
     _panel_wind(ax_wind, df)
 
-    # Row 4 full — precipitation.
+    rose_spec = gs[3, 8:12].subgridspec(2, 1, height_ratios=[4.5, 1], hspace=0.05)
+    ax_rose = fig.add_subplot(rose_spec[0], projection="polar")
+    ax_rose_legend = fig.add_subplot(rose_spec[1])
+    _panel_wind_rose(ax_rose, ax_rose_legend, df)
+
+    # Row 4 — precipitation (full width).
     ax_precip = fig.add_subplot(gs[4, :])
     _panel_precip(ax_precip, df)
 
