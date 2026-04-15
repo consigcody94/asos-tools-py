@@ -3,9 +3,8 @@ title: ASOS Tools
 emoji: 🌤️
 colorFrom: blue
 colorTo: purple
-sdk: streamlit
-sdk_version: "1.39.0"
-app_file: app.py
+sdk: docker
+app_port: 7860
 pinned: true
 license: mit
 short_description: Pull NCEI 1-minute ASOS surface observations by date range
