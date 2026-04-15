@@ -318,10 +318,11 @@ def _do_group_zip(stations_list, start, end, group_label, window_label) -> bytes
 # Header tabs
 # ---------------------------------------------------------------------------
 
-tab_reports, tab_browser, tab_watchlist = st.tabs([
+tab_reports, tab_browser, tab_watchlist, tab_missing = st.tabs([
     "📊  Reports",
     "🗂  AOMC Browser",
-    "🚨  Live Watchlist",
+    "⚠️  $ Maintenance Watchlist",
+    "🚨  Missing METARs",
 ])
 
 
@@ -599,26 +600,29 @@ with tab_reports:
 # ===========================================================================
 
 with tab_browser:
+    st.markdown("### Federal ASOS Station Directory")
     st.markdown(
-        '<div class="lede">Browse the **920 federal ASOS stations** from NCEI HOMR. '
-        'Search by id, name, state, or county. Click a row for details; use '
-        'the Reports tab to generate a dashboard for any selected station.</div>',
-        unsafe_allow_html=True,
+        "Browse the **920 AOMC-certified ASOS stations** operated by NWS, FAA, "
+        "and DOD. This list comes from NCEI's Historical Observing Metadata "
+        "Repository (HOMR) — the authoritative federal source. Use the search "
+        "and state filter to find stations, then switch to the **Reports** tab "
+        "to generate a dashboard for any of them."
     )
     if not _HAVE_AOMC:
         st.warning("AOMC catalog not bundled — run `deploy/build_aomc_catalog.py`.")
     else:
         col_q, col_st = st.columns([3, 1])
         with col_q:
-            query = st.text_input("Search", "", placeholder="e.g. Kennedy, JFK, Chicago, NY",
+            query = st.text_input("Search by ID, name, or county",
+                                  "", placeholder="e.g. Kennedy, JFK, Chicago, NY",
                                   label_visibility="collapsed")
         with col_st:
             states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
-            state_filter = st.selectbox("State", ["All"] + states, index=0,
-                                        label_visibility="collapsed")
+            state_filter = st.selectbox("Filter by state", ["All states"] + states,
+                                        index=0, label_visibility="collapsed")
 
         rows = AOMC_STATIONS
-        if state_filter != "All":
+        if state_filter != "All states":
             rows = [s for s in rows if s.get("state") == state_filter]
         if query:
             q = query.upper().strip()
@@ -627,9 +631,9 @@ with tab_browser:
                     or q in (s.get("name", "") or "").upper()
                     or q in (s.get("county", "") or "").upper()]
 
-        st.caption(f"{len(rows):,} station(s) match.")
-        df = pd.DataFrame([{
-            "ID": s.get("id"),
+        st.caption(f"Showing {len(rows):,} of {len(AOMC_STATIONS):,} stations.")
+        browser_df = pd.DataFrame([{
+            "ICAO": s.get("id"),
             "Call": s.get("call"),
             "Name": s.get("name"),
             "State": s.get("state"),
@@ -637,196 +641,322 @@ with tab_browser:
             "Lat": s.get("lat"),
             "Lon": s.get("lon"),
             "Elev (ft)": s.get("elev_ft"),
+            "WBAN": s.get("wban"),
             "Types": s.get("station_types"),
+            "Begin date": s.get("begin_date"),
         } for s in rows])
-        st.dataframe(df, use_container_width=True, height=640, hide_index=True)
+        st.dataframe(browser_df, use_container_width=True, height=600, hide_index=True)
 
-        # Optional export of the filtered list.
         if len(rows) > 0:
-            st.download_button("⬇ Download filtered CSV",
-                               data=df.to_csv(index=False).encode(),
-                               file_name="aomc_filtered.csv",
+            st.download_button("⬇ Download filtered station list",
+                               data=browser_df.to_csv(index=False).encode(),
+                               file_name="aomc_stations_filtered.csv",
                                mime="text/csv")
+
+        with st.expander("What is AOMC?"):
+            st.markdown("""
+The **ASOS Operations and Monitoring Center** is the NWS entity responsible for
+the national ASOS network. The ~920 stations in this directory are federally
+commissioned, calibrated, and maintained by NWS / FAA / DOD. They are distinct
+from the broader set of ~2,900+ automated weather stations (including
+general-aviation AWOS sites) indexed by IEM.
+
+**Source:** [NCEI Historical Observing Metadata Repository (HOMR)](https://www.ncei.noaa.gov/access/homr/)
+— file `asos-stations.txt`, fetched and bundled at package-build time.
+            """)
 
 
 # ===========================================================================
-# TAB 3 — Live Watchlist
+# Shared scan logic for tabs 3 + 4
+# ===========================================================================
+
+def _scan_controls(key_prefix: str):
+    """Render scan-window + scope controls. Returns (scan_ids, hours, now_key)."""
+    col_h, col_scope, col_refresh = st.columns([2, 2, 1])
+    with col_h:
+        hours = st.selectbox(
+            "Scan window",
+            [1, 2, 4, 6, 12, 24],
+            index=2,
+            format_func=lambda h: f"Last {h} hour{'s' if h != 1 else ''}",
+            key=f"{key_prefix}_hours",
+        )
+    with col_scope:
+        scope = st.selectbox(
+            "Scope",
+            ["All AOMC stations (~920)", "Single state", "Preset group"],
+            key=f"{key_prefix}_scope",
+        )
+    with col_refresh:
+        now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
+        if st.button("🔄 Refresh", use_container_width=True, key=f"{key_prefix}_refresh"):
+            _cached_watchlist.clear()
+            now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+    if scope == "Single state":
+        states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
+        state_pick = st.selectbox("Pick a state", states,
+                                  index=states.index("NY") if "NY" in states else 0,
+                                  key=f"{key_prefix}_state")
+        scan_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("state") == state_pick)
+    elif scope == "Preset group":
+        preset = st.selectbox("Pick a preset group", list_groups(),
+                              format_func=lambda s: s.replace("_", " ").title(),
+                              key=f"{key_prefix}_group")
+        group = get_group(preset)
+        scan_ids = tuple(sid for sid in group if sid in AOMC_IDS) or tuple(group)
+    else:
+        scan_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+
+    return scan_ids, hours, now_key
+
+
+def _run_scan(scan_ids, hours, now_key):
+    """Execute the scan and return the watchlist DataFrame."""
+    st.caption(f"Scanning {len(scan_ids):,} station(s), last {hours} hour(s). "
+               f"Cache TTL 3 min.")
+    with st.spinner(f"Scanning {len(scan_ids)} stations…"):
+        return _cached_watchlist(scan_ids, float(hours), now_key)
+
+
+def _format_display(wl):
+    """Prepare a display-ready copy of the watchlist DataFrame."""
+    display = wl.copy()
+    display["latest_time"] = display["latest_time"].apply(
+        lambda t: t.strftime("%Y-%m-%d %H:%MZ") if pd.notna(t) else "—")
+    display["latest_flag_time"] = display["latest_flag_time"].apply(
+        lambda t: t.strftime("%H:%MZ") if pd.notna(t) else "—")
+    display["min_since_last_flag"] = display["minutes_since_last_flag"].apply(
+        lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—")
+    display["min_since_last_report"] = display["minutes_since_last_report"].apply(
+        lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—")
+    return display
+
+
+# ===========================================================================
+# TAB 3 — $ Maintenance Watchlist (flagged / intermittent / recovered)
 # ===========================================================================
 
 with tab_watchlist:
+    st.markdown("### $ Maintenance Flag Watchlist")
     st.markdown(
-        '<div class="lede"><strong>Operational scan:</strong> every '
-        '<strong>federal AOMC ASOS station</strong> (~920 sites). Shows which '
-        'sites are reporting the <code>$</code> maintenance-check indicator '
-        'right now, which have <em>recovered</em> after flagging earlier in '
-        'the window, and which are clean. Built for dispatchers and controllers '
-        'who need situational awareness of the national ASOS network.</div>',
-        unsafe_allow_html=True,
+        "Scans every AOMC station and shows which ones are currently "
+        "reporting the **`$` maintenance-check indicator** at the end of "
+        "their METARs. A trailing `$` means the ASOS station has self-detected "
+        "a sensor problem — data from that site should be treated with caution. "
+        "This tab filters to only the `$`-related statuses so you can focus on "
+        "**who's degraded** and **who has come back clean**."
     )
     if not _HAVE_AOMC:
-        st.warning("AOMC catalog not bundled — run `deploy/build_aomc_catalog.py`.")
+        st.warning("AOMC catalog not bundled.")
     else:
-        col_h, col_scope, col_refresh = st.columns([2, 2, 1])
-        with col_h:
-            hours = st.selectbox(
-                "Scan window",
-                [1, 2, 4, 6, 12, 24],
-                index=2,
-                format_func=lambda h: f"Last {h} hour{'s' if h != 1 else ''}",
-            )
-        with col_scope:
-            scope = st.selectbox(
-                "Scope",
-                ["All AOMC stations (~920)", "Single state", "Preset group"],
-            )
-        with col_refresh:
-            # Cache busts every minute when this changes.
-            now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
-            if st.button("🔄 Refresh", use_container_width=True):
-                _cached_watchlist.clear()
-                now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
-
-        if scope == "Single state":
-            states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
-            state_pick = st.selectbox("Pick a state", states,
-                                      index=states.index("NY") if "NY" in states else 0)
-            scan_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("state") == state_pick)
-        elif scope == "Preset group":
-            preset = st.selectbox("Pick a preset group", list_groups(),
-                                  format_func=lambda s: s.replace("_", " ").title())
-            group = get_group(preset)
-            scan_ids = tuple(sid for sid in group if sid in AOMC_IDS)
-            if not scan_ids:
-                scan_ids = tuple(group)  # fall back to group even if not in AOMC
-        else:
-            scan_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-
-        st.caption(f"Scanning {len(scan_ids):,} station(s), last {hours} hour(s). "
-                   f"Cache TTL 3 minutes.")
-
-        with st.spinner(f"Scanning {len(scan_ids)} stations…"):
-            try:
-                wl = _cached_watchlist(scan_ids, float(hours), now_key)
-            except Exception as e:
-                st.error(f"Scan failed: {e}")
-                st.stop()
+        scan_ids, hours, now_key = _scan_controls("wl")
+        try:
+            wl = _run_scan(scan_ids, hours, now_key)
+        except Exception as e:
+            st.error(f"Scan failed: {e}")
+            st.stop()
 
         if wl.empty:
             st.warning("No METARs returned for this scope/window.")
         else:
             counts = wl["status"].value_counts()
-            total = len(wl)
-            missing = int(counts.get("MISSING", 0))
             flagged = int(counts.get("FLAGGED", 0))
             intermittent = int(counts.get("INTERMITTENT", 0))
             recovered = int(counts.get("RECOVERED", 0))
             clean = int(counts.get("CLEAN", 0))
-            no_data = int(counts.get("NO DATA", 0))
 
             st.markdown(
                 f'<div class="chip-row">'
-                f'{_chip("scanned", f"{total:,}")}'
-                f'{_chip("missing now", f"{missing:,}", "missing")}'
-                f'{_chip("flagged now", f"{flagged:,}", "flagged")}'
+                f'{_chip("flagged now ($)", f"{flagged:,}", "flagged")}'
                 f'{_chip("intermittent", f"{intermittent:,}", "flagged")}'
                 f'{_chip("recovered", f"{recovered:,}", "recovered")}'
                 f'{_chip("clean", f"{clean:,}", "clean")}'
-                f'{_chip("no data", f"{no_data:,}")}'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+                f'{_chip("total scanned", f"{len(wl):,}")}'
+                f'</div>', unsafe_allow_html=True)
 
-            # Filter.
-            show_all = st.checkbox("Show all statuses (including CLEAN and NO DATA)",
-                                   value=False)
-            if not show_all:
-                wl = wl[wl["status"].isin(
-                    ["MISSING", "FLAGGED", "INTERMITTENT", "RECOVERED"]
-                )]
+            # Default: show only $-related rows.
+            show_clean = st.checkbox("Also show CLEAN stations",
+                                     value=False, key="wl_show_clean")
+            filtered = wl[wl["status"].isin(
+                ["FLAGGED", "INTERMITTENT", "RECOVERED"]
+                + (["CLEAN"] if show_clean else [])
+            )]
 
-            # Display-friendly frame.
-            display = wl.copy()
-            display["latest_time"] = display["latest_time"].apply(
-                lambda t: t.strftime("%Y-%m-%d %H:%MZ") if pd.notna(t) else "—"
-            )
-            display["latest_flag_time"] = display["latest_flag_time"].apply(
-                lambda t: t.strftime("%H:%MZ") if pd.notna(t) else "—"
-            )
-            display["min_since_last_flag"] = display["minutes_since_last_flag"].apply(
-                lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—"
-            )
-            display["min_since_last_report"] = display["minutes_since_last_report"].apply(
-                lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—"
-            )
+            display = _format_display(filtered)
             display = display[[
                 "station", "name", "state", "status",
-                "missing", "expected_hourly", "missing_hours_utc",
-                "min_since_last_report",
                 "flagged", "total", "flag_rate",
                 "latest_time", "latest_flag_time", "min_since_last_flag",
                 "latest_metar",
             ]].rename(columns={
-                "station": "Station",
-                "name": "Name",
-                "state": "State",
-                "status": "Status",
-                "missing": "Missing",
-                "expected_hourly": "Expected",
-                "missing_hours_utc": "Missing Hours (UTC)",
-                "min_since_last_report": "Min since last report",
-                "flagged": "$",
-                "total": "Total",
-                "flag_rate": "Flag %",
-                "latest_time": "Latest Report",
-                "latest_flag_time": "Last $",
-                "min_since_last_flag": "Min since $",
+                "station": "Station", "name": "Name", "state": "State",
+                "status": "Status", "flagged": "$ Count", "total": "Total",
+                "flag_rate": "Flag %", "latest_time": "Latest Report",
+                "latest_flag_time": "Last $", "min_since_last_flag": "Min since $",
                 "latest_metar": "Latest METAR",
             })
 
-            st.dataframe(
-                display,
-                use_container_width=True,
-                height=600,
-                hide_index=True,
-                column_config={
-                    "Flag %": st.column_config.ProgressColumn(
-                        "Flag %",
-                        min_value=0, max_value=100,
-                        format="%.0f%%",
-                    ),
-                    "Missing": st.column_config.NumberColumn(
-                        "Missing",
-                        help="Number of scheduled hourly METARs that did NOT come through.",
-                    ),
-                    "Missing Hours (UTC)": st.column_config.TextColumn(
-                        "Missing Hours (UTC)",
-                        help="Hour boundaries with no METAR filed.",
-                        width="medium",
-                    ),
-                    "Latest METAR": st.column_config.TextColumn(
-                        "Latest METAR", width="large",
-                    ),
-                },
-            )
+            st.dataframe(display, use_container_width=True, height=540,
+                         hide_index=True,
+                         column_config={
+                             "Flag %": st.column_config.ProgressColumn(
+                                 "Flag %", min_value=0, max_value=100, format="%.0f%%"),
+                             "Latest METAR": st.column_config.TextColumn(
+                                 "Latest METAR", width="large"),
+                         })
 
             st.download_button(
-                "⬇ Download watchlist CSV",
-                data=wl.to_csv(index=False).encode(),
-                file_name=f"watchlist_last{hours}h_"
+                "⬇ Download $ watchlist CSV",
+                data=filtered.to_csv(index=False).encode(),
+                file_name=f"dollar_watchlist_last{hours}h_"
                           f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M')}.csv",
-                mime="text/csv",
-            )
+                mime="text/csv")
 
-            with st.expander("Status definitions"):
+            with st.expander("What does $ mean?"):
                 st.markdown("""
-- **MISSING** — one or more scheduled hourly METARs did **not** come through in the window. A silent station is more serious than a flagged one: we have no idea what the weather is. The *Missing Hours* column lists the specific UTC hour boundaries that went unreported.
-- **FLAGGED** — the most recent METAR in the scan window ends with `$`. Sensor degraded *right now*.
-- **INTERMITTENT** — had `$` reports in the window; most recent is clean but the previous one was flagged. Unstable.
-- **RECOVERED** — had `$` reports earlier in the window; the **last two reports are clean**. Back online.
-- **CLEAN** — every expected hourly report arrived, zero `$` flags. Healthy.
-- **NO DATA** — IEM returned no METARs for this station *and* the scan window is too short to have expected any (e.g. last 30 min).
+**The `$` maintenance-check indicator** is a flag appended to the end of an
+ASOS METAR by the station itself. It signals that the ASOS equipment has
+detected an out-of-tolerance condition on one or more sensors. Common causes:
 
-*ASOS schedule:* one routine METAR is filed per hour at approximately `HH:51Z`. The scanner skips the current in-progress hour until 15 minutes past its `:51` to avoid false missing flags.
+- Visibility sensor contamination or degradation
+- Ceilometer (cloud height sensor) malfunction
+- Precipitation discriminator error
+- Temperature / dewpoint sensor drift
+
+**Status definitions:**
+
+| Status | Meaning | Action |
+|---|---|---|
+| **FLAGGED** | Latest METAR ends with `$` — degraded *right now* | Treat readings with caution; check sensor-specific remarks |
+| **INTERMITTENT** | Mixed flags — latest clean but previous was flagged | Monitor; sensor may be marginal |
+| **RECOVERED** | Was flagged earlier; **last 2 reports are clean** | Likely back to normal; verify with next few reports |
+| **CLEAN** | Zero `$` flags in the scan window | Healthy |
+                """)
+
+
+# ===========================================================================
+# TAB 4 — Missing METARs (silent stations)
+# ===========================================================================
+
+with tab_missing:
+    st.markdown("### Missing METAR Monitor")
+    st.markdown(
+        "Scans AOMC stations for **missing scheduled METARs** — hours where "
+        "the station was expected to report but didn't. A silent station is "
+        "operationally **more critical** than a `$`-flagged one: at least a "
+        "flagged station is still reporting data. A missing station gives you "
+        "nothing."
+    )
+    st.markdown(
+        "> **ASOS routine schedule:** one METAR per hour at approximately "
+        "**`HH:51Z`**. The scanner checks each fully-elapsed hour bucket in "
+        "the window. If a bucket has zero METARs filed, it's counted as "
+        "*missing*. The current in-progress hour is skipped (15-min grace) "
+        "to avoid false alerts."
+    )
+
+    if not _HAVE_AOMC:
+        st.warning("AOMC catalog not bundled.")
+    else:
+        scan_ids_m, hours_m, now_key_m = _scan_controls("miss")
+        try:
+            wl_m = _run_scan(scan_ids_m, hours_m, now_key_m)
+        except Exception as e:
+            st.error(f"Scan failed: {e}")
+            st.stop()
+
+        if wl_m.empty:
+            st.warning("No data returned.")
+        else:
+            counts_m = wl_m["status"].value_counts()
+            missing = int(counts_m.get("MISSING", 0))
+            no_data = int(counts_m.get("NO DATA", 0))
+            total_m = len(wl_m)
+            reporting = total_m - missing - no_data
+
+            st.markdown(
+                f'<div class="chip-row">'
+                f'{_chip("missing now", f"{missing:,}", "missing")}'
+                f'{_chip("no data at all", f"{no_data:,}", "missing")}'
+                f'{_chip("reporting normally", f"{reporting:,}", "clean")}'
+                f'{_chip("total scanned", f"{total_m:,}")}'
+                f'</div>', unsafe_allow_html=True)
+
+            # Show only MISSING + NO DATA by default.
+            show_reporting = st.checkbox(
+                "Also show stations that ARE reporting",
+                value=False, key="miss_show_reporting")
+            if show_reporting:
+                filtered_m = wl_m
+            else:
+                filtered_m = wl_m[wl_m["status"].isin(["MISSING", "NO DATA"])]
+
+            display_m = _format_display(filtered_m)
+            display_m = display_m[[
+                "station", "name", "state", "status",
+                "missing", "expected_hourly", "missing_hours_utc",
+                "min_since_last_report",
+                "total",
+                "latest_time",
+                "latest_metar",
+            ]].rename(columns={
+                "station": "Station", "name": "Name", "state": "State",
+                "status": "Status", "missing": "Missing",
+                "expected_hourly": "Expected", "missing_hours_utc": "Missing Hours (UTC)",
+                "min_since_last_report": "Min since report",
+                "total": "Reports received",
+                "latest_time": "Last report time",
+                "latest_metar": "Last METAR (if any)",
+            })
+
+            st.dataframe(display_m, use_container_width=True, height=540,
+                         hide_index=True,
+                         column_config={
+                             "Missing": st.column_config.NumberColumn(
+                                 "Missing",
+                                 help="Hourly reports that did NOT arrive."),
+                             "Expected": st.column_config.NumberColumn(
+                                 "Expected",
+                                 help="How many hourly METARs SHOULD have been filed in this window."),
+                             "Missing Hours (UTC)": st.column_config.TextColumn(
+                                 "Missing Hours (UTC)", width="medium",
+                                 help="Specific UTC hour boundaries with no METAR."),
+                             "Last METAR (if any)": st.column_config.TextColumn(
+                                 "Last METAR (if any)", width="large"),
+                         })
+
+            st.download_button(
+                "⬇ Download missing-METAR CSV",
+                data=filtered_m.to_csv(index=False).encode(),
+                file_name=f"missing_metars_last{hours_m}h_"
+                          f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M')}.csv",
+                mime="text/csv")
+
+            with st.expander("Why do METARs go missing?"):
+                st.markdown("""
+**Common causes of missing METARs:**
+
+| Cause | Notes |
+|---|---|
+| **Power outage** | Station lost electricity; no system to file reports |
+| **Communication failure** | ASOS is running but the METAR can't reach the FAA/NWS network |
+| **Station decommissioned** | Some remote / military sites report seasonally or have been taken offline |
+| **IEM ingestion lag** | Rare — IEM may be behind on ingesting from NCEI |
+| **Sensor cascade failure** | All sensors fail simultaneously; ASOS decides not to file |
+
+**What controllers should check:**
+1. Is the station on the NOTAM system? (outage formally announced)
+2. Is the AWOS backup available for that airport?
+3. Has the station historically had gaps? (check with a 24h or 7-day window)
+4. If the station was missing but is now back, check the first post-gap METAR
+   for accuracy — sensor drift can occur during extended outages.
+
+**Columns explained:**
+- **Missing** — count of hour buckets in the window with no METAR
+- **Expected** — how many hourly METARs the station SHOULD have filed
+- **Missing Hours (UTC)** — the specific hours that went unreported
+- **Min since report** — minutes since ANY METAR was received (higher = more stale)
                 """)
 
 
