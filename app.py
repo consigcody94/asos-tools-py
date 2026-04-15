@@ -69,7 +69,7 @@ def _cached_watchlist(station_ids: tuple, hours: float, end_iso: str):
 
 
 # ---------------------------------------------------------------------------
-# Page + CSS
+# Page + theme toggle
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
@@ -79,143 +79,210 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown("""
-<style>
+# Theme state — persists across reruns via session_state.
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+_DARK = st.session_state.theme == "dark"
+
+# ---------------------------------------------------------------------------
+# CSS — two complete palettes, injected based on the toggle.
+# ---------------------------------------------------------------------------
+
+# Shared layout rules (theme-independent).
+_CSS_SHARED = """
 section.main > div.block-container {
     padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1400px;
 }
-[data-testid="stSidebar"] {
-    background: #0f1729; border-right: 1px solid #1e293b;
-}
 [data-testid="stSidebar"] > div { padding-top: 1rem; }
 [data-testid="stSidebar"] label {
-    color: #e2e8f0 !important;
     font-weight: 600 !important;
     font-size: 0.8rem !important;
     letter-spacing: 0.5px !important;
     text-transform: uppercase !important;
 }
 h1 {
-    color: #f8fafc !important; font-weight: 800 !important;
-    font-size: 2.2rem !important; letter-spacing: -0.02em;
+    font-weight: 800 !important;
+    font-size: 2.2rem !important;
+    letter-spacing: -0.02em;
     margin-bottom: 0.2rem !important;
 }
-h2, h3 { color: #f1f5f9 !important; font-weight: 700 !important; margin-top: 1.5rem !important; }
-p, .stMarkdown { color: #cbd5e1 !important; font-size: 0.95rem; line-height: 1.55; }
+h2, h3 { font-weight: 700 !important; margin-top: 1.5rem !important; }
+p, .stMarkdown { font-size: 0.95rem; line-height: 1.55; }
 .accent-bar {
     height: 4px; width: 60px;
     background: linear-gradient(90deg, #38bdf8, #a855f7);
     border-radius: 2px; margin-bottom: 0.6rem;
 }
 .eyebrow {
-    color: #38bdf8; font-size: 0.75rem; font-weight: 700;
+    font-size: 0.75rem; font-weight: 700;
     letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem;
 }
-.lede {
-    color: #94a3b8; font-size: 1.05rem; line-height: 1.55;
-    max-width: 900px; margin-bottom: 1.2rem;
-}
+.lede { font-size: 1.05rem; line-height: 1.55; max-width: 900px; margin-bottom: 1.2rem; }
 .chip-row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.8rem 0 1.4rem 0; }
 .kpi-chip {
-    background: #111a2e; border: 1px solid #253356;
-    border-left: 3px solid #38bdf8;
     padding: 0.55rem 1rem 0.55rem 0.85rem;
     border-radius: 8px; min-width: 150px;
 }
-.kpi-chip.flagged { border-left-color: #f87171; }
-.kpi-chip.clean   { border-left-color: #34d399; }
-.kpi-chip.recovered { border-left-color: #fbbf24; }
-.kpi-chip.missing { border-left-color: #ef4444; background: #1a0e0e; }
-.kpi-chip.missing .value { color: #fca5a5; }
 .kpi-chip .label {
-    font-size: 0.66rem; color: #94a3b8; letter-spacing: 0.15em;
+    font-size: 0.66rem; letter-spacing: 0.15em;
     text-transform: uppercase; font-weight: 600; margin-bottom: 0.15rem;
 }
-.kpi-chip .value {
-    font-size: 1.35rem; font-weight: 800; color: #f8fafc; line-height: 1.1;
-}
-.stButton > button {
-    background: linear-gradient(180deg, #38bdf8, #0ea5e9);
-    color: #001220 !important; font-weight: 700; border: none;
-    padding: 0.65rem 1rem; border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(14,165,233,0.3);
-}
-.stButton > button:hover {
-    background: linear-gradient(180deg, #7dd3fc, #38bdf8);
-    box-shadow: 0 6px 20px rgba(14,165,233,0.5);
-}
-.stDownloadButton > button {
-    background: #1e293b; color: #f1f5f9 !important;
-    border: 1px solid #334155; font-weight: 600;
-}
-.stDownloadButton > button:hover { background: #334155; border-color: #64748b; }
-.streamlit-expanderHeader {
-    background: #111a2e !important; border: 1px solid #253356 !important;
-    color: #e2e8f0 !important; font-weight: 600 !important;
-}
-[data-testid="stDataFrame"] { border: 1px solid #253356; border-radius: 6px; }
+.kpi-chip .value { font-size: 1.35rem; font-weight: 800; line-height: 1.1; }
 [data-testid="stImage"] {
-    min-height: 680px; background: #0f1729;
-    border-radius: 8px; border: 1px solid #1e293b;
-    display: block; overflow: hidden;
+    min-height: 680px; border-radius: 8px; display: block; overflow: hidden;
 }
-[data-testid="stImage"] img {
-    display: block; width: 100%; height: auto;
-}
-[data-testid="stAlert"] {
-    background: #111a2e; border-left: 4px solid #38bdf8; color: #e2e8f0 !important;
-}
-
-/* Header tabs at the top of the page. */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 0.4rem;
-    border-bottom: 1px solid #1e293b;
-    padding-bottom: 0.3rem;
-}
+[data-testid="stImage"] img { display: block; width: 100%; height: auto; }
+[data-testid="stExpander"] details[open] > summary ~ div { animation: none; }
+.stTabs [data-baseweb="tab-list"] { gap: 0.4rem; padding-bottom: 0.3rem; }
 .stTabs [data-baseweb="tab"] {
-    background: transparent;
-    color: #94a3b8 !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-    border-radius: 6px !important;
-    padding: 0.6rem 1.2rem !important;
-    letter-spacing: 0.02em;
+    background: transparent; font-weight: 700 !important;
+    font-size: 0.95rem !important; border-radius: 6px !important;
+    padding: 0.6rem 1.2rem !important; letter-spacing: 0.02em;
 }
-.stTabs [data-baseweb="tab"]:hover {
-    background: #111a2e !important;
-    color: #e2e8f0 !important;
-}
-.stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: #1b2740 !important;
-    color: #f8fafc !important;
-    border-bottom: 2px solid #38bdf8 !important;
-}
-
 .footer-note {
-    color: #64748b; font-size: 0.75rem; text-align: center;
-    margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #1e293b;
+    font-size: 0.75rem; text-align: center;
+    margin-top: 3rem; padding-top: 1rem;
 }
 .flag-strip-wrap { margin: 0.4rem 0 1.5rem 0; }
 .flag-strip {
     display: flex; gap: 1px; height: 14px;
     border-radius: 3px; overflow: hidden;
-    border: 1px solid #253356;
 }
 .flag-strip-tick { flex: 1 1 auto; }
 .flag-strip-tick.flagged { background: #f87171; }
 .flag-strip-tick.clean { background: #34d399; }
 .flag-strip-labels {
     display: flex; justify-content: space-between;
-    font-size: 0.7rem; color: #94a3b8; margin-top: 0.2rem;
-    font-family: monospace;
+    font-size: 0.7rem; margin-top: 0.2rem; font-family: monospace;
 }
-</style>
-""", unsafe_allow_html=True)
+"""
 
+# Dark palette.
+_CSS_DARK = """
+[data-testid="stSidebar"] { background: #0f1729; border-right: 1px solid #1e293b; }
+[data-testid="stSidebar"] label { color: #e2e8f0 !important; }
+h1 { color: #f8fafc !important; }
+h2, h3 { color: #f1f5f9 !important; }
+p, .stMarkdown { color: #cbd5e1 !important; }
+.eyebrow { color: #38bdf8; }
+.lede { color: #94a3b8; }
+.kpi-chip {
+    background: #111a2e; border: 1px solid #253356; border-left: 3px solid #38bdf8;
+}
+.kpi-chip.flagged { border-left-color: #f87171; }
+.kpi-chip.clean   { border-left-color: #34d399; }
+.kpi-chip.recovered { border-left-color: #fbbf24; }
+.kpi-chip.missing { border-left-color: #ef4444; background: #1a0e0e; }
+.kpi-chip.missing .value { color: #fca5a5; }
+.kpi-chip .label { color: #94a3b8; }
+.kpi-chip .value { color: #f8fafc; }
+.stButton > button {
+    background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+    color: #001220 !important; font-weight: 700; border: none;
+    box-shadow: 0 4px 14px rgba(14,165,233,0.3);
+}
+.stButton > button:hover {
+    background: linear-gradient(180deg, #7dd3fc, #38bdf8);
+}
+.stDownloadButton > button {
+    background: #1e293b; color: #f1f5f9 !important;
+    border: 1px solid #334155;
+}
+.streamlit-expanderHeader {
+    background: #111a2e !important; border: 1px solid #253356 !important;
+    color: #e2e8f0 !important;
+}
+[data-testid="stDataFrame"] { border: 1px solid #253356; border-radius: 6px; }
+[data-testid="stImage"] { background: #0f1729; border: 1px solid #1e293b; }
+[data-testid="stAlert"] {
+    background: #111a2e; border-left: 4px solid #38bdf8; color: #e2e8f0 !important;
+}
+.stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #1e293b; }
+.stTabs [data-baseweb="tab"] { color: #94a3b8 !important; }
+.stTabs [data-baseweb="tab"]:hover { background: #111a2e !important; color: #e2e8f0 !important; }
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: #1b2740 !important; color: #f8fafc !important;
+    border-bottom: 2px solid #38bdf8 !important;
+}
+.footer-note { color: #64748b; border-top: 1px solid #1e293b; }
+.flag-strip { border: 1px solid #253356; }
+.flag-strip-labels { color: #94a3b8; }
+"""
+
+# Light palette.
+_CSS_LIGHT = """
+[data-testid="stSidebar"] { background: #f8fafc; border-right: 1px solid #e2e8f0; }
+[data-testid="stSidebar"] label { color: #1e293b !important; }
+h1 { color: #0f172a !important; }
+h2, h3 { color: #1e293b !important; }
+p, .stMarkdown { color: #334155 !important; }
+.eyebrow { color: #0284c7; }
+.lede { color: #64748b; }
+.kpi-chip {
+    background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #0ea5e9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.kpi-chip.flagged { border-left-color: #dc2626; }
+.kpi-chip.clean   { border-left-color: #16a34a; }
+.kpi-chip.recovered { border-left-color: #d97706; }
+.kpi-chip.missing { border-left-color: #dc2626; background: #fef2f2; }
+.kpi-chip.missing .value { color: #991b1b; }
+.kpi-chip .label { color: #64748b; }
+.kpi-chip .value { color: #0f172a; }
+.stButton > button {
+    background: linear-gradient(180deg, #0ea5e9, #0284c7);
+    color: #ffffff !important; font-weight: 700; border: none;
+    box-shadow: 0 2px 8px rgba(14,165,233,0.25);
+}
+.stButton > button:hover {
+    background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+}
+.stDownloadButton > button {
+    background: #ffffff; color: #1e293b !important;
+    border: 1px solid #cbd5e1;
+}
+.streamlit-expanderHeader {
+    background: #f1f5f9 !important; border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+[data-testid="stDataFrame"] { border: 1px solid #e2e8f0; border-radius: 6px; }
+[data-testid="stImage"] { background: #f1f5f9; border: 1px solid #e2e8f0; }
+[data-testid="stAlert"] {
+    background: #f0f9ff; border-left: 4px solid #0ea5e9; color: #1e293b !important;
+}
+.stTabs [data-baseweb="tab-list"] { border-bottom: 1px solid #e2e8f0; }
+.stTabs [data-baseweb="tab"] { color: #64748b !important; }
+.stTabs [data-baseweb="tab"]:hover { background: #f1f5f9 !important; color: #1e293b !important; }
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: #e0f2fe !important; color: #0f172a !important;
+    border-bottom: 2px solid #0284c7 !important;
+}
+.footer-note { color: #94a3b8; border-top: 1px solid #e2e8f0; }
+.flag-strip { border: 1px solid #e2e8f0; }
+.flag-strip-labels { color: #64748b; }
+"""
+
+st.markdown(
+    f"<style>{_CSS_SHARED}\n{_CSS_DARK if _DARK else _CSS_LIGHT}</style>",
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
-# Header
+# Header + theme toggle
 # ---------------------------------------------------------------------------
+
+# Theme toggle at the very top of the sidebar.
+def _toggle_theme():
+    st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+
+st.sidebar.button(
+    f"{'☀️ Light mode' if _DARK else '🌙 Dark mode'}",
+    on_click=_toggle_theme,
+    use_container_width=True,
+    key="theme_toggle",
+)
+st.sidebar.markdown("---")
 
 st.markdown('<div class="accent-bar"></div>', unsafe_allow_html=True)
 st.markdown('<div class="eyebrow">NCEI · ASOS · 1-minute surface observations</div>',
