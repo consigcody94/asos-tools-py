@@ -1,4 +1,26 @@
 
+# MATLAB
 *.asv
 *.m~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+.venv/
+venv/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# OS
 .DS_Store
