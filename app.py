@@ -300,8 +300,18 @@ with col_theme:
     )
 st.sidebar.markdown("---")
 
-# Condensed header — one line title + one line subtitle (no accent bar/eyebrow).
-st.markdown("# 🌤️ ASOS Tools")
+# Header with refresh button top-right.
+hdr_left, hdr_right = st.columns([5, 1])
+with hdr_left:
+    st.markdown("# 🌤️ ASOS Tools")
+with hdr_right:
+    st.markdown("")  # spacer
+    if st.button("🔄 Refresh", key="global_refresh", use_container_width=True,
+                 help="Clear cached data and re-scan"):
+        _cached_fetch_1min.clear()
+        _cached_fetch_metars.clear()
+        _cached_watchlist.clear()
+        st.rerun()
 st.caption(
     "Live ASOS station data, maintenance-flag monitoring, and missing-METAR "
     "tracking for 920 federal stations. Data: NOAA/NCEI via IEM."
@@ -766,7 +776,7 @@ general-aviation AWOS sites) indexed by IEM.
 
 def _scan_controls(key_prefix: str):
     """Render scan-window + scope controls. Returns (scan_ids, hours, now_key)."""
-    col_h, col_scope, col_refresh = st.columns([2, 2, 1])
+    col_h, col_scope = st.columns(2)
     with col_h:
         hours = st.selectbox(
             "Scan window",
@@ -781,11 +791,7 @@ def _scan_controls(key_prefix: str):
             ["All AOMC stations (~920)", "Single state", "Preset group"],
             key=f"{key_prefix}_scope",
         )
-    with col_refresh:
-        now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
-        if st.button("🔄 Refresh", use_container_width=True, key=f"{key_prefix}_refresh"):
-            _cached_watchlist.clear()
-            now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    now_key = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
 
     if scope == "Single state":
         states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
