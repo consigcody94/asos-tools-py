@@ -955,13 +955,12 @@ if _HAVE_AOMC:
         _status_label = "UNKNOWN"
         _status_color = "#71767a"  # USWDS gray
 
-# Status banner — sits above everything, like a federal status page.
+# Status banner — system status + live clock.
 _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 st.markdown(f"""
 <div class="ops-banner">
   <div class="ops-banner-left">
-    <span class="banner-pill">UNCLASSIFIED</span>
-    <span class="banner-meta">FOR OFFICIAL USE · ASOS NETWORK MONITORING</span>
+    <span class="banner-meta">ASOS NETWORK MONITORING · PUBLIC ACCESS</span>
   </div>
   <div class="ops-banner-right">
     <span class="status-dot" style="background:{_status_color};box-shadow:0 0 8px {_status_color};"></span>
