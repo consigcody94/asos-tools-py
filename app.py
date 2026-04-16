@@ -879,12 +879,14 @@ with tab_watchlist:
             display = _format_display(filtered)
             display = display[[
                 "station", "name", "state", "status",
+                "probable_reason",
                 "flagged", "total", "flag_rate",
                 "latest_time", "latest_flag_time", "min_since_last_flag",
                 "latest_metar",
             ]].rename(columns={
                 "station": "Station", "name": "Name", "state": "State",
-                "status": "Status", "flagged": "$ Count", "total": "Total",
+                "status": "Status", "probable_reason": "Probable Reason",
+                "flagged": "$ Count", "total": "Total",
                 "flag_rate": "Flag %", "latest_time": "Latest Report",
                 "latest_flag_time": "Last $", "min_since_last_flag": "Min since $",
                 "latest_metar": "Latest METAR",
@@ -908,25 +910,42 @@ with tab_watchlist:
                           f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M')}.csv",
                 mime="text/csv")
 
-            with st.expander("What does $ mean?"):
+            with st.expander("What does $ mean? + How we decode it"):
                 st.markdown("""
-**The `$` maintenance-check indicator** is a flag appended to the end of an
-ASOS METAR by the station itself. It signals that the ASOS equipment has
-detected an out-of-tolerance condition on one or more sensors. Common causes:
+**The `$` maintenance-check indicator** is appended to the end of an ASOS
+METAR when the station's internal self-test detects an out-of-tolerance
+condition. It signals that maintenance is needed — it does **not**
+necessarily mean the reported data is inaccurate.
 
-- Visibility sensor contamination or degradation
-- Ceilometer (cloud height sensor) malfunction
-- Precipitation discriminator error
-- Temperature / dewpoint sensor drift
+**How we decode the probable reason:**
+
+The METAR remarks section can contain specific sensor-down codes that
+tell you exactly which subsystem triggered the flag:
+
+| Code | Sensor | Meaning |
+|---|---|---|
+| `RVRNO` | RVR sensor | Runway Visual Range data not available |
+| `PWINO` | Precip ID sensor | Present weather identification not available |
+| `PNO` | Precip gauge | Precipitation amount not available |
+| `FZRANO` | Freezing rain sensor | Freezing rain detection not available |
+| `TSNO` | Lightning sensor | Thunderstorm / lightning detection not available |
+| `VISNO [loc]` | Visibility sensor | Visibility at a secondary location not available |
+| `CHINO [loc]` | Ceilometer | Cloud height indicator at a location not available |
+
+**Most common case:** the `$` appears with NO specific sensor code. This
+means the ASOS self-test found a component drifting out of tolerance
+(calibration age, sensor wear, environmental contamination) but the
+sensor is still reporting data. The **Probable Reason** column will
+show "Internal check" for these.
 
 **Status definitions:**
 
-| Status | Meaning | Action |
-|---|---|---|
-| **FLAGGED** | Latest METAR ends with `$` — degraded *right now* | Treat readings with caution; check sensor-specific remarks |
-| **INTERMITTENT** | Mixed flags — latest clean but previous was flagged | Monitor; sensor may be marginal |
-| **RECOVERED** | Was flagged earlier; **last 2 reports are clean** | Likely back to normal; verify with next few reports |
-| **CLEAN** | Zero `$` flags in the scan window | Healthy |
+| Status | Meaning |
+|---|---|
+| **FLAGGED** | Latest METAR ends with `$` |
+| **INTERMITTENT** | Mixed flags — latest clean but previous was flagged |
+| **RECOVERED** | Was flagged earlier; **last 2 reports are clean** |
+| **CLEAN** | Zero `$` flags in the scan window |
                 """)
 
 
@@ -989,6 +1008,7 @@ with tab_missing:
             display_m = _format_display(filtered_m)
             display_m = display_m[[
                 "station", "name", "state", "status",
+                "probable_reason",
                 "missing", "expected_hourly", "missing_hours_utc",
                 "min_since_last_report",
                 "total",
@@ -996,7 +1016,8 @@ with tab_missing:
                 "latest_metar",
             ]].rename(columns={
                 "station": "Station", "name": "Name", "state": "State",
-                "status": "Status", "missing": "Missing",
+                "status": "Status", "probable_reason": "Probable Reason",
+                "missing": "Missing",
                 "expected_hourly": "Expected", "missing_hours_utc": "Missing Hours (UTC)",
                 "min_since_last_report": "Min since report",
                 "total": "Reports received",

@@ -31,8 +31,119 @@ __all__ = [
     "IEM_ENDPOINT_METAR",
     "fetch_metars",
     "has_maintenance_flag",
+    "decode_maintenance_reasons",
     "MAINTENANCE_FLAG_CHAR",
+    "SENSOR_INDICATORS",
 ]
+
+# Sensor-down codes that appear in METAR remarks when a specific
+# sensor or subsystem is fully offline. These produce hard "NO" data
+# in the observation.
+SENSOR_INDICATORS: dict[str, tuple[str, str]] = {
+    "RVRNO":  ("RVR sensor",          "Runway Visual Range data not available"),
+    "PWINO":  ("Precip ID sensor",    "Present weather identification not available"),
+    "PNO":    ("Precip gauge",        "Precipitation amount not available"),
+    "FZRANO": ("Freezing rain sensor","Freezing rain detection not available"),
+    "TSNO":   ("Lightning sensor",    "Thunderstorm / lightning detection not available"),
+    "SLPNO":  ("Pressure sensor",     "Sea-level pressure not available"),
+}
+
+# Location-qualified indicators (e.g. VISNO RWY06, CHINO RWY24L).
+_LOCATION_INDICATORS: dict[str, tuple[str, str]] = {
+    "VISNO": ("Visibility sensor",    "Visibility at {loc} not available"),
+    "CHINO": ("Ceilometer",           "Cloud height at {loc} not available"),
+}
+
+
+def decode_maintenance_reasons(metar: str) -> list[dict]:
+    """Decode why a METAR has the ``$`` maintenance flag.
+
+    Inspects the remarks section for explicit sensor-down codes (RVRNO,
+    PWINO, PNO, FZRANO, TSNO, VISNO, CHINO, SLPNO) and for missing data
+    fields (M for temp/dew, missing altimeter, etc.).
+
+    Returns a list of dicts, each with keys ``sensor`` and ``reason``.
+    If the ``$`` is present but no specific indicator is found, a generic
+    "ASOS internal tolerance check" entry is returned — this is by far
+    the most common case (sensor drift, calibration age, component wear).
+
+    Parameters
+    ----------
+    metar
+        The raw METAR text string.
+
+    Returns
+    -------
+    list of dict
+        Each dict has ``{"sensor": str, "reason": str}``.
+    """
+    if not isinstance(metar, str) or not metar:
+        return []
+
+    upper = metar.upper()
+    reasons: list[dict] = []
+
+    # 1. Explicit sensor-down codes.
+    for code, (sensor, desc) in SENSOR_INDICATORS.items():
+        if code in upper:
+            reasons.append({"sensor": sensor, "reason": desc})
+
+    # 2. Location-qualified codes (VISNO RWY06, CHINO RWY24L).
+    import re
+    for code, (sensor, desc_template) in _LOCATION_INDICATORS.items():
+        pattern = rf"{code}\s+(\S+)"
+        m = re.search(pattern, upper)
+        if m:
+            loc = m.group(1).rstrip("$=").strip()
+            reasons.append({
+                "sensor": sensor,
+                "reason": desc_template.format(loc=loc or "secondary location"),
+            })
+        elif code in upper:
+            reasons.append({
+                "sensor": sensor,
+                "reason": desc_template.format(loc="secondary location"),
+            })
+
+    # 3. Missing data fields — clues from the observation body.
+    # Temperature/dewpoint missing (M/M or M/...).
+    if re.search(r"\bM/M\b", upper):
+        reasons.append({
+            "sensor": "Temp/Dew sensor",
+            "reason": "Temperature and dewpoint both missing (M/M)",
+        })
+    # Altimeter missing.
+    if " A////" in upper or " AM" in upper:
+        reasons.append({
+            "sensor": "Altimeter",
+            "reason": "Altimeter setting missing",
+        })
+    # Wind missing.
+    if "/////KT" in upper:
+        reasons.append({
+            "sensor": "Wind sensor",
+            "reason": "Wind data missing",
+        })
+
+    # 4. If $ present but no specific indicator found — most common case.
+    is_flagged = has_maintenance_flag(metar)
+    if is_flagged and not reasons:
+        reasons.append({
+            "sensor": "Internal check",
+            "reason": "ASOS self-test detected out-of-tolerance condition; "
+                      "specific sensor not identified in METAR remarks",
+        })
+
+    return reasons
+
+
+def decode_reasons_short(metar: str) -> str:
+    """One-line summary of maintenance reasons, for table display."""
+    reasons = decode_maintenance_reasons(metar)
+    if not reasons:
+        return ""
+    parts = [r["sensor"] for r in reasons]
+    return " · ".join(parts)
 
 IEM_ENDPOINT_METAR = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
 MAINTENANCE_FLAG_CHAR = "$"

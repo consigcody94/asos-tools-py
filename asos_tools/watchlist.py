@@ -30,7 +30,7 @@ from typing import Iterable, Sequence, Union
 
 import pandas as pd
 
-from asos_tools.metars import fetch_metars
+from asos_tools.metars import decode_reasons_short, fetch_metars
 
 __all__ = [
     "build_watchlist",
@@ -44,6 +44,7 @@ WATCHLIST_COLUMNS = [
     "name",
     "state",
     "status",
+    "probable_reason",
     "total",
     "flagged",
     "missing",
@@ -235,11 +236,21 @@ def build_watchlist(
             lookup_id = "K" + stn if ("K" + stn) in meta_map else stn
             meta = meta_map.get(lookup_id, {})
 
+            # Decode probable reason from the latest METAR (or latest flagged one).
+            if flagged > 0:
+                last_flagged_metar = sub.loc[sub["has_maintenance"], "metar"].iloc[-1]
+                reason = decode_reasons_short(last_flagged_metar)
+            elif missing_count > 0:
+                reason = "No METAR received"
+            else:
+                reason = ""
+
             rows.append({
                 "station": lookup_id,
                 "name": meta.get("name", "") or "",
                 "state": meta.get("state", "") or "",
                 "status": status,
+                "probable_reason": reason,
                 "total": total,
                 "flagged": flagged,
                 "missing": missing_count,
@@ -276,6 +287,7 @@ def build_watchlist(
                 "name": meta.get("name", "") or "",
                 "state": meta.get("state", "") or "",
                 "status": status,
+                "probable_reason": "No METAR received" if status == "MISSING" else "",
                 "total": 0,
                 "flagged": 0,
                 "missing": expected_count if status == "MISSING" else 0,
