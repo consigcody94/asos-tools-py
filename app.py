@@ -119,16 +119,7 @@ p, .stMarkdown { font-size: 0.95rem; line-height: 1.55; }
     letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem;
 }
 .lede { font-size: 1.05rem; line-height: 1.55; max-width: 900px; margin-bottom: 1.2rem; }
-.chip-row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.8rem 0 1.4rem 0; }
-.kpi-chip {
-    padding: 0.55rem 1rem 0.55rem 0.85rem;
-    border-radius: 8px; min-width: 150px;
-}
-.kpi-chip .label {
-    font-size: 0.66rem; letter-spacing: 0.15em;
-    text-transform: uppercase; font-weight: 600; margin-bottom: 0.15rem;
-}
-.kpi-chip .value { font-size: 1.35rem; font-weight: 800; line-height: 1.1; }
+/* st.metric() handles KPIs natively — no custom chip CSS needed. */
 [data-testid="stImage"] {
     min-height: 680px; border-radius: 8px; display: block; overflow: hidden;
 }
@@ -173,16 +164,7 @@ h2, h3 { color: #f1f5f9 !important; }
 p, .stMarkdown { color: #cbd5e1 !important; }
 .eyebrow { color: #38bdf8; }
 .lede { color: #94a3b8; }
-.kpi-chip {
-    background: #111a2e; border: 1px solid #253356; border-left: 3px solid #38bdf8;
-}
-.kpi-chip.flagged { border-left-color: #f87171; }
-.kpi-chip.clean   { border-left-color: #34d399; }
-.kpi-chip.recovered { border-left-color: #fbbf24; }
-.kpi-chip.missing { border-left-color: #ef4444; background: #1a0e0e; }
-.kpi-chip.missing .value { color: #fca5a5; }
-.kpi-chip .label { color: #94a3b8; }
-.kpi-chip .value { color: #f8fafc; }
+/* KPIs use st.metric() — auto-themed. */
 .stButton > button {
     background: linear-gradient(180deg, #38bdf8, #0ea5e9);
     color: #001220 !important; font-weight: 700; border: none;
@@ -231,17 +213,7 @@ h2, h3 { color: #1e293b !important; }
 p, .stMarkdown { color: #334155 !important; }
 .eyebrow { color: #0284c7; }
 .lede { color: #64748b; }
-.kpi-chip {
-    background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #0ea5e9;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.kpi-chip.flagged { border-left-color: #dc2626; }
-.kpi-chip.clean   { border-left-color: #16a34a; }
-.kpi-chip.recovered { border-left-color: #d97706; }
-.kpi-chip.missing { border-left-color: #dc2626; background: #fef2f2; }
-.kpi-chip.missing .value { color: #991b1b; }
-.kpi-chip .label { color: #64748b; }
-.kpi-chip .value { color: #0f172a; }
+/* KPIs use st.metric() — auto-themed. */
 .stButton > button {
     background: linear-gradient(180deg, #0ea5e9, #0284c7);
     color: #ffffff !important; font-weight: 700; border: none;
@@ -312,40 +284,57 @@ st.markdown(
 # Header + theme toggle
 # ---------------------------------------------------------------------------
 
-# Theme toggle at the very top of the sidebar.
 def _toggle_theme():
     st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
 
-st.sidebar.button(
-    f"{'☀️ Light mode' if _DARK else '🌙 Dark mode'}",
-    on_click=_toggle_theme,
-    use_container_width=True,
-    key="theme_toggle",
-)
+# Compact theme toggle in sidebar header — icon only, no full-width button.
+col_brand, col_theme = st.sidebar.columns([4, 1])
+with col_brand:
+    st.sidebar.caption("ASOS Tools")
+with col_theme:
+    st.sidebar.button(
+        "☀️" if _DARK else "🌙",
+        on_click=_toggle_theme,
+        key="theme_toggle",
+        help="Switch to light mode" if _DARK else "Switch to dark mode",
+    )
 st.sidebar.markdown("---")
 
-st.markdown('<div class="accent-bar"></div>', unsafe_allow_html=True)
-st.markdown('<div class="eyebrow">NCEI · ASOS · 1-minute surface observations</div>',
-            unsafe_allow_html=True)
-st.markdown("# ASOS Tools")
-st.markdown(
-    '<div class="lede">'
-    'Reports, browser, and a live operational watchlist of every AOMC-certified '
-    'federal ASOS station. Data fetched live from NOAA/NCEI via the '
-    'Iowa Environmental Mesonet.'
-    '</div>',
-    unsafe_allow_html=True,
+# Condensed header — one line title + one line subtitle (no accent bar/eyebrow).
+st.markdown("# 🌤️ ASOS Tools")
+st.caption(
+    "Live ASOS station data, maintenance-flag monitoring, and missing-METAR "
+    "tracking for 920 federal stations. Data: NOAA/NCEI via IEM."
 )
 
 
-# ---------------------------------------------------------------------------
-# Helpers used across tabs
-# ---------------------------------------------------------------------------
+def _kpis(items: list[tuple[str, str]]) -> None:
+    """Render a row of KPI metrics using st.metric (auto-themes)."""
+    cols = st.columns(len(items))
+    for col, (label, value) in zip(cols, items):
+        col.metric(label, value)
 
-def _chip(label: str, value: str, css: str = "") -> str:
-    cls = f"kpi-chip {css}".strip()
-    return (f'<div class="{cls}"><div class="label">{label}</div>'
-            f'<div class="value">{value}</div></div>')
+
+# Status emoji badges for tables.
+_STATUS_BADGE = {
+    "MISSING": "🔴 MISSING",
+    "FLAGGED": "🟠 FLAGGED",
+    "INTERMITTENT": "🟡 INTERMITTENT",
+    "RECOVERED": "🟢 RECOVERED",
+    "CLEAN": "✅ CLEAN",
+    "NO DATA": "⚪ NO DATA",
+}
+
+
+def _badge_status(df: pd.DataFrame) -> pd.DataFrame:
+    """Replace plain status text with emoji-prefixed badges."""
+    if "status" in df.columns:
+        df = df.copy()
+        df["status"] = df["status"].map(lambda s: _STATUS_BADGE.get(s, s))
+    if "Status" in df.columns:
+        df = df.copy()
+        df["Status"] = df["Status"].map(lambda s: _STATUS_BADGE.get(s, s))
+    return df
 
 
 def _render_to_bytes(builder_fn, **kwargs) -> bytes:
@@ -426,10 +415,10 @@ def _do_group_zip(stations_list, start, end, group_label, window_label) -> bytes
 # ---------------------------------------------------------------------------
 
 tab_reports, tab_browser, tab_watchlist, tab_missing = st.tabs([
-    "📊  Reports",
-    "🗂  AOMC Browser",
-    "⚠️  $ Maintenance Watchlist",
-    "🚨  Missing METARs",
+    "📊 Reports",
+    "🗂 Stations",
+    "⚠️ $ Flags",
+    "🚨 Missing",
 ])
 
 
@@ -600,13 +589,12 @@ with tab_reports:
                     st.error("No 1-minute data in this window.")
                 else:
                     station_name = str(df["station_name"].iloc[0])
-                    st.markdown(
-                        f'<div class="chip-row">'
-                        f'{_chip("station", station)}'
-                        f'{_chip("name", station_name)}'
-                        f'{_chip("window", window_label)}'
-                        f'{_chip("rows", f"{len(df):,}")}'
-                        f'</div>', unsafe_allow_html=True)
+                    _kpis([
+                        ("Station", f"{station}"),
+                        ("Name", station_name),
+                        ("Window", window_label),
+                        ("Observations", f"{len(df):,}"),
+                    ])
 
                     if _HAVE_AOMC and station in AOMC_IDS:
                         meta = next(s for s in AOMC_STATIONS if s["id"] == station)
@@ -659,13 +647,12 @@ with tab_reports:
                     n_flag = int(metars["has_maintenance"].sum())
                     rate = n_flag / total * 100 if total else 0
 
-                    st.markdown(
-                        f'<div class="chip-row">'
-                        f'{_chip("stations", str(metars["station"].nunique()))}'
-                        f'{_chip("metars", f"{total:,}")}'
-                        f'{_chip("flagged $", f"{n_flag:,}", "flagged")}'
-                        f'{_chip("flag rate", f"{rate:.1f}%")}'
-                        f'</div>', unsafe_allow_html=True)
+                    _kpis([
+                        ("Stations", str(metars["station"].nunique())),
+                        ("METARs", f"{total:,}"),
+                        ("Flagged $", f"{n_flag:,}"),
+                        ("Flag Rate", f"{rate:.1f}%"),
+                    ])
 
                     if len(stations_list) == 1 and total > 0:
                         st.markdown(_flag_strip_html(metars), unsafe_allow_html=True)
@@ -873,14 +860,13 @@ with tab_watchlist:
             recovered = int(counts.get("RECOVERED", 0))
             clean = int(counts.get("CLEAN", 0))
 
-            st.markdown(
-                f'<div class="chip-row">'
-                f'{_chip("flagged now ($)", f"{flagged:,}", "flagged")}'
-                f'{_chip("intermittent", f"{intermittent:,}", "flagged")}'
-                f'{_chip("recovered", f"{recovered:,}", "recovered")}'
-                f'{_chip("clean", f"{clean:,}", "clean")}'
-                f'{_chip("total scanned", f"{len(wl):,}")}'
-                f'</div>', unsafe_allow_html=True)
+            _kpis([
+                ("🟠 Flagged $", f"{flagged:,}"),
+                ("🟡 Intermittent", f"{intermittent:,}"),
+                ("🟢 Recovered", f"{recovered:,}"),
+                ("✅ Clean", f"{clean:,}"),
+                ("Total", f"{len(wl):,}"),
+            ])
 
             # Default: show only $-related rows.
             show_clean = st.checkbox("Also show CLEAN stations",
@@ -904,6 +890,8 @@ with tab_watchlist:
                 "latest_metar": "Latest METAR",
             })
 
+            display = _badge_status(display)
+            st.caption(f"Scanned at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
             st.dataframe(display, use_container_width=True, height=540,
                          hide_index=True,
                          column_config={
@@ -982,13 +970,12 @@ with tab_missing:
             total_m = len(wl_m)
             reporting = total_m - missing - no_data
 
-            st.markdown(
-                f'<div class="chip-row">'
-                f'{_chip("missing now", f"{missing:,}", "missing")}'
-                f'{_chip("no data at all", f"{no_data:,}", "missing")}'
-                f'{_chip("reporting normally", f"{reporting:,}", "clean")}'
-                f'{_chip("total scanned", f"{total_m:,}")}'
-                f'</div>', unsafe_allow_html=True)
+            _kpis([
+                ("🔴 Missing", f"{missing:,}"),
+                ("⚪ No Data", f"{no_data:,}"),
+                ("✅ Reporting", f"{reporting:,}"),
+                ("Total Scanned", f"{total_m:,}"),
+            ])
 
             # Show only MISSING + NO DATA by default.
             show_reporting = st.checkbox(
@@ -1017,6 +1004,8 @@ with tab_missing:
                 "latest_metar": "Last METAR (if any)",
             })
 
+            display_m = _badge_status(display_m)
+            st.caption(f"Scanned at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
             st.dataframe(display_m, use_container_width=True, height=540,
                          hide_index=True,
                          column_config={
