@@ -320,12 +320,24 @@ hr {
     margin: 0.8rem 0 !important;
 }
 
-/* Main content image (reports) — clean border */
+/* Main content image (reports) — reserve space to prevent page jump */
 .main [data-testid="stImage"] {
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(128,128,128,0.12);
+    min-height: 700px;
+    background: #f8fafc;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
+.main [data-testid="stImage"] img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+/* Prevent Streamlit from auto-scrolling on content update */
+.main { scroll-behavior: auto !important; }
 
 /* === OPERATIONS BANNER (top of page) === */
 .ops-banner {
@@ -955,53 +967,58 @@ if _HAVE_AOMC:
         _status_label = "UNKNOWN"
         _status_color = "#71767a"  # USWDS gray
 
-# Status banner — system status + live clock.
+# Status banner — system status + live clock. Use st.html() to avoid
+# markdown wrapping raw HTML in <p> tags that break flex layout.
 _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-st.markdown(f"""
-<div class="ops-banner">
-  <div class="ops-banner-left">
-    <span class="banner-meta">ASOS NETWORK MONITORING · PUBLIC ACCESS</span>
-  </div>
-  <div class="ops-banner-right">
-    <span class="status-dot" style="background:{_status_color};box-shadow:0 0 8px {_status_color};"></span>
-    <span class="status-label" style="color:{_status_color};">SYSTEM {_status_label}</span>
-    <span class="banner-meta banner-time">{_now_iso}</span>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+_banner_html = (
+    '<div class="ops-banner">'
+    '<div class="ops-banner-left">'
+    '<span class="banner-meta">ASOS NETWORK MONITORING · PUBLIC ACCESS</span>'
+    '</div>'
+    '<div class="ops-banner-right">'
+    f'<span class="status-dot" style="background:{_status_color};'
+    f'box-shadow:0 0 8px {_status_color};"></span>'
+    f'<span class="status-label" style="color:{_status_color};">SYSTEM {_status_label}</span>'
+    f'<span class="banner-meta banner-time">{_now_iso}</span>'
+    '</div>'
+    '</div>'
+)
+st.markdown(_banner_html, unsafe_allow_html=True)
 
 # Title block.
-st.markdown("""
-<div class="ops-title">
-  <div class="ops-title-name">O.W.L.</div>
-  <div class="ops-title-sub">Observation Watch Log · National ASOS Operations Dashboard</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    '<div class="ops-title">'
+    '<div class="ops-title-name">O.W.L.</div>'
+    '<div class="ops-title-sub">Observation Watch Log · National ASOS Operations Dashboard</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
 # Network health gauge.
 if _health_pct is not None and _health_total:
     bar_color = ("#00a91c" if _health_pct >= 85
                  else ("#ffbe2e" if _health_pct >= 70 else "#b50909"))
-    st.markdown(f"""
-<div class="health-card">
-  <div class="health-row">
-    <div class="health-meta">
-      <div class="health-label">NETWORK HEALTH · LAST {_SCAN_HOURS}H</div>
-      <div class="health-numbers">
-        <span class="health-pct">{_health_pct:.1f}%</span>
-        <span class="health-detail">{_health_clean:,} of {_health_total:,} stations reporting clean</span>
-      </div>
-    </div>
-    <div class="health-stats">
-      <div class="health-stat"><span class="dot" style="background:#00a91c;"></span>{_health_clean:,} CLEAN</div>
-      <div class="health-stat"><span class="dot" style="background:#b50909;"></span>{_health_problem:,} ATTENTION</div>
-    </div>
-  </div>
-  <div class="health-bar-track">
-    <div class="health-bar-fill" style="width:{_health_pct}%;background:{bar_color};"></div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    _gauge_html = (
+        '<div class="health-card">'
+        '<div class="health-row">'
+        '<div class="health-meta">'
+        f'<div class="health-label">NETWORK HEALTH · LAST {_SCAN_HOURS}H</div>'
+        '<div class="health-numbers">'
+        f'<span class="health-pct">{_health_pct:.1f}%</span>'
+        f'<span class="health-detail">{_health_clean:,} of {_health_total:,} stations reporting clean</span>'
+        '</div>'
+        '</div>'
+        '<div class="health-stats">'
+        f'<div class="health-stat"><span class="dot" style="background:#00a91c;"></span>{_health_clean:,} CLEAN</div>'
+        f'<div class="health-stat"><span class="dot" style="background:#b50909;"></span>{_health_problem:,} ATTENTION</div>'
+        '</div>'
+        '</div>'
+        '<div class="health-bar-track">'
+        f'<div class="health-bar-fill" style="width:{_health_pct}%;background:{bar_color};"></div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(_gauge_html, unsafe_allow_html=True)
 
 
 # ===========================================================================
@@ -1396,24 +1413,24 @@ decommissioned/seasonal, sensor cascade failure, or IEM ingestion lag.
 # ===========================================================================
 
 _now_footer = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-st.markdown(f"""
-<div class="fed-footer">
-  <div class="fed-footer-cite">
-    <strong>Data Source Chain:</strong>
-    NOAA / NCEI ASOS METAR archive →
-    Iowa Environmental Mesonet (mesonet.agron.iastate.edu) →
-    O.W.L. processing layer.
-    <strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository (HOMR)
-    asos-stations.txt — {len(AOMC_STATIONS):,} federally-operated AOMC stations
-    (NWS / FAA / DOD).
-  </div>
-  <div class="fed-footer-meta">
-    O.W.L. — OBSERVATION WATCH LOG · v1.0 ·
-    SYSTEM TIME {_now_footer} ·
-    <a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> ·
-    <a href="https://www.ncei.noaa.gov">NCEI</a> ·
-    <a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> ·
-    <a href="https://mesonet.agron.iastate.edu">IEM</a>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+_footer_html = (
+    '<div class="fed-footer">'
+    '<div class="fed-footer-cite">'
+    '<strong>Data Source Chain:</strong> '
+    'NOAA / NCEI ASOS METAR archive &rarr; '
+    'Iowa Environmental Mesonet (mesonet.agron.iastate.edu) &rarr; '
+    'O.W.L. processing layer. '
+    '<strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository '
+    f'(HOMR) asos-stations.txt — {len(AOMC_STATIONS):,} federally-operated AOMC '
+    'stations (NWS / FAA / DOD).'
+    '</div>'
+    '<div class="fed-footer-meta">'
+    f'O.W.L. — OBSERVATION WATCH LOG · v1.0 · SYSTEM TIME {_now_footer} · '
+    '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> · '
+    '<a href="https://www.ncei.noaa.gov">NCEI</a> · '
+    '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> · '
+    '<a href="https://mesonet.agron.iastate.edu">IEM</a>'
+    '</div>'
+    '</div>'
+)
+st.markdown(_footer_html, unsafe_allow_html=True)
