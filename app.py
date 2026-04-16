@@ -95,20 +95,80 @@ st.set_page_config(
 )
 
 st.markdown("""<style>
+/* Layout */
 section.main > div.block-container {
-    padding-top: 1.6rem; max-width: 1440px;
+    padding-top: 1.4rem; max-width: 1460px;
 }
-/* Wider sidebar so station names don't clip. */
-[data-testid="stSidebar"] { min-width: 320px; max-width: 380px; }
-[data-testid="stSidebar"] > div { padding-top: 0.6rem; }
-/* Metric card styling. */
+[data-testid="stSidebar"] { min-width: 310px; max-width: 370px; }
+[data-testid="stSidebar"] > div { padding-top: 0.5rem; }
+
+/* Metric cards — theme-aware with CSS variables */
 div[data-testid="stMetric"] {
-    background: #1e293b; padding: 0.6rem 0.8rem;
-    border-radius: 6px; border-left: 3px solid #0ea5e9;
+    padding: 0.55rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid rgba(128,128,128,0.15);
+    border-left: 3px solid var(--primary-color, #0ea5e9);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-div[data-testid="stMetric"] label { font-size: 0.72rem !important; }
-/* Tighter table rows. */
-[data-testid="stDataFrame"] td { font-size: 0.82rem; }
+div[data-testid="stMetric"] label {
+    font-size: 0.7rem !important;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    font-size: 1.3rem !important;
+    font-weight: 700;
+}
+
+/* Tabs — clean underline style */
+.stTabs [data-baseweb="tab-list"] { gap: 0; }
+.stTabs [data-baseweb="tab"] {
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    padding: 0.6rem 1.1rem !important;
+    border-radius: 0 !important;
+    border-bottom: 2px solid transparent !important;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    border-bottom-color: var(--primary-color, #0ea5e9) !important;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    border-bottom-color: rgba(128,128,128,0.3) !important;
+}
+
+/* Tables */
+[data-testid="stDataFrame"] { border-radius: 8px; overflow: hidden; }
+
+/* Sidebar section headers */
+[data-testid="stSidebar"] h3 {
+    font-size: 0.95rem !important;
+    letter-spacing: 0.02em;
+}
+[data-testid="stSidebar"] h4 {
+    font-size: 0.82rem !important;
+    letter-spacing: 0.02em;
+    opacity: 0.85;
+}
+
+/* Download buttons */
+[data-testid="stDownloadButton"] > button {
+    font-size: 0.82rem !important;
+    font-weight: 600;
+}
+
+/* Primary generate button */
+.stButton > button[kind="primary"] {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+/* Image container */
+[data-testid="stImage"] {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(128,128,128,0.12);
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -118,7 +178,8 @@ div[data-testid="stMetric"] label { font-size: 0.72rem !important; }
 
 with st.sidebar:
     st.markdown("### ASOS Tools")
-    st.caption("Network monitoring · 920 federal stations")
+    st.caption("Automated Surface Observing System")
+    st.caption(f"{len(AOMC_STATIONS)} federal stations · NWS / FAA / DOD")
 
     # ---- Quick network pulse (auto-runs, cached) ----
     if _HAVE_AOMC:
@@ -235,12 +296,47 @@ with st.sidebar:
 
     # ---- Sidebar footer ----
     st.divider()
-    if st.button("Refresh all data", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
+    fc1, fc2 = st.columns(2)
+    with fc1:
+        if st.button("Refresh", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+    with fc2:
+        # Dark mode toggle — Streamlit handles the rest via
+        # its built-in theme system. We just re-render.
+        if "dark_mode" not in st.session_state:
+            st.session_state.dark_mode = False
+        if st.button("Dark" if not st.session_state.dark_mode else "Light",
+                     use_container_width=True, key="theme_btn"):
+            st.session_state.dark_mode = not st.session_state.dark_mode
+            st.rerun()
+
+    # Apply dark overrides if toggled on.
+    if st.session_state.get("dark_mode"):
+        st.markdown("""<style>
+        [data-testid="stApp"],
+        [data-testid="stAppViewContainer"],
+        .main { background-color: #0f172a !important; color: #e2e8f0 !important; }
+        [data-testid="stHeader"] { background-color: #0f172a !important; }
+        [data-testid="stSidebar"] { background-color: #1e293b !important;
+            border-right: 1px solid #334155 !important; }
+        [data-testid="stSidebar"] * { color: #e2e8f0 !important; }
+        h1, h2, h3, h4 { color: #f1f5f9 !important; }
+        p, span, label, [data-testid="stMarkdownContainer"] { color: #cbd5e1 !important; }
+        div[data-testid="stMetric"] {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        [data-testid="stDataFrame"] { border-color: #334155 !important; }
+        .stTabs [data-baseweb="tab"] { color: #94a3b8 !important; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] { color: #f1f5f9 !important; }
+        [data-testid="stImage"] { border-color: #334155 !important; }
+        </style>""", unsafe_allow_html=True)
+
     st.caption(
         "[Source](https://github.com/consigcody94/asos-tools-py) · "
-        "Data: NOAA/NCEI via IEM"
+        "Data: [NOAA/NCEI](https://www.ncei.noaa.gov) via "
+        "[IEM](https://mesonet.agron.iastate.edu)"
     )
 
 
@@ -248,11 +344,11 @@ with st.sidebar:
 # Header
 # ===========================================================================
 
-st.title("ASOS Tools")
+st.markdown("## ASOS Network Monitor")
 st.caption(
-    "Automated Surface Observing System — network monitoring for "
-    f"{len(AOMC_STATIONS)} federal stations (NWS / FAA / DOD). "
-    "Data from NOAA/NCEI via Iowa Environmental Mesonet."
+    f"{len(AOMC_STATIONS)} federal stations · "
+    "NOAA / NWS / FAA / DOD · "
+    "Data via Iowa Environmental Mesonet"
 )
 
 
