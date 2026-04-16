@@ -101,7 +101,7 @@ def build_missing_report(
     ax_h.add_patch(Rectangle(
         (0.0, 0.96), 1.0, 0.04,
         transform=ax_h.transAxes, color=ACCENT, clip_on=False, zorder=10))
-    ax_h.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+    ax_h.text(0.005, 0.98, "O.W.L.  —  OBSERVATION WATCH LOG",
               fontsize=7, color="#ffffff", fontweight="bold",
               transform=ax_h.transAxes, va="center", zorder=11)
     ax_h.text(0.99, 0.98, "MISSING METAR REPORT",
@@ -252,7 +252,7 @@ def build_missing_report(
              "DATA  NOAA/NCEI ASOS METAR archive  via  IEM",
              fontsize=7.2, color=MUTED, ha="left")
     fig.text(0.97, 0.018,
-             f"Generated {now}  |  ASOS Network Monitor",
+             f"Generated {now}  |  O.W.L.",
              fontsize=7.2, color=MUTED, ha="right")
 
     out = Path(out_path)

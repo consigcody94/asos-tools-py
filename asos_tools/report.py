@@ -159,7 +159,7 @@ def _draw_header(fig, ax, *, station_id: str, station_name: str,
     ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
                            transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+    ax.text(0.005, 0.98, "O.W.L.  —  OBSERVATION WATCH LOG",
             fontsize=7, color="#ffffff", fontweight="bold",
             transform=ax.transAxes, va="center", zorder=11)
     ax.text(0.99, 0.98, "1-MINUTE OBSERVATION REPORT",
@@ -698,7 +698,7 @@ def build_report(
              "Data: NOAA/NCEI ASOS archive via Iowa Environmental Mesonet",
              fontsize=7, color=MUTED, ha="left")
     fig.text(0.97, 0.018,
-             f"Generated {now}  |  ASOS Network Monitor",
+             f"Generated {now}  |  O.W.L.",
              fontsize=7, color=MUTED, ha="right")
 
     out = Path(out_path)
@@ -722,7 +722,7 @@ def _draw_maint_header(ax, *, group_label: str, window_label: str,
     ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
                            transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+    ax.text(0.005, 0.98, "O.W.L.  —  OBSERVATION WATCH LOG",
             fontsize=7, color="#ffffff", fontweight="bold",
             transform=ax.transAxes, va="center", zorder=11)
     ax.text(0.99, 0.98, "MAINTENANCE FLAG REPORT",
@@ -927,7 +927,7 @@ def _draw_cmp_header(ax, *, group_label: str, window_label: str,
     ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
                            transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+    ax.text(0.005, 0.98, "O.W.L.  —  OBSERVATION WATCH LOG",
             fontsize=7, color="#ffffff", fontweight="bold",
             transform=ax.transAxes, va="center", zorder=11)
     ax.text(0.99, 0.98, "FLAGGED VS CLEAN COMPARISON",

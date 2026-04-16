@@ -120,7 +120,7 @@ def _short_name(name: str) -> str:
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
-    page_title="ASOS Tools",
+    page_title="O.W.L. — Observation Watch Log",
     page_icon="⬡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -209,9 +209,9 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 # ===========================================================================
 
 with st.sidebar:
-    st.markdown("### ASOS Tools")
-    st.caption("Automated Surface Observing System")
-    st.caption(f"{len(AOMC_STATIONS)} federal stations · NWS / FAA / DOD")
+    st.markdown("### O.W.L.")
+    st.caption("Observation Watch Log")
+    st.caption(f"{len(AOMC_STATIONS)} ASOS stations · NWS / FAA / DOD")
 
     # ---- Quick network pulse (cached at 3-min boundary) ----
     if _HAVE_AOMC:
@@ -530,11 +530,11 @@ with st.sidebar:
 # Header
 # ===========================================================================
 
-st.markdown("## ASOS Network Monitor")
+st.markdown("## O.W.L.")
 st.caption(
-    f"{len(AOMC_STATIONS)} federal stations · "
-    "NOAA / NWS / FAA / DOD · "
-    "Data via Iowa Environmental Mesonet"
+    "Observation Watch Log · "
+    f"{len(AOMC_STATIONS)} federal ASOS stations · "
+    "NOAA / NWS / FAA / DOD"
 )
 
 
