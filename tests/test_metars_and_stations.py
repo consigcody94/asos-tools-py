@@ -143,7 +143,7 @@ class TestFetchMetarsOffline:
         assert call.args[0] == IEM_ENDPOINT_METAR
         params = call.kwargs["params"]
         assert params["station"] == "JFK,LGA"
-        assert params["data"] == "metar"
+        assert "metar" in params["data"]  # data field now includes parsed columns too
         assert params["year1"] == 2024 and params["month1"] == 1 and params["day1"] == 15
         assert params["year2"] == 2024 and params["month2"] == 1 and params["day2"] == 16
         assert params["format"] == "onlycomma"
