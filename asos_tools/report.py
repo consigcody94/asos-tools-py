@@ -173,23 +173,35 @@ def _draw_header(fig, ax, *, station_id: str, station_name: str,
             fontsize=9.2, color=SOFT, transform=ax.transAxes, va="center")
 
     # --- KPI chip strip (bottom ~42%) ---
+    # Compute data completeness: actual rows vs expected 1-per-minute.
+    span_min = (df["valid"].max() - df["valid"].min()).total_seconds() / 60
+    completeness = round(len(df) / max(span_min, 1) * 100, 1) if span_min > 0 else 0
+
     chips: list[tuple[str, str, str]] = []
     if "tmpf" in df and df["tmpf"].notna().any():
-        chips.append(("TEMP RANGE",
-                      f"{_stat(df['tmpf'].min(),'{:.0f}')}–{_stat(df['tmpf'].max(),'{:.0f}')}°F",
+        avg_t = df["tmpf"].mean()
+        chips.append(("TEMP (min/avg/max)",
+                      f"{_stat(df['tmpf'].min(),'{:.0f}')}/{_stat(avg_t,'{:.0f}')}/{_stat(df['tmpf'].max(),'{:.0f}')}°F",
                       C_TEMP))
-    if "gust_sknt" in df and df["gust_sknt"].notna().any():
-        chips.append(("PEAK GUST",
-                      f"{_stat(df['gust_sknt'].max(),'{:.0f}')} kt",
-                      C_GUST))
+    if "sknt" in df and df["sknt"].notna().any():
+        avg_w = df["sknt"].mean()
+        calm_pct = round((df["sknt"] == 0).sum() / max(df["sknt"].notna().sum(), 1) * 100, 0)
+        chips.append(("WIND (avg/peak)",
+                      f"{_stat(avg_w,'{:.0f}')}/{_stat(df['gust_sknt'].max(),'{:.0f}')} kt  {calm_pct:.0f}% calm",
+                      C_WIND))
     if "pres1" in df and df["pres1"].notna().any():
         chips.append(("PRESSURE RANGE",
-                      f"{_stat(df['pres1'].min(),'{:.2f}')}–{_stat(df['pres1'].max(),'{:.2f}')}",
+                      f"{_stat(df['pres1'].min(),'{:.2f}')}–{_stat(df['pres1'].max(),'{:.2f}')} inHg",
                       C_PRES))
     if "precip" in df and df["precip"].notna().any():
         chips.append(("TOTAL PRECIP",
                       f"{_stat(df['precip'].sum(),'{:.2f}')} in",
                       C_PRECIP))
+    if "vis1_coeff" in df and df["vis1_coeff"].notna().any():
+        min_vis = df["vis1_coeff"].min()
+        chips.append(("DATA COMPLETENESS",
+                      f"{completeness:.0f}% ({len(df):,} obs)",
+                      ACCENT))
 
     _draw_chip_strip(ax, chips)
 
@@ -332,6 +344,20 @@ def _panel_temp_dew(ax, df: pd.DataFrame) -> None:
 
     ax.legend(loc="lower left", ncol=3, handlelength=1.6,
               fontsize=8, bbox_to_anchor=(0.0, -0.02))
+
+    # Inline stats box — top-right corner.
+    if t is not None and t.notna().any():
+        mean_t = t.mean()
+        spread = (t - d).mean() if d is not None and d.notna().any() else None
+        stats_lines = [f"Avg: {mean_t:.1f}°F"]
+        if spread is not None:
+            stats_lines.append(f"Avg T-Td: {spread:.1f}°F")
+        stats_text = "\n".join(stats_lines)
+        ax.text(0.99, 0.97, stats_text, transform=ax.transAxes,
+                fontsize=7.5, color=SOFT, ha="right", va="top",
+                family="monospace",
+                bbox=dict(facecolor=BG_CHIP, edgecolor=BORDER,
+                          boxstyle="round,pad=0.3", alpha=0.9))
 
 
 def _panel_pressure(ax, df: pd.DataFrame) -> None:
@@ -485,6 +511,21 @@ def _panel_wind(ax, df: pd.DataFrame) -> None:
                           color=C_GUST, above=True)
 
     ax.legend(loc="upper left", ncol=2, handlelength=1.6, fontsize=8)
+
+    # Inline stats box.
+    if "sknt" in df and df["sknt"].notna().any():
+        avg_spd = df["sknt"].mean()
+        max_gust = df["gust_sknt"].max() if "gust_sknt" in df else None
+        calm_n = (df["sknt"] == 0).sum()
+        calm_pct = calm_n / max(df["sknt"].notna().sum(), 1) * 100
+        lines = [f"Avg: {avg_spd:.1f} kt", f"Calm: {calm_pct:.0f}%"]
+        if max_gust and pd.notna(max_gust):
+            lines.append(f"Peak: {max_gust:.0f} kt")
+        ax.text(0.99, 0.97, "\n".join(lines), transform=ax.transAxes,
+                fontsize=7.5, color=SOFT, ha="right", va="top",
+                family="monospace",
+                bbox=dict(facecolor=BG_CHIP, edgecolor=BORDER,
+                          boxstyle="round,pad=0.3", alpha=0.9))
 
 
 def _choose_precip_freq(span_seconds: float) -> tuple[str, str]:
@@ -694,6 +735,18 @@ def _panel_flag_rate_per_station(ax, metars_df: pd.DataFrame) -> None:
     per_stn["rate"] = per_stn["mean"] * 100
     per_stn = per_stn.sort_values("rate")
 
+    # Compute probable reason per station from the last flagged METAR.
+    from asos_tools.metars import decode_reasons_short
+    reasons: dict[str, str] = {}
+    for stn in per_stn.index:
+        flagged = metars_df[(metars_df["station"] == stn) & metars_df["has_maintenance"]]
+        if not flagged.empty:
+            row = flagged.iloc[-1]
+            wx = row.get("wxcodes") if "wxcodes" in flagged.columns else None
+            reasons[stn] = decode_reasons_short(row["metar"], wx)
+        else:
+            reasons[stn] = ""
+
     colors = [C_CLEAN if r < 10 else ("#fbbf24" if r < 50 else C_FLAG)
               for r in per_stn["rate"]]
     bars = ax.barh(per_stn.index, per_stn["rate"],
@@ -701,9 +754,13 @@ def _panel_flag_rate_per_station(ax, metars_df: pd.DataFrame) -> None:
     ax.set_xlim(0, 105)
     ax.set_xlabel("% of METARs ending in $")
     ax.grid(True, axis="x", alpha=0.4)
-    for bar, rate, count in zip(bars, per_stn["rate"], per_stn["count"]):
-        ax.text(rate + 1, bar.get_y() + bar.get_height() / 2,
-                f"{rate:.0f}%  ({count})", va="center", color=SOFT, fontsize=8)
+    for bar, (stn, row_data) in zip(bars, per_stn.iterrows()):
+        label = f"{row_data['rate']:.0f}%  ({row_data['count']})"
+        reason = reasons.get(stn, "")
+        if reason:
+            label += f"  — {reason[:40]}"
+        ax.text(row_data["rate"] + 1, bar.get_y() + bar.get_height() / 2,
+                label, va="center", color=SOFT, fontsize=7)
 
 
 def _panel_flag_heatmap(ax, metars_df: pd.DataFrame) -> None:
