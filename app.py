@@ -160,7 +160,13 @@ p, .stMarkdown { font-size: 0.95rem; line-height: 1.55; }
 
 # Dark palette.
 _CSS_DARK = """
-[data-testid="stSidebar"] { background: #0f1729; border-right: 1px solid #1e293b; }
+[data-testid="stApp"],
+[data-testid="stAppViewContainer"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stVerticalBlockBorderWrapper"],
+.main { background-color: #0b1220 !important; color: #e2e8f0 !important; }
+[data-testid="stHeader"] { background-color: #0b1220 !important; }
+[data-testid="stSidebar"] { background: #0f1729 !important; border-right: 1px solid #1e293b; }
 [data-testid="stSidebar"] label { color: #e2e8f0 !important; }
 h1 { color: #f8fafc !important; }
 h2, h3 { color: #f1f5f9 !important; }
@@ -212,7 +218,13 @@ p, .stMarkdown { color: #cbd5e1 !important; }
 
 # Light palette.
 _CSS_LIGHT = """
-[data-testid="stSidebar"] { background: #f8fafc; border-right: 1px solid #e2e8f0; }
+[data-testid="stApp"],
+[data-testid="stAppViewContainer"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stVerticalBlockBorderWrapper"],
+.main { background-color: #ffffff !important; color: #1e293b !important; }
+[data-testid="stHeader"] { background-color: #ffffff !important; }
+[data-testid="stSidebar"] { background: #f8fafc !important; border-right: 1px solid #e2e8f0; }
 [data-testid="stSidebar"] label { color: #1e293b !important; }
 h1 { color: #0f172a !important; }
 h2, h3 { color: #1e293b !important; }
@@ -261,6 +273,34 @@ p, .stMarkdown { color: #334155 !important; }
 .footer-note { color: #94a3b8; border-top: 1px solid #e2e8f0; }
 .flag-strip { border: 1px solid #e2e8f0; }
 .flag-strip-labels { color: #64748b; }
+
+/* Force readable text on all Streamlit widgets in light mode. */
+[data-testid="stApp"] * {
+    color: inherit;
+}
+[data-baseweb="select"] span,
+[data-baseweb="radio"] label,
+[data-baseweb="checkbox"] label,
+[data-testid="stWidgetLabel"] label,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stCaptionContainer"],
+[data-testid="stText"] {
+    color: #334155 !important;
+}
+[data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea {
+    color: #1e293b !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+/* Sidebar widget text in light mode */
+[data-testid="stSidebar"] [data-baseweb="select"] span,
+[data-testid="stSidebar"] [data-baseweb="radio"] label,
+[data-testid="stSidebar"] [data-baseweb="checkbox"] label,
+[data-testid="stSidebar"] p {
+    color: #334155 !important;
+}
 """
 
 st.markdown(
