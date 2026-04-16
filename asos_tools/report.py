@@ -543,9 +543,26 @@ def _panel_precip(ax, df: pd.DataFrame) -> None:
     ax.set_title("PRECIPITATION", loc="left")
     valid = df["valid"]
     if "precip" not in df or df["precip"].notna().sum() == 0:
-        ax.text(0.5, 0.5, "no precip data", transform=ax.transAxes,
-                ha="center", va="center", color=MUTED)
+        ax.text(0.5, 0.5, "No precipitation data available",
+                transform=ax.transAxes, ha="center", va="center",
+                color=MUTED, fontsize=10)
         ax.set_axis_off()
+        return
+
+    total = float(df["precip"].sum(skipna=True))
+
+    # If total precip is effectively zero, show a clear message.
+    if total < 0.005:
+        ax.text(0.5, 0.5, "No precipitation recorded in this window",
+                transform=ax.transAxes, ha="center", va="center",
+                color=MUTED, fontsize=10)
+        ax.set_axis_off()
+        # Still show the total pill.
+        ax.text(0.985, 0.92, "0.00 in",
+                transform=ax.transAxes, fontsize=11, fontweight="bold",
+                color=FG_HI, ha="right", va="top",
+                bbox=dict(facecolor=BG_CHIP, edgecolor=BORDER,
+                          boxstyle="round,pad=0.3"))
         return
 
     span = (valid.max() - valid.min()).total_seconds()
@@ -554,36 +571,37 @@ def _panel_precip(ax, df: pd.DataFrame) -> None:
     series = df.set_index("valid")["precip"].resample(freq).sum(min_count=1)
     width_days = pd.Timedelta(freq).total_seconds() / 86400
 
-    # Per-interval bars on primary axis.
+    # Per-interval bars — brighter color, thicker edge for visibility.
     ax.bar(series.index, series.values, width=width_days, align="edge",
-           color=C_PRECIP, edgecolor="none", alpha=0.9)
+           color="#06b6d4", edgecolor="#0891b2", linewidth=0.5, alpha=0.95)
     ax.set_ylabel(unit, color=C_PRECIP, fontsize=8.5)
     ax.tick_params(axis="y", colors=C_PRECIP, labelsize=8)
     ax.grid(True, axis="y", alpha=0.5)
     ax.margins(x=0.005)
-    # Reserve headroom so the bars don't kiss the top frame.
-    bar_max = float(series.max(skipna=True) or 0)
-    ax.set_ylim(0, bar_max * 1.25 if bar_max > 0 else 1.0)
 
-    # Cumulative overlay on twin axis, with its own headroom.
+    # Y-axis: ensure bars are always visually prominent — minimum ylim
+    # is 2× the max bar height so bars occupy at least half the panel.
+    bar_max = float(series.max(skipna=True) or 0)
+    ax.set_ylim(0, max(bar_max * 2.0, 0.02))
+
+    # Cumulative overlay on twin axis.
     cumulative = series.fillna(0).cumsum()
-    total = float(df["precip"].sum(skipna=True))
     ax2 = ax.twinx()
-    ax2.plot(cumulative.index, cumulative.values, color=C_CUM, lw=1.6,
+    ax2.plot(cumulative.index, cumulative.values, color=C_CUM, lw=2.0,
              zorder=5)
     ax2.fill_between(cumulative.index, 0, cumulative.values,
-                     color=C_CUM, alpha=0.10, linewidth=0)
+                     color=C_CUM, alpha=0.12, linewidth=0)
     ax2.set_ylabel("cumulative (in)", color=C_CUM, fontsize=8.5)
     ax2.tick_params(axis="y", colors=C_CUM, labelsize=8)
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_color(BORDER)
     ax2.grid(False)
-    ax2.set_ylim(0, max(total * 1.15, 0.05))
+    ax2.set_ylim(0, max(total * 1.3, 0.05))
 
-    # Unified legend, top-left.
+    # Unified legend.
     handles = [
-        plt.Rectangle((0, 0), 1, 1, color=C_PRECIP, alpha=0.9),
-        plt.Line2D([0], [0], color=C_CUM, lw=1.6),
+        plt.Rectangle((0, 0), 1, 1, color="#06b6d4", alpha=0.95),
+        plt.Line2D([0], [0], color=C_CUM, lw=2.0),
     ]
     ax.legend(handles, [unit, "cumulative"], loc="upper left",
               ncol=2, handlelength=1.6, fontsize=8)
