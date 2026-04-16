@@ -137,13 +137,29 @@ def decode_maintenance_reasons(metar: str) -> list[dict]:
     return reasons
 
 
-def decode_reasons_short(metar: str) -> str:
-    """One-line summary of maintenance reasons, for table display."""
+def decode_reasons_short(metar: str, wxcodes: str | None = None) -> str:
+    """One-line summary of maintenance reasons, for table display.
+
+    If ``wxcodes`` (parsed present weather from IEM) is provided and contains
+    significant weather (TS, FZRA, SN, etc.), the summary is prefixed with
+    the active weather so controllers see context alongside the sensor issue.
+    """
     reasons = decode_maintenance_reasons(metar)
     if not reasons:
         return ""
     parts = [r["sensor"] for r in reasons]
-    return " · ".join(parts)
+    summary = " · ".join(parts)
+
+    # Prefix with active weather if significant.
+    if wxcodes and isinstance(wxcodes, str) and wxcodes.strip():
+        wx = wxcodes.strip()
+        # Flag severe/significant wx that makes a $ flag more operationally urgent.
+        URGENT_WX = {"TS", "FZRA", "FZDZ", "SN", "PL", "GR", "FG", "BLSN", "+RA"}
+        codes = set(wx.replace(",", " ").split())
+        urgent = codes & URGENT_WX
+        if urgent:
+            summary = f"[{wx}] {summary}"
+    return summary
 
 IEM_ENDPOINT_METAR = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
 MAINTENANCE_FLAG_CHAR = "$"
@@ -208,7 +224,11 @@ def fetch_metars(
 
     params = {
         "station": ",".join(station_list),
-        "data": "metar",
+        # Pull raw METAR + parsed fields we use for the decoder + watchlist.
+        # wxcodes = present weather (RA, SN, TS, FG, etc.) parsed by IEM.
+        # peak_wind_gust/drct = max gust from the METAR period.
+        # vsby = visibility. skyc1/skyl1 = lowest cloud layer.
+        "data": "metar,wxcodes,peak_wind_gust,peak_wind_drct,vsby,skyc1,skyl1,tmpf,dwpf,sknt,drct,alti",
         "year1": start_utc.year, "month1": start_utc.month,
         "day1": start_utc.day, "hour1": start_utc.hour,
         "minute1": start_utc.minute,
@@ -249,8 +269,17 @@ def fetch_metars(
     # Maintenance flag.
     df["has_maintenance"] = df["metar"].fillna("").map(has_maintenance_flag)
 
+    # Coerce parsed numeric fields (IEM sends "M" for missing).
+    for col in ["tmpf", "dwpf", "sknt", "drct", "alti", "vsby",
+                "peak_wind_gust", "peak_wind_drct", "skyl1"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
     df = df.sort_values(["valid", "station"], kind="mergesort").reset_index(drop=True)
-    # Column order.
-    cols = ["station", "valid", "metar", "has_maintenance"]
-    extra = [c for c in df.columns if c not in cols]
-    return df[cols + extra]
+    # Column order — lead with the most useful fields.
+    lead = ["station", "valid", "metar", "has_maintenance",
+            "wxcodes", "tmpf", "dwpf", "sknt", "drct",
+            "peak_wind_gust", "vsby", "skyc1", "alti"]
+    lead = [c for c in lead if c in df.columns]
+    extra = [c for c in df.columns if c not in lead]
+    return df[lead + extra]

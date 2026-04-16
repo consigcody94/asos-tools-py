@@ -236,10 +236,13 @@ def build_watchlist(
             lookup_id = "K" + stn if ("K" + stn) in meta_map else stn
             meta = meta_map.get(lookup_id, {})
 
-            # Decode probable reason from the latest METAR (or latest flagged one).
+            # Decode probable reason from the latest flagged METAR.
             if flagged > 0:
-                last_flagged_metar = sub.loc[sub["has_maintenance"], "metar"].iloc[-1]
-                reason = decode_reasons_short(last_flagged_metar)
+                last_flagged_row = sub.loc[sub["has_maintenance"]].iloc[-1]
+                last_flagged_metar = last_flagged_row["metar"]
+                last_wxcodes = (last_flagged_row.get("wxcodes")
+                                if "wxcodes" in sub.columns else None)
+                reason = decode_reasons_short(last_flagged_metar, last_wxcodes)
             elif missing_count > 0:
                 reason = "No METAR received"
             else:

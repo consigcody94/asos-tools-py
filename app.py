@@ -26,6 +26,7 @@ from asos_tools.report import (
     build_report,
 )
 from asos_tools._missing_report import build_missing_report
+from asos_tools.nws import get_current_conditions
 from asos_tools.stations import GROUPS, get_group, list_groups
 from asos_tools.watchlist import build_watchlist, STATUS_ORDER
 
@@ -57,6 +58,12 @@ def _cached_fetch_1min(station: str, start: datetime, end: datetime):
 @st.cache_data(ttl=600, show_spinner=False)
 def _cached_fetch_metars(stations_key: tuple, start: datetime, end: datetime):
     return fetch_metars(list(stations_key), start, end)
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _cached_nws(station_id: str) -> dict | None:
+    """Current conditions from NWS api.weather.gov — 2-min cache."""
+    return get_current_conditions(station_id)
 
 
 @st.cache_data(ttl=180, show_spinner=False)  # 3-minute TTL for operational freshness
@@ -523,6 +530,35 @@ with tab_reports:
             group_label = " · ".join(first) + (" +…" if len(stations_list) > 3 else "")
 
     st.sidebar.caption(f"{len(stations_list)} station(s) selected")
+
+    # Live weather widget — single-station only.
+    if len(stations_list) == 1 and stations_list[0]:
+        with st.sidebar.expander(f"🌤️ Current weather: {stations_list[0]}", expanded=True):
+            cond = _cached_nws(stations_list[0])
+            if cond:
+                st.markdown(f"**{cond.get('description', '—')}**")
+                c1, c2 = st.columns(2)
+                c1.metric("Temp", f"{cond['temp_f']}°F" if cond.get("temp_f") is not None else "—")
+                c2.metric("Dewpoint", f"{cond['dewpoint_f']}°F" if cond.get("dewpoint_f") is not None else "—")
+                c1, c2 = st.columns(2)
+                wind_str = (f"{cond['wind_speed_kt']:.0f} kt"
+                            if cond.get("wind_speed_kt") is not None else "—")
+                if cond.get("wind_direction") is not None:
+                    wind_str = f"{cond['wind_direction']:.0f}° @ {wind_str}"
+                c1.metric("Wind", wind_str)
+                gust = cond.get("wind_gust_kt")
+                c2.metric("Gust", f"{gust:.0f} kt" if gust else "—")
+                c1, c2 = st.columns(2)
+                c1.metric("Visibility", f"{cond['visibility_mi']} mi" if cond.get("visibility_mi") is not None else "—")
+                c2.metric("Pressure", f"{cond['pressure_inhg']} inHg" if cond.get("pressure_inhg") is not None else "—")
+                st.caption(f"Sky: {cond.get('sky', '—')}")
+                if cond.get("wx") and cond["wx"] != "None":
+                    st.caption(f"Wx: {cond['wx']}")
+                ts = cond.get("timestamp", "")
+                if ts:
+                    st.caption(f"Obs time: {ts[:19]}Z")
+            else:
+                st.caption("NWS data unavailable for this station.")
 
     st.sidebar.markdown("### Time window")
     window_mode = st.sidebar.radio(
