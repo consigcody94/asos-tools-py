@@ -99,11 +99,14 @@ def build_missing_report(
     ax_h = fig.add_subplot(gs[0, :])
     ax_h.set_axis_off()
     ax_h.add_patch(Rectangle(
-        (0.0, 0.95), 0.035, 0.04,
-        transform=ax_h.transAxes, color=C_MISS, clip_on=False, zorder=10))
-    ax_h.text(0.045, 0.965, "MISSING  METAR  REPORT",
-              fontsize=8.5, color=C_MISS, fontweight="bold",
-              transform=ax_h.transAxes, va="center")
+        (0.0, 0.96), 1.0, 0.04,
+        transform=ax_h.transAxes, color=ACCENT, clip_on=False, zorder=10))
+    ax_h.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+              fontsize=7, color="#ffffff", fontweight="bold",
+              transform=ax_h.transAxes, va="center", zorder=11)
+    ax_h.text(0.99, 0.98, "MISSING METAR REPORT",
+              fontsize=7, color="#ffffff",
+              transform=ax_h.transAxes, va="center", ha="right", zorder=11)
     nfs = 22 if len(group_label) <= 18 else 15
     ax_h.text(0.0, 0.74, group_label, fontsize=nfs, fontweight="bold",
               color=FG_HI, transform=ax_h.transAxes, va="center")
@@ -249,7 +252,7 @@ def build_missing_report(
              "DATA  NOAA/NCEI ASOS METAR archive  via  IEM",
              fontsize=7.2, color=MUTED, ha="left")
     fig.text(0.97, 0.018,
-             f"GENERATED  {now}  |  asos-tools-py",
+             f"Generated {now}  |  ASOS Network Monitor",
              fontsize=7.2, color=MUTED, ha="right")
 
     out = Path(out_path)

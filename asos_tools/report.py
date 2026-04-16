@@ -57,31 +57,31 @@ def __getattr__(name):
 
 
 # -----------------------------------------------------------------------------
-# Theme
+# Theme — clean white, government aesthetic
 # -----------------------------------------------------------------------------
 
-# Tailwind-ish dark palette — vivid-on-slate.
-BG_OUTER = "#0b1220"
-BG_PANEL = "#111a2e"
-BG_CHIP = "#1b2740"
-GRID = "#23314f"
-BORDER = "#2d3d5c"
-MUTED = "#94a3b8"
-SOFT = "#cbd5e1"
-FG = "#e2e8f0"
-FG_HI = "#f8fafc"
-ACCENT = "#38bdf8"  # sky-400
+# White-background professional palette.
+BG_OUTER = "#ffffff"
+BG_PANEL = "#ffffff"
+BG_CHIP = "#f1f5f9"       # slate-100 — subtle chip background
+GRID = "#e2e8f0"          # slate-200
+BORDER = "#cbd5e1"        # slate-300
+MUTED = "#64748b"         # slate-500
+SOFT = "#475569"          # slate-600
+FG = "#1e293b"            # slate-800
+FG_HI = "#0f172a"         # slate-900
+ACCENT = "#003366"        # NOAA official blue
 
-# Series colors
-C_TEMP = "#f97316"  # orange-500
-C_DEW = "#0ea5e9"  # sky-500
-C_SPREAD = "#1e40af"  # blue-800
-C_WIND = "#4ade80"  # green-400
-C_GUST = "#c084fc"  # violet-400
-C_PRES = "#fbbf24"  # amber-400
-C_PRECIP = "#22d3ee"  # cyan-400
-C_CUM = "#f472b6"  # pink-400
-C_FREEZE = "#64748b"  # slate-500
+# Series colors — muted professional tones, not neon.
+C_TEMP = "#dc2626"        # red-600 (warm = red convention)
+C_DEW = "#2563eb"         # blue-600 (cool = blue convention)
+C_SPREAD = "#dbeafe"      # blue-100 — subtle fill between T and Td
+C_WIND = "#16a34a"        # green-600
+C_GUST = "#7c3aed"        # violet-600
+C_PRES = "#d97706"        # amber-600
+C_PRECIP = "#0891b2"      # cyan-600
+C_CUM = "#be185d"         # pink-700
+C_FREEZE = "#94a3b8"      # slate-400
 
 
 def _apply_style() -> None:
@@ -92,28 +92,31 @@ def _apply_style() -> None:
         "axes.edgecolor": BORDER,
         "axes.labelcolor": FG,
         "axes.titlecolor": FG_HI,
-        "axes.titlesize": 10.5,
+        "axes.titlesize": 10,
         "axes.titleweight": "bold",
-        "axes.titlepad": 10,
+        "axes.titlepad": 8,
         "axes.titlelocation": "left",
-        "axes.labelsize": 9,
+        "axes.labelsize": 8.5,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "axes.linewidth": 0.8,
+        "axes.linewidth": 0.6,
         "xtick.color": MUTED,
         "ytick.color": MUTED,
-        "xtick.labelsize": 8,
-        "ytick.labelsize": 8,
-        "xtick.major.pad": 4,
-        "ytick.major.pad": 4,
+        "xtick.labelsize": 7.5,
+        "ytick.labelsize": 7.5,
+        "xtick.major.pad": 3,
+        "ytick.major.pad": 3,
         "grid.color": GRID,
-        "grid.linewidth": 0.6,
-        "grid.alpha": 0.55,
+        "grid.linewidth": 0.5,
+        "grid.alpha": 0.7,
         "font.family": ["DejaVu Sans", "Segoe UI", "Arial"],
-        "font.size": 9,
-        "legend.frameon": False,
-        "legend.fontsize": 8,
-        "legend.labelcolor": SOFT,
+        "font.size": 8.5,
+        "legend.frameon": True,
+        "legend.facecolor": "#ffffff",
+        "legend.edgecolor": BORDER,
+        "legend.fontsize": 7.5,
+        "legend.labelcolor": FG,
+        "text.color": FG,
     })
 
 
@@ -152,13 +155,16 @@ def _draw_header(fig, ax, *, station_id: str, station_name: str,
 
     # --- Title block (top ~55% of header strip) ---
 
-    # Accent tag.
-    ax.add_patch(Rectangle((0.0, 0.95), 0.035, 0.04,
+    # Top rule — full width NOAA blue bar.
+    ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
                            transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.045, 0.965, "1-MINUTE  OBSERVATION  REPORT",
-            fontsize=8.5, color=ACCENT, fontweight="bold",
-            transform=ax.transAxes, va="center")
+    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+            fontsize=7, color="#ffffff", fontweight="bold",
+            transform=ax.transAxes, va="center", zorder=11)
+    ax.text(0.99, 0.98, "1-MINUTE OBSERVATION REPORT",
+            fontsize=7, color="#ffffff",
+            transform=ax.transAxes, va="center", ha="right", zorder=11)
 
     # Station name (auto-shrink if long).
     name_fs = 22 if len(station_name) <= 18 else (18 if len(station_name) <= 26 else 15)
@@ -209,10 +215,8 @@ def _draw_header(fig, ax, *, station_id: str, station_name: str,
 def _draw_chip_strip(ax, chips: list[tuple[str, str, str]]) -> None:
     """Render a horizontal strip of KPI chips along the bottom of ``ax``.
 
-    Each chip is a tuple ``(label, value, accent_color)``. The label sits
-    in the upper third of the chip; the value sits in the lower two-thirds.
-    Chip height is chosen so neither element can visually overlap the other
-    at the fontsizes we use below.
+    Each chip is ``(label, value, accent_color)``. Clean white-bg style
+    with a thin left accent bar and no rounded fancy patches.
     """
     if not chips:
         return
@@ -221,34 +225,32 @@ def _draw_chip_strip(ax, chips: list[tuple[str, str, str]]) -> None:
     gap = 0.012
     chip_w = (1.0 - gap * (n - 1)) / n
     chip_y = 0.035
-    chip_h = 0.44  # taller than before so label + value never touch
+    chip_h = 0.44
 
-    # Vertical zones inside the chip, as fractions of chip_h.
-    label_y = chip_y + chip_h * 0.78   # upper strip
-    value_y = chip_y + chip_h * 0.30   # lower strip
+    label_y = chip_y + chip_h * 0.78
+    value_y = chip_y + chip_h * 0.30
 
     for i, (label, value, accent) in enumerate(chips):
         x_left = i * (chip_w + gap)
-        # Background.
-        ax.add_patch(FancyBboxPatch(
+        # Clean rectangular chip with thin border.
+        ax.add_patch(Rectangle(
             (x_left, chip_y), chip_w, chip_h,
             transform=ax.transAxes,
-            boxstyle="round,pad=0.0,rounding_size=0.035",
-            facecolor=BG_CHIP, edgecolor=BORDER, linewidth=0.9,
+            facecolor=BG_CHIP, edgecolor=BORDER, linewidth=0.6,
             clip_on=False,
         ))
-        # Left accent stripe.
+        # Left accent bar.
         ax.add_patch(Rectangle(
-            (x_left, chip_y + 0.04), 0.005, chip_h - 0.08,
+            (x_left, chip_y), 0.004, chip_h,
             transform=ax.transAxes, color=accent, clip_on=False,
         ))
-        # Label (upper third, small, uppercase, muted).
-        ax.text(x_left + 0.022, label_y, label,
-                transform=ax.transAxes, fontsize=8, color=SOFT,
+        # Label.
+        ax.text(x_left + 0.018, label_y, label.upper(),
+                transform=ax.transAxes, fontsize=6.5, color=MUTED,
                 ha="left", va="center")
-        # Value (lower two-thirds, big, bright).
-        ax.text(x_left + 0.022, value_y, value,
-                transform=ax.transAxes, fontsize=15, fontweight="bold",
+        # Value.
+        ax.text(x_left + 0.018, value_y, value,
+                transform=ax.transAxes, fontsize=14, fontweight="bold",
                 color=FG_HI, ha="left", va="center")
 
 
@@ -693,11 +695,11 @@ def build_report(
     # Footer — data source + generation timestamp.
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     fig.text(0.055, 0.018,
-             f"DATA  NOAA/NCEI ASOS 1-minute archive  via  Iowa Environmental Mesonet",
-             fontsize=7.2, color=MUTED, ha="left")
+             "Data: NOAA/NCEI ASOS archive via Iowa Environmental Mesonet",
+             fontsize=7, color=MUTED, ha="left")
     fig.text(0.97, 0.018,
-             f"GENERATED  {now}  ·  asos-tools-py",
-             fontsize=7.2, color=MUTED, ha="right")
+             f"Generated {now}  |  ASOS Network Monitor",
+             fontsize=7, color=MUTED, ha="right")
 
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -717,12 +719,15 @@ C_CLEAN = "#34d399"  # emerald-400 — clean observations
 def _draw_maint_header(ax, *, group_label: str, window_label: str,
                        metars_df: pd.DataFrame) -> None:
     ax.set_axis_off()
-    ax.add_patch(Rectangle((0.0, 0.95), 0.035, 0.04,
-                           transform=ax.transAxes, color=C_FLAG,
+    ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
+                           transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.045, 0.965, "ASOS  MAINTENANCE-FLAG  REPORT",
-            fontsize=8.5, color=C_FLAG, fontweight="bold",
-            transform=ax.transAxes, va="center")
+    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+            fontsize=7, color="#ffffff", fontweight="bold",
+            transform=ax.transAxes, va="center", zorder=11)
+    ax.text(0.99, 0.98, "MAINTENANCE FLAG REPORT",
+            fontsize=7, color="#ffffff",
+            transform=ax.transAxes, va="center", ha="right", zorder=11)
     ax.text(0.0, 0.74, group_label, fontsize=22, fontweight="bold",
             color=FG_HI, transform=ax.transAxes, va="center")
 
@@ -919,12 +924,15 @@ def build_maintenance_report(
 def _draw_cmp_header(ax, *, group_label: str, window_label: str,
                      metars_df: pd.DataFrame) -> None:
     ax.set_axis_off()
-    ax.add_patch(Rectangle((0.0, 0.95), 0.035, 0.04,
+    ax.add_patch(Rectangle((0.0, 0.96), 1.0, 0.04,
                            transform=ax.transAxes, color=ACCENT,
                            clip_on=False, zorder=10))
-    ax.text(0.045, 0.965, "FLAGGED  VS  CLEAN  COMPARISON",
-            fontsize=8.5, color=ACCENT, fontweight="bold",
-            transform=ax.transAxes, va="center")
+    ax.text(0.005, 0.98, "ASOS NETWORK MONITOR",
+            fontsize=7, color="#ffffff", fontweight="bold",
+            transform=ax.transAxes, va="center", zorder=11)
+    ax.text(0.99, 0.98, "FLAGGED VS CLEAN COMPARISON",
+            fontsize=7, color="#ffffff",
+            transform=ax.transAxes, va="center", ha="right", zorder=11)
     ax.text(0.0, 0.74, group_label, fontsize=22, fontweight="bold",
             color=FG_HI, transform=ax.transAxes, va="center")
 
