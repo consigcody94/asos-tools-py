@@ -21,6 +21,7 @@ from asos_tools.report import (
     build_report,
 )
 from asos_tools._missing_report import build_missing_report
+from asos_tools.incident_docx import generate_incident_docx
 from asos_tools.nws import get_current_conditions
 from asos_tools.stations import GROUPS, get_group, list_groups
 from asos_tools.watchlist import build_watchlist
@@ -582,7 +583,8 @@ with st.sidebar:
 
     report_type = st.selectbox(
         "Report type",
-        ["1-min dashboard", "Maintenance ($)", "Flagged vs clean", "Missing METARs"],
+        ["1-min dashboard", "Maintenance ($)", "Flagged vs clean",
+         "Missing METARs", "Incident report (DOCX)"],
     )
 
     smode = st.radio("Station source", ["Single", "Group", "Custom"],
@@ -1209,7 +1211,57 @@ with tab_reports:
         preview_slot = st.empty()
 
         try:
-            if report_type == "1-min dashboard":
+            if report_type == "Incident report (DOCX)":
+                # DOCX incident investigation — runs a fresh METAR fetch per
+                # station and builds a formatted Word document for download.
+                if not stations_list:
+                    report_slot.error("Select at least one station in the sidebar.")
+                else:
+                    # Use window span for the investigation hours.
+                    span_hours = max(1.0, (end - start).total_seconds() / 3600)
+
+                    with kpi_slot.container():
+                        c1, c2, c3 = st.columns(3)
+                        c1.metric("Stations", len(stations_list))
+                        c2.metric("Window", wlabel)
+                        c3.metric("Investigation Depth",
+                                  f"{span_hours:.0f}h")
+
+                    with st.spinner(
+                            f"Investigating {len(stations_list)} station(s) "
+                            f"over {span_hours:.0f} hours…"):
+                        docx_bytes = generate_incident_docx(
+                            stations_list, hours=span_hours, end=end)
+
+                    with report_slot.container():
+                        st.success(
+                            f"Incident investigation complete. "
+                            f"Report: {len(docx_bytes):,} bytes · "
+                            f"{len(stations_list)} station(s)."
+                        )
+                        st.info(
+                            "The DOCX report includes:  "
+                            "executive summary · per-station incident timelines · "
+                            "raw $ METAR evidence callouts · sensor code breakdown · "
+                            "root-cause analysis of missing downstream tickets · "
+                            "recommendations · methodology."
+                        )
+
+                    ts = end.strftime("%Y%m%d_%H%MZ")
+                    slug = "_".join(s.lower() for s in stations_list[:4])
+                    if len(stations_list) > 4:
+                        slug += f"_plus{len(stations_list) - 4}"
+                    with download_slot.container():
+                        st.download_button(
+                            "⬇ Download incident report (DOCX)",
+                            data=docx_bytes,
+                            file_name=f"Incident_Report_{slug}_{ts}.docx",
+                            mime="application/vnd.openxmlformats-officedocument"
+                                 ".wordprocessingml.document",
+                            use_container_width=True,
+                        )
+
+            elif report_type == "1-min dashboard":
                 stn = stations_list[0]
                 with st.spinner(f"Fetching {stn}…"):
                     df = _fetch_1min(stn, start, end)
