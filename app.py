@@ -331,6 +331,56 @@ with st.sidebar:
         .stTabs [data-baseweb="tab"] { color: #94a3b8 !important; }
         .stTabs [data-baseweb="tab"][aria-selected="true"] { color: #f1f5f9 !important; }
         [data-testid="stImage"] { border-color: #334155 !important; }
+
+        /* Inputs, selects, textareas — dark backgrounds + white text */
+        [data-baseweb="select"] { background: #1e293b !important; }
+        [data-baseweb="select"] * { color: #f1f5f9 !important; }
+        [data-baseweb="select"] [data-baseweb="tag"] { background: #334155 !important; }
+        [data-baseweb="input"] { background: #1e293b !important; }
+        [data-baseweb="input"] input { color: #f1f5f9 !important; background: transparent !important; }
+        [data-baseweb="textarea"] textarea { color: #f1f5f9 !important; background: #1e293b !important; }
+        [data-baseweb="popover"] { background: #1e293b !important; }
+        [data-baseweb="popover"] li { color: #e2e8f0 !important; }
+        [data-baseweb="popover"] li:hover { background: #334155 !important; }
+        [data-baseweb="menu"] { background: #1e293b !important; }
+        [data-baseweb="menu"] li { color: #e2e8f0 !important; }
+        [data-baseweb="menu"] li:hover { background: #334155 !important; }
+
+        /* Radio + checkbox + toggle */
+        [data-baseweb="radio"] label,
+        [data-baseweb="checkbox"] label { color: #e2e8f0 !important; }
+        [data-testid="stWidgetLabel"] { color: #cbd5e1 !important; }
+
+        /* Captions */
+        [data-testid="stCaptionContainer"] { color: #94a3b8 !important; }
+
+        /* Buttons */
+        .stButton > button { color: #f1f5f9 !important; border-color: #475569 !important; }
+        .stButton > button:hover { background: #334155 !important; }
+        .stButton > button[kind="primary"] { background: #0ea5e9 !important;
+            color: #0f172a !important; border: none !important; }
+        [data-testid="stDownloadButton"] > button { color: #e2e8f0 !important;
+            background: #1e293b !important; border-color: #475569 !important; }
+
+        /* Expanders */
+        [data-testid="stExpander"] summary { color: #e2e8f0 !important; }
+        [data-testid="stExpander"] { border-color: #334155 !important; }
+
+        /* Alerts */
+        [data-testid="stAlert"] { background: #1e293b !important; color: #e2e8f0 !important; }
+
+        /* Dividers */
+        hr { border-color: #334155 !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+        /* Date input */
+        [data-baseweb="datepicker"] { background: #1e293b !important; }
+        [data-baseweb="datepicker"] * { color: #e2e8f0 !important; }
+        [data-baseweb="calendar"] { background: #1e293b !important; }
         </style>""", unsafe_allow_html=True)
 
     st.caption(
