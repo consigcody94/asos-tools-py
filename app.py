@@ -320,24 +320,38 @@ hr {
     margin: 0.8rem 0 !important;
 }
 
-/* Main content image (reports) — reserve space to prevent page jump */
-.main [data-testid="stImage"] {
+/* Main content image (reports) — reserve space to prevent page jump.
+   Applies to every st.image in the main area regardless of wrapper. */
+section.main [data-testid="stImage"],
+section.main div[data-testid="stImage"],
+[data-testid="stVerticalBlock"] [data-testid="stImage"] {
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(128,128,128,0.12);
-    min-height: 700px;
+    min-height: 780px !important;
     background: #f8fafc;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-}
-.main [data-testid="stImage"] img {
-    width: 100%;
-    height: auto;
     display: block;
 }
-/* Prevent Streamlit from auto-scrolling on content update */
-.main { scroll-behavior: auto !important; }
+section.main [data-testid="stImage"] img,
+[data-testid="stVerticalBlock"] [data-testid="stImage"] img {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+}
+/* Sidebar image (logo) — override the main-area sizing */
+[data-testid="stSidebar"] [data-testid="stImage"] {
+    min-height: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Disable smooth scroll so Streamlit can't animate scroll position
+   when content is injected into a placeholder. */
+html, body, .main, section.main { scroll-behavior: auto !important; }
+
+/* Report placeholder: reserve vertical space BEFORE the image loads
+   so the page doesn't jump when st.image() fills the slot. */
+.stSpinner { min-height: 40px; }
 
 /* === OPERATIONS BANNER (top of page) === */
 .ops-banner {
@@ -973,7 +987,7 @@ _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 _banner_html = (
     '<div class="ops-banner">'
     '<div class="ops-banner-left">'
-    '<span class="banner-meta">ASOS NETWORK MONITORING · PUBLIC ACCESS</span>'
+    '<span class="banner-meta">ASOS NETWORK MONITORING &middot; PUBLIC ACCESS</span>'
     '</div>'
     '<div class="ops-banner-right">'
     f'<span class="status-dot" style="background:{_status_color};'
@@ -983,15 +997,14 @@ _banner_html = (
     '</div>'
     '</div>'
 )
-st.markdown(_banner_html, unsafe_allow_html=True)
+st.html(_banner_html)
 
 # Title block.
-st.markdown(
+st.html(
     '<div class="ops-title">'
     '<div class="ops-title-name">O.W.L.</div>'
-    '<div class="ops-title-sub">Observation Watch Log · National ASOS Operations Dashboard</div>'
-    '</div>',
-    unsafe_allow_html=True,
+    '<div class="ops-title-sub">Observation Watch Log &middot; National ASOS Operations Dashboard</div>'
+    '</div>'
 )
 
 # Network health gauge.
@@ -1002,7 +1015,7 @@ if _health_pct is not None and _health_total:
         '<div class="health-card">'
         '<div class="health-row">'
         '<div class="health-meta">'
-        f'<div class="health-label">NETWORK HEALTH · LAST {_SCAN_HOURS}H</div>'
+        f'<div class="health-label">NETWORK HEALTH &middot; LAST {_SCAN_HOURS}H</div>'
         '<div class="health-numbers">'
         f'<span class="health-pct">{_health_pct:.1f}%</span>'
         f'<span class="health-detail">{_health_clean:,} of {_health_total:,} stations reporting clean</span>'
@@ -1018,7 +1031,7 @@ if _health_pct is not None and _health_total:
         '</div>'
         '</div>'
     )
-    st.markdown(_gauge_html, unsafe_allow_html=True)
+    st.html(_gauge_html)
 
 
 # ===========================================================================
@@ -1187,48 +1200,60 @@ with tab_reports:
     if not go:
         st.info("Configure report settings in the sidebar and click **Generate**.")
     else:
+        # Build a STABLE skeleton first. All slots exist with reserved space
+        # before any slow fetch runs. Content is then filled into the
+        # placeholders, which prevents the page from growing progressively.
+        kpi_slot = st.empty()
+        report_slot = st.empty()
+        download_slot = st.empty()
+        preview_slot = st.empty()
+
         try:
             if report_type == "1-min dashboard":
                 stn = stations_list[0]
                 with st.spinner(f"Fetching {stn}…"):
                     df = _fetch_1min(stn, start, end)
                 if df.empty:
-                    st.error("No data for this station/window.")
+                    report_slot.error("No data for this station/window.")
                 else:
                     name = str(df["station_name"].iloc[0])
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("Station", stn)
-                    c2.metric("Name", _short_name(name))
-                    c3.metric("Window", wlabel)
-                    c4.metric("Observations", f"{len(df):,}")
+                    with kpi_slot.container():
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("Station", stn)
+                        c2.metric("Name", _short_name(name))
+                        c3.metric("Window", wlabel)
+                        c4.metric("Observations", f"{len(df):,}")
 
                     with st.spinner("Rendering…"):
                         png = _render(build_report, df=df, window_label=wlabel,
                                       station_id=stn, station_name=name)
-                    st.image(png, use_container_width=True)
+                    report_slot.image(png, use_container_width=True)
 
-                    c1, c2 = st.columns(2)
-                    c1.download_button("Download PNG", png,
-                                       f"{stn}_{wlabel.replace(' ', '')}.png",
-                                       "image/png", use_container_width=True)
-                    c2.download_button("Download CSV",
-                                       df.to_csv(index=False).encode(),
-                                       f"{stn}_{wlabel.replace(' ', '')}.csv",
-                                       "text/csv", use_container_width=True)
+                    with download_slot.container():
+                        c1, c2 = st.columns(2)
+                        c1.download_button("Download PNG", png,
+                                           f"{stn}_{wlabel.replace(' ', '')}.png",
+                                           "image/png", use_container_width=True)
+                        c2.download_button("Download CSV",
+                                           df.to_csv(index=False).encode(),
+                                           f"{stn}_{wlabel.replace(' ', '')}.csv",
+                                           "text/csv", use_container_width=True)
 
-                    with st.expander("Data preview (50 rows)"):
-                        st.dataframe(df.head(50), use_container_width=True, height=300)
+                    with preview_slot.container():
+                        with st.expander("Data preview (50 rows)"):
+                            st.dataframe(df.head(50), use_container_width=True, height=300)
             else:
                 with st.spinner("Fetching METARs…"):
                     metars = _fetch_metars(tuple(stations_list), start, end)
                 if metars.empty:
-                    st.error("No METARs for this selection/window.")
+                    report_slot.error("No METARs for this selection/window.")
                 else:
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("Stations", metars["station"].nunique())
-                    c2.metric("METARs", f"{len(metars):,}")
-                    nflag = int(metars["has_maintenance"].sum())
-                    c3.metric("Flagged", f"{nflag} ({nflag / len(metars) * 100:.0f}%)")
+                    with kpi_slot.container():
+                        c1, c2, c3 = st.columns(3)
+                        c1.metric("Stations", metars["station"].nunique())
+                        c2.metric("METARs", f"{len(metars):,}")
+                        nflag = int(metars["has_maintenance"].sum())
+                        c3.metric("Flagged", f"{nflag} ({nflag / len(metars) * 100:.0f}%)")
 
                     builders = {
                         "Maintenance ($)": (build_maintenance_report, "maintenance"),
@@ -1239,20 +1264,22 @@ with tab_reports:
                     with st.spinner("Rendering…"):
                         png = _render(builder, metars_df=metars,
                                       group_label=group_label, window_label=wlabel)
-                    st.image(png, use_container_width=True)
+                    report_slot.image(png, use_container_width=True)
 
                     slug = group_label.lower().replace(" ", "-").replace(",", "")
-                    c1, c2 = st.columns(2)
-                    c1.download_button("Download PNG", png,
-                                       f"{slug}_{wlabel.replace(' ', '')}_{kind}.png",
-                                       "image/png", use_container_width=True)
-                    c2.download_button("Download CSV",
-                                       metars.to_csv(index=False).encode(),
-                                       f"{slug}_{wlabel.replace(' ', '')}_metars.csv",
-                                       "text/csv", use_container_width=True)
+                    with download_slot.container():
+                        c1, c2 = st.columns(2)
+                        c1.download_button("Download PNG", png,
+                                           f"{slug}_{wlabel.replace(' ', '')}_{kind}.png",
+                                           "image/png", use_container_width=True)
+                        c2.download_button("Download CSV",
+                                           metars.to_csv(index=False).encode(),
+                                           f"{slug}_{wlabel.replace(' ', '')}_metars.csv",
+                                           "text/csv", use_container_width=True)
 
-                    with st.expander("METAR data preview (50 rows)"):
-                        st.dataframe(metars.head(50), use_container_width=True, height=300)
+                    with preview_slot.container():
+                        with st.expander("METAR data preview (50 rows)"):
+                            st.dataframe(metars.head(50), use_container_width=True, height=300)
         except Exception as e:
             logger.exception("Report generation failed")
             st.error(f"Could not generate report: {e}. Check station ID and time window.")
@@ -1417,20 +1444,20 @@ _footer_html = (
     '<div class="fed-footer">'
     '<div class="fed-footer-cite">'
     '<strong>Data Source Chain:</strong> '
-    'NOAA / NCEI ASOS METAR archive &rarr; '
-    'Iowa Environmental Mesonet (mesonet.agron.iastate.edu) &rarr; '
+    'NOAA / NCEI ASOS METAR archive &rsaquo; '
+    'Iowa Environmental Mesonet (mesonet.agron.iastate.edu) &rsaquo; '
     'O.W.L. processing layer. '
     '<strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository '
-    f'(HOMR) asos-stations.txt — {len(AOMC_STATIONS):,} federally-operated AOMC '
+    f'(HOMR) asos-stations.txt &mdash; {len(AOMC_STATIONS):,} federally-operated AOMC '
     'stations (NWS / FAA / DOD).'
     '</div>'
     '<div class="fed-footer-meta">'
-    f'O.W.L. — OBSERVATION WATCH LOG · v1.0 · SYSTEM TIME {_now_footer} · '
-    '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> · '
-    '<a href="https://www.ncei.noaa.gov">NCEI</a> · '
-    '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> · '
+    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.0 &middot; SYSTEM TIME {_now_footer} &middot; '
+    '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> &middot; '
+    '<a href="https://www.ncei.noaa.gov">NCEI</a> &middot; '
+    '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> &middot; '
     '<a href="https://mesonet.agron.iastate.edu">IEM</a>'
     '</div>'
     '</div>'
 )
-st.markdown(_footer_html, unsafe_allow_html=True)
+st.html(_footer_html)
