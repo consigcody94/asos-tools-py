@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import io
+import logging
+import re
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pandas as pd
+import requests as _requests
 import streamlit as st
 
 from asos_tools import fetch_1min, fetch_metars
@@ -20,6 +24,8 @@ from asos_tools._missing_report import build_missing_report
 from asos_tools.nws import get_current_conditions
 from asos_tools.stations import GROUPS, get_group, list_groups
 from asos_tools.watchlist import build_watchlist
+
+logger = logging.getLogger(__name__)
 
 try:
     from asos_tools.stations import ALL_ASOS_STATIONS
@@ -36,9 +42,30 @@ except ImportError:
     AOMC_IDS = frozenset()
     _HAVE_AOMC = False
 
+# Pre-computed lookups (perf fix: avoid O(n) scans and per-call dict builds).
+_AOMC_META = {s["id"]: s for s in AOMC_STATIONS}
+_SCAN_HOURS = 4
+_MAX_CUSTOM_DAYS = 365
+
+
+def _round_3min(dt: datetime) -> str:
+    """Round to nearest 3-min boundary — matches scan cache TTL."""
+    return dt.replace(second=0, microsecond=0,
+                      minute=(dt.minute // 3) * 3).isoformat()
+
+
+def _round_5min(dt: datetime) -> datetime:
+    """Round to nearest 5-min boundary for stable fetch cache keys."""
+    return dt.replace(second=0, microsecond=0,
+                      minute=(dt.minute // 5) * 5)
+
+
+def _wlabel(days: int) -> str:
+    return f"{days} day{'s' if days != 1 else ''}"
+
 
 # ---------------------------------------------------------------------------
-# Cached fetches
+# Cached fetches (perf fixes applied)
 # ---------------------------------------------------------------------------
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -51,20 +78,25 @@ def _fetch_metars(stations_key, start, end):
 
 @st.cache_data(ttl=120, show_spinner=False)
 def _fetch_nws(station_id):
+    # Security: validate station ID before passing to NWS URL path.
+    if not re.fullmatch(r"[A-Z0-9]{3,6}", station_id.strip().upper()):
+        return None
     return get_current_conditions(station_id)
 
 @st.cache_data(ttl=180, show_spinner=False)
 def _scan(station_ids, hours, cache_key):
+    """Watchlist scan. cache_key is rounded to 3-min to match TTL."""
     end = datetime.fromisoformat(cache_key).replace(tzinfo=timezone.utc)
-    meta = {s["id"]: s for s in AOMC_STATIONS}
     return build_watchlist(
-        [meta.get(sid, {"id": sid}) for sid in station_ids],
+        [_AOMC_META.get(sid, {"id": sid}) for sid in station_ids],
         hours=hours, end=end,
     )
 
 
 def _render(builder, **kw):
-    tmp = Path(f".tmp_{datetime.now().timestamp()}.png")
+    """Render a report PNG via a temp file (matplotlib needs a path)."""
+    with NamedTemporaryFile(suffix=".png", delete=False) as f:
+        tmp = Path(f.name)
     try:
         builder(out_path=tmp, **kw)
         return tmp.read_bytes()
@@ -181,10 +213,10 @@ with st.sidebar:
     st.caption("Automated Surface Observing System")
     st.caption(f"{len(AOMC_STATIONS)} federal stations · NWS / FAA / DOD")
 
-    # ---- Quick network pulse (auto-runs, cached) ----
+    # ---- Quick network pulse (cached at 3-min boundary) ----
     if _HAVE_AOMC:
         all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-        ck = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
+        ck = _round_3min(datetime.now(timezone.utc))
         try:
             pulse = _scan(all_ids, 4.0, ck)
             if not pulse.empty:
@@ -195,8 +227,9 @@ with st.sidebar:
                 pc3.metric("Missing",
                            int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0)))
                 st.caption(f"Last 4h · {datetime.now(timezone.utc):%H:%M UTC}")
-        except Exception:
-            st.caption("Scan unavailable")
+        except Exception as exc:
+            logger.exception("Sidebar pulse scan failed")
+            st.warning("Network scan unavailable")
 
     st.divider()
 
@@ -220,11 +253,15 @@ with st.sidebar:
             pool = ([s for s in ALL_ASOS_STATIONS if s["id"] in AOMC_IDS]
                     if aomc_toggle else ALL_ASOS_STATIONS)
             pool_ids = [s["id"] for s in pool]
-            # Short labels that won't clip: "KJFK · JFK Kennedy · NY"
+            _plk = {s["id"]: s for s in pool}  # O(1) lookup (was O(n²))
             sid = st.selectbox(
                 "Station", pool_ids,
                 index=pool_ids.index("KJFK") if "KJFK" in pool_ids else 0,
-                format_func=lambda s: f"{s} · {_short_name(next((r['name'] for r in pool if r['id'] == s), ''))} · {next((r.get('state','') for r in pool if r['id'] == s), '')}",
+                format_func=lambda s: (
+                    f"{s} · {_short_name(_plk.get(s, {}).get('name', ''))} · "
+                    f"{_plk.get(s, {}).get('state', '')}"
+                ),
+                help="Select by ICAO ID, name, or state",
             )
         else:
             sid = st.text_input("ICAO ID", "KJFK").strip().upper()
@@ -257,12 +294,17 @@ with st.sidebar:
             ed = st.date_input("To", today)
         start = datetime.combine(sd, datetime.min.time(), tzinfo=timezone.utc)
         end = datetime.combine(ed, datetime.min.time(), tzinfo=timezone.utc)
-        wlabel = f"{(end - start).days} day"
+        span = (end - start).days
+        if span > _MAX_CUSTOM_DAYS:
+            st.error(f"Date range too large ({span} days). Maximum is {_MAX_CUSTOM_DAYS} days.")
+        elif span <= 0:
+            st.error("End date must be after start date.")
+        wlabel = _wlabel(span)
     else:
         days = {"1 day": 1, "7 days": 7, "14 days": 14, "30 days": 30}[wmode]
-        end = datetime.now(timezone.utc)
-        start = end - timedelta(days=days)
-        wlabel = f"{days} day"
+        end = _round_5min(datetime.now(timezone.utc))
+        start = _round_5min(end - timedelta(days=days))
+        wlabel = _wlabel(days)
 
     go = st.button("Generate", type="primary", use_container_width=True)
 
@@ -282,7 +324,7 @@ with st.sidebar:
             w_spd = cond.get("wind_speed_kt")
             w_dir = cond.get("wind_direction")
             wc1.metric("Wind",
-                       f"{w_dir:.0f}°/{w_spd:.0f}kt" if w_spd is not None else "—")
+                       f"{w_dir:.0f}° / {w_spd:.0f} kt" if w_spd is not None else "—")
             wc2.metric("Vis",
                        f"{cond['visibility_mi']:.0f}mi" if cond.get("visibility_mi") is not None else "—")
             sky = cond.get("sky", "")
@@ -528,7 +570,7 @@ def _scan_ui(key):
         ids = tuple(sid for sid in get_group(g) if sid in AOMC_IDS) or tuple(get_group(g))
     else:
         ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-    ck = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
+    ck = _round_3min(datetime.now(timezone.utc))
     return ids, hours, ck
 
 
@@ -551,108 +593,107 @@ def _fmt_wl(wl, statuses):
 
 with tab_summary:
     if not _HAVE_AOMC:
-        st.error("AOMC catalog not loaded.")
-        st.stop()
-
-    all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-    ck = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
-
-    with st.spinner("Scanning network…"):
-        wl = _scan(all_ids, 4.0, ck)
-
-    if wl.empty:
-        st.warning("No data returned.")
+        st.error("AOMC catalog not loaded. Restart the app or contact your administrator.")
     else:
-        cts = wl["status"].value_counts()
-        nf = int(cts.get("FLAGGED", 0))
-        ni = int(cts.get("INTERMITTENT", 0))
-        nr = int(cts.get("RECOVERED", 0))
-        nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
-        nc = int(cts.get("CLEAN", 0))
+        all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+        ck = _round_3min(datetime.now(timezone.utc))
 
-        c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric("Clean", nc)
-        c2.metric("Flagged ($)", nf)
-        c3.metric("Missing", nm)
-        c4.metric("Recovered", nr)
-        c5.metric("Intermittent", ni)
-        st.caption(f"Last 4 hours · {len(wl)} stations · {datetime.now(timezone.utc):%H:%M:%S UTC}")
+        with st.spinner("Scanning network…"):
+            wl = _scan(all_ids, float(_SCAN_HOURS), ck)
 
-        st.divider()
-
-        if nf == 0 and nm == 0:
-            st.success(f"Network healthy. All {nc} stations reporting clean.")
+        if wl.empty:
+            st.warning("No data returned. Check network connectivity.")
         else:
-            msg = []
-            if nf: msg.append(f"**{nf}** flagged ($)")
-            if ni: msg.append(f"**{ni}** intermittent")
-            if nm: msg.append(f"**{nm}** missing")
-            if nr: msg.append(f"**{nr}** recovered")
-            st.warning(" · ".join(msg) + f" · **{nc}** clean (not listed)")
+            cts = wl["status"].value_counts()
+            nf = int(cts.get("FLAGGED", 0))
+            ni = int(cts.get("INTERMITTENT", 0))
+            nr = int(cts.get("RECOVERED", 0))
+            nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
+            nc = int(cts.get("CLEAN", 0))
 
-        # Flagged
-        flagged = _fmt_wl(wl, ["FLAGGED"])
-        if not flagged.empty:
-            st.subheader(f"Flagged Stations ({len(flagged)})")
-            st.dataframe(
-                flagged[["station", "name", "state", "probable_reason",
-                         "flagged", "total", "flag_rate"]].rename(columns={
-                    "station": "Station", "name": "Name", "state": "ST",
-                    "probable_reason": "Probable Reason",
-                    "flagged": "$", "total": "Total", "flag_rate": "Rate %",
-                }),
-                use_container_width=True, hide_index=True,
-                height=min(36 * len(flagged) + 38, 460),
-                column_config={
-                    "Rate %": st.column_config.ProgressColumn(
-                        min_value=0, max_value=100, format="%.0f%%"),
-                })
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Clean", nc)
+            c2.metric("Flagged ($)", nf)
+            c3.metric("Missing", nm)
+            c4.metric("Recovered", nr)
+            c5.metric("Interm.", ni)
+            st.caption(f"Last {_SCAN_HOURS}h · {len(wl)} stations · {datetime.now(timezone.utc):%H:%M:%S UTC}")
 
-        # Intermittent
-        inter = _fmt_wl(wl, ["INTERMITTENT"])
-        if not inter.empty:
-            st.subheader(f"Intermittent ({len(inter)})")
-            st.dataframe(
-                inter[["station", "name", "state", "probable_reason"]].rename(columns={
-                    "station": "Station", "name": "Name", "state": "ST",
-                    "probable_reason": "Reason",
-                }),
-                use_container_width=True, hide_index=True,
-                height=min(36 * len(inter) + 38, 220))
+            st.divider()
 
-        # Recovered
-        recov = _fmt_wl(wl, ["RECOVERED"])
-        if not recov.empty:
-            st.subheader(f"Recovered ({len(recov)})")
-            st.dataframe(
-                recov[["station", "name", "state", "minutes_since_last_flag"]].rename(columns={
-                    "station": "Station", "name": "Name", "state": "ST",
-                    "minutes_since_last_flag": "Min since $",
-                }),
-                use_container_width=True, hide_index=True,
-                height=min(36 * len(recov) + 38, 220))
+            if nf == 0 and nm == 0:
+                st.success(f"Network healthy. All {nc} stations reporting clean.")
+            else:
+                msg = []
+                if nf: msg.append(f"**{nf}** flagged ($)")
+                if ni: msg.append(f"**{ni}** intermittent")
+                if nm: msg.append(f"**{nm}** missing")
+                if nr: msg.append(f"**{nr}** recovered")
+                st.warning(" · ".join(msg) + f" · **{nc}** clean (not listed)")
 
-        # Missing
-        miss = _fmt_wl(wl, ["MISSING", "NO DATA"])
-        if not miss.empty:
-            st.subheader(f"Missing METARs ({len(miss)})")
-            st.dataframe(
-                miss[["station", "name", "state", "missing",
-                      "expected_hourly", "missing_hours_utc",
-                      "minutes_since_last_report"]].rename(columns={
-                    "station": "Station", "name": "Name", "state": "ST",
-                    "missing": "Gaps", "expected_hourly": "Expected",
-                    "missing_hours_utc": "Missing Hours",
-                    "minutes_since_last_report": "Min since report",
-                }),
-                use_container_width=True, hide_index=True,
-                height=min(36 * len(miss) + 38, 460))
+            # Flagged
+            flagged = _fmt_wl(wl, ["FLAGGED"])
+            if not flagged.empty:
+                st.subheader(f"Flagged Stations ({len(flagged)})")
+                st.dataframe(
+                    flagged[["station", "name", "state", "probable_reason",
+                             "flagged", "total", "flag_rate"]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "probable_reason": "Reason",
+                        "flagged": "$", "total": "Total", "flag_rate": "Rate %",
+                    }),
+                    use_container_width=True, hide_index=True,
+                    height=min(36 * len(flagged) + 38, 460),
+                    column_config={
+                        "Rate %": st.column_config.ProgressColumn(
+                            min_value=0, max_value=100, format="%.0f%%"),
+                    })
 
-        st.divider()
-        st.caption(
-            f"**{nc} stations** reporting clean — not listed. "
-            "Use the other tabs for detailed analysis."
-        )
+            # Intermittent
+            inter = _fmt_wl(wl, ["INTERMITTENT"])
+            if not inter.empty:
+                st.subheader(f"Intermittent ({len(inter)})")
+                st.dataframe(
+                    inter[["station", "name", "state", "probable_reason"]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "probable_reason": "Reason",
+                    }),
+                    use_container_width=True, hide_index=True,
+                    height=min(36 * len(inter) + 38, 220))
+
+            # Recovered
+            recov = _fmt_wl(wl, ["RECOVERED"])
+            if not recov.empty:
+                st.subheader(f"Recovered ({len(recov)})")
+                st.dataframe(
+                    recov[["station", "name", "state", "minutes_since_last_flag"]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "minutes_since_last_flag": "Min since $",
+                    }),
+                    use_container_width=True, hide_index=True,
+                    height=min(36 * len(recov) + 38, 220))
+
+            # Missing
+            miss = _fmt_wl(wl, ["MISSING", "NO DATA"])
+            if not miss.empty:
+                st.subheader(f"Missing METARs ({len(miss)})")
+                st.dataframe(
+                    miss[["station", "name", "state", "missing",
+                          "expected_hourly", "missing_hours_utc",
+                          "minutes_since_last_report"]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "missing": "Gaps", "expected_hourly": "Expected",
+                        "missing_hours_utc": "Missing Hours",
+                        "minutes_since_last_report": "Min since report",
+                    }),
+                    use_container_width=True, hide_index=True,
+                    height=min(36 * len(miss) + 38, 460))
+
+            st.divider()
+            st.caption(
+                f"**{nc} stations** reporting clean — not listed. "
+                "Use the other tabs for detailed analysis."
+            )
 
 
 # ===========================================================================
@@ -730,8 +771,8 @@ with tab_reports:
                     with st.expander("METAR data preview (50 rows)"):
                         st.dataframe(metars.head(50), use_container_width=True, height=300)
         except Exception as e:
-            st.error(f"Error: {e}")
-            st.exception(e)
+            logger.exception("Report generation failed")
+            st.error(f"Could not generate report: {e}. Check station ID and time window.")
 
 
 # ===========================================================================
@@ -795,7 +836,7 @@ with tab_flags:
         with st.spinner(f"Scanning {len(ids)} stations…"):
             wl_f = _scan(ids, float(hours), ck)
         if wl_f.empty:
-            st.warning("No data.")
+            st.warning("No data returned. Verify station IDs are valid and the time window is within the last 30 days.")
         else:
             cts = wl_f["status"].value_counts()
             c1, c2, c3, c4 = st.columns(4)
@@ -852,7 +893,7 @@ with tab_missing:
         with st.spinner(f"Scanning {len(ids)} stations…"):
             wl_m = _scan(ids, float(hours), ck)
         if wl_m.empty:
-            st.warning("No data.")
+            st.warning("No data returned. Verify station IDs are valid and the time window is within the last 30 days.")
         else:
             cts = wl_m["status"].value_counts()
             nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))

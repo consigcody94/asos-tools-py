@@ -18,6 +18,7 @@ Example
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Iterable, Union
@@ -89,7 +90,6 @@ def decode_maintenance_reasons(metar: str) -> list[dict]:
             reasons.append({"sensor": sensor, "reason": desc})
 
     # 2. Location-qualified codes (VISNO RWY06, CHINO RWY24L).
-    import re
     for code, (sensor, desc_template) in _LOCATION_INDICATORS.items():
         pattern = rf"{code}\s+(\S+)"
         m = re.search(pattern, upper)
