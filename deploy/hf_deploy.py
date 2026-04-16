@@ -83,6 +83,7 @@ def main() -> int:
     # Upload top-level single files.
     for local, remote, msg in [
         ("app.py", "app.py", "Upload Streamlit app"),
+        ("owl_logo.png", "owl_logo.png", "Upload O.W.L. logo"),
         ("requirements.txt", "requirements.txt", "Upload requirements"),
         ("Dockerfile", "Dockerfile", "Upload Dockerfile"),
         ("deploy/huggingface_README.md", "README.md",

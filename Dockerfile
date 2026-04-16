@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY asos_tools/ ./asos_tools/
 COPY app.py .
+COPY owl_logo.png .
 COPY .streamlit/ ./.streamlit/
 
 # HF Spaces docker expects the app on port 7860.

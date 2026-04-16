@@ -209,7 +209,11 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 # ===========================================================================
 
 with st.sidebar:
-    st.markdown("### O.W.L.")
+    logo = Path(__file__).parent / "owl_logo.png"
+    if logo.exists():
+        st.image(str(logo), width=180)
+    else:
+        st.markdown("### O.W.L.")
     st.caption("Observation Watch Log")
     st.caption(f"{len(AOMC_STATIONS)} ASOS stations · NWS / FAA / DOD")
 
