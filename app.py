@@ -127,77 +127,202 @@ st.set_page_config(
 )
 
 st.markdown("""<style>
+/* Professional typography: Inter for UI, Space Grotesk for headings */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+html, body, [class*="st-"], [class*="css-"], button, input, select, textarea {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+}
+
+h1, h2, h3, h4, h5, h6,
+[data-testid="stHeading"] {
+    font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+code, pre, [data-testid="stCode"] {
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+}
+
 /* Layout */
 section.main > div.block-container {
     padding-top: 1.4rem; max-width: 1460px;
 }
-[data-testid="stSidebar"] { min-width: 310px; max-width: 370px; }
-[data-testid="stSidebar"] > div { padding-top: 0.5rem; }
+[data-testid="stSidebar"] { min-width: 320px; max-width: 380px; }
+[data-testid="stSidebar"] > div {
+    padding-top: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
 
-/* Metric cards — theme-aware with CSS variables */
+/* === SIDEBAR LOGO — seamless, with breathing room === */
+[data-testid="stSidebar"] [data-testid="stImage"],
+[data-testid="stSidebar"] [data-testid="stImage"]:first-of-type {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0.5rem 0 0 0 !important;
+    margin: 0 0 0.5rem 0 !important;
+    min-height: 0 !important;
+}
+[data-testid="stSidebar"] [data-testid="stImage"] img {
+    display: block;
+    margin: 0 auto;
+    max-width: 82% !important;
+    height: auto !important;
+    filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.12));
+}
+
+/* Sidebar content padding (applied after image) */
+[data-testid="stSidebar"] > div > div {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* === LIGHT MODE POLISH === */
+
+/* Sidebar has subtle off-white tint to visually separate from main. */
+[data-testid="stSidebar"] {
+    background: #f8fafc !important;
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+/* Metric cards — NOAA blue accent + visible border */
 div[data-testid="stMetric"] {
-    padding: 0.55rem 0.8rem;
-    border-radius: 8px;
-    border: 1px solid rgba(128,128,128,0.15);
-    border-left: 3px solid var(--primary-color, #0ea5e9);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #003366;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 div[data-testid="stMetric"] label {
-    font-size: 0.7rem !important;
-    letter-spacing: 0.03em;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    opacity: 0.7;
+    opacity: 0.72;
 }
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-    font-size: 1.3rem !important;
-    font-weight: 700;
+    font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+    font-size: 1.45rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
 }
 
 /* Tabs — clean underline style */
 .stTabs [data-baseweb="tab-list"] { gap: 0; }
 .stTabs [data-baseweb="tab"] {
+    font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 0.88rem !important;
-    padding: 0.6rem 1.1rem !important;
+    font-size: 0.9rem !important;
+    padding: 0.65rem 1.15rem !important;
     border-radius: 0 !important;
     border-bottom: 2px solid transparent !important;
+    letter-spacing: -0.005em;
 }
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
-    border-bottom-color: var(--primary-color, #0ea5e9) !important;
+    border-bottom-color: #003366 !important;
+    color: #003366 !important;
+    font-weight: 700 !important;
 }
 .stTabs [data-baseweb="tab"]:hover {
     border-bottom-color: rgba(128,128,128,0.3) !important;
 }
 
 /* Tables */
-[data-testid="stDataFrame"] { border-radius: 8px; overflow: hidden; }
+[data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
 
-/* Sidebar section headers */
+/* Sidebar section headers — refined hierarchy */
 [data-testid="stSidebar"] h3 {
-    font-size: 0.95rem !important;
-    letter-spacing: 0.02em;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-top: 1rem !important;
+    margin-bottom: 0.4rem !important;
 }
 [data-testid="stSidebar"] h4 {
-    font-size: 0.82rem !important;
-    letter-spacing: 0.02em;
-    opacity: 0.85;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-top: 0.8rem !important;
+    margin-bottom: 0.3rem !important;
 }
 
-/* Download buttons */
-[data-testid="stDownloadButton"] > button {
-    font-size: 0.82rem !important;
+/* Sidebar captions — tighter line-height */
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] p {
+    font-size: 0.78rem !important;
+    line-height: 1.4;
+}
+
+/* Brand line in sidebar — under logo */
+.owl-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
     font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #64748b;
+    margin: -0.5rem 0 1rem 0;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-/* Primary generate button */
+/* Main page title */
+h2 {
+    font-size: 1.9rem !important;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.2rem !important;
+}
+
+/* Buttons */
+[data-testid="stDownloadButton"] > button,
+.stButton > button {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.005em;
+    border-radius: 8px !important;
+}
 .stButton > button[kind="primary"] {
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    background-color: #003366 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: 0.82rem !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0, 51, 102, 0.25);
+}
+.stButton > button[kind="primary"]:hover {
+    background-color: #1e40af !important;
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.35);
 }
 
-/* Image container */
-[data-testid="stImage"] {
-    border-radius: 8px;
+/* Dividers — thinner */
+hr {
+    border-color: #e2e8f0 !important;
+    margin: 0.8rem 0 !important;
+}
+
+/* Main content image (reports) — clean border */
+.main [data-testid="stImage"] {
+    border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(128,128,128,0.12);
 }
@@ -211,10 +336,11 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 with st.sidebar:
     logo = Path(__file__).parent / "owl_logo.png"
     if logo.exists():
-        st.image(str(logo), width=180)
-    else:
-        st.markdown("### O.W.L.")
-    st.caption("Observation Watch Log")
+        st.image(str(logo), use_container_width=True)
+    st.markdown(
+        '<div class="owl-brand">Observation Watch Log</div>',
+        unsafe_allow_html=True,
+    )
     st.caption(f"{len(AOMC_STATIONS)} ASOS stations · NWS / FAA / DOD")
 
     # ---- Quick network pulse (cached at 3-min boundary) ----
@@ -360,23 +486,76 @@ with st.sidebar:
     # Apply dark overrides if toggled on.
     if st.session_state.get("dark_mode"):
         st.markdown("""<style>
+        /* === DARK MODE — deep navy with distinct layers === */
+        /* Main: darkest. Sidebar: mid. Cards: slightly lighter. */
         [data-testid="stApp"],
         [data-testid="stAppViewContainer"],
-        .main { background-color: #0f172a !important; color: #e2e8f0 !important; }
-        [data-testid="stHeader"] { background-color: #0f172a !important; }
-        [data-testid="stSidebar"] { background-color: #1e293b !important;
-            border-right: 1px solid #334155 !important; }
-        [data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-        h1, h2, h3, h4 { color: #f1f5f9 !important; }
-        p, span, label, [data-testid="stMarkdownContainer"] { color: #cbd5e1 !important; }
-        div[data-testid="stMetric"] {
-            background: #1e293b !important;
-            border-color: #334155 !important;
+        .main { background-color: #0a1020 !important; color: #e2e8f0 !important; }
+        [data-testid="stHeader"] { background-color: #0a1020 !important; }
+
+        [data-testid="stSidebar"] {
+            background-color: #111a2e !important;
+            border-right: 1px solid #1f2a44 !important;
         }
-        [data-testid="stDataFrame"] { border-color: #334155 !important; }
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+            color: #cbd5e1 !important;
+        }
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] h4 {
+            color: #f1f5f9 !important;
+        }
+        [data-testid="stSidebar"] .owl-brand {
+            color: #94a3b8 !important;
+            border-bottom-color: #1f2a44 !important;
+        }
+
+        h1, h2, h3, h4 { color: #f1f5f9 !important; }
+        p, [data-testid="stMarkdownContainer"] { color: #cbd5e1 !important; }
+        [data-testid="stCaptionContainer"] { color: #94a3b8 !important; }
+
+        /* Metric cards — distinct elevation from sidebar bg */
+        div[data-testid="stMetric"] {
+            background: #1a2540 !important;
+            border: 1px solid #2d3a5c !important;
+            border-left: 3px solid #38bdf8 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+        }
+        div[data-testid="stMetric"] label { color: #94a3b8 !important; }
+        div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+            color: #f1f5f9 !important;
+        }
+
+        /* Logo drop-shadow — softer on dark */
+        [data-testid="stSidebar"] [data-testid="stImage"] img {
+            filter: drop-shadow(0 4px 16px rgba(56, 189, 248, 0.25)) !important;
+        }
+
+        /* Tables */
+        [data-testid="stDataFrame"] {
+            border-color: #2d3a5c !important;
+            background: #111a2e !important;
+        }
+
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            border-bottom: 1px solid #1f2a44 !important;
+        }
         .stTabs [data-baseweb="tab"] { color: #94a3b8 !important; }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] { color: #f1f5f9 !important; }
-        [data-testid="stImage"] { border-color: #334155 !important; }
+        .stTabs [data-baseweb="tab"]:hover { color: #cbd5e1 !important; }
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            color: #f1f5f9 !important;
+            border-bottom-color: #38bdf8 !important;
+        }
+
+        /* Images */
+        .main [data-testid="stImage"] {
+            background: #111a2e !important;
+            border-color: #1f2a44 !important;
+        }
 
         /* EVERY form control — nuclear approach to catch all Streamlit variants */
         [data-baseweb="select"],
@@ -470,17 +649,18 @@ with st.sidebar:
             background-color: #334155 !important;
             border-color: #64748b !important;
         }
-        /* Primary button keeps accent */
+        /* Primary button — NOAA blue, light-blue text for contrast */
         .stButton > button[kind="primary"],
         [data-testid="stBaseButton-primary"] {
-            background-color: #0ea5e9 !important;
-            color: #0f172a !important;
-            -webkit-text-fill-color: #0f172a !important;
+            background-color: #1e40af !important;
+            color: #f0f9ff !important;
+            -webkit-text-fill-color: #f0f9ff !important;
             border: none !important;
+            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.35) !important;
         }
         .stButton > button[kind="primary"]:hover,
         [data-testid="stBaseButton-primary"]:hover {
-            background-color: #38bdf8 !important;
+            background-color: #2563eb !important;
         }
         /* Download buttons */
         [data-testid="stDownloadButton"] > button,
