@@ -432,7 +432,8 @@ def _do_group_zip(stations_list, start, end, group_label, window_label) -> bytes
 # Header tabs
 # ---------------------------------------------------------------------------
 
-tab_reports, tab_browser, tab_watchlist, tab_missing = st.tabs([
+tab_summary, tab_reports, tab_browser, tab_watchlist, tab_missing = st.tabs([
+    "🏠 Summary",
     "📊 Reports",
     "🗂 Stations",
     "⚠️ $ Flags",
@@ -441,7 +442,168 @@ tab_reports, tab_browser, tab_watchlist, tab_missing = st.tabs([
 
 
 # ===========================================================================
-# TAB 1 — Reports (the original app)
+# TAB 0 — Summary (landing page)
+# ===========================================================================
+
+with tab_summary:
+    st.markdown("### Welcome to ASOS Tools")
+    st.markdown(
+        "Here's the current state of the national ASOS network. "
+        "This scans all **920 AOMC federal stations** over the last **4 hours** automatically."
+    )
+
+    if not _HAVE_AOMC:
+        st.warning("AOMC catalog not bundled — run `deploy/build_aomc_catalog.py`.")
+    else:
+        # Auto-scan on page load (cached, so free after first hit).
+        all_aomc_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+        now_key_summary = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:00")
+
+        with st.spinner("Scanning all AOMC stations (last 4 hours)…"):
+            try:
+                wl_summary = _cached_watchlist(all_aomc_ids, 4.0, now_key_summary)
+            except Exception as e:
+                st.error(f"Scan failed: {e}")
+                wl_summary = pd.DataFrame()
+
+        if not wl_summary.empty:
+            counts = wl_summary["status"].value_counts()
+            n_flagged = int(counts.get("FLAGGED", 0))
+            n_intermittent = int(counts.get("INTERMITTENT", 0))
+            n_recovered = int(counts.get("RECOVERED", 0))
+            n_missing = int(counts.get("MISSING", 0))
+            n_no_data = int(counts.get("NO DATA", 0))
+            n_clean = int(counts.get("CLEAN", 0))
+            n_total = len(wl_summary)
+            scan_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+            # --- KPI overview ---
+            _kpis([
+                ("🟢 Clean", f"{n_clean}"),
+                ("🟠 Flagged ($)", f"{n_flagged}"),
+                ("🟡 Intermittent", f"{n_intermittent}"),
+                ("🟢 Recovered", f"{n_recovered}"),
+                ("🔴 Missing", f"{n_missing + n_no_data}"),
+                ("Total", f"{n_total}"),
+            ])
+            st.caption(f"Scanned at {scan_time}")
+
+            # --- Greeting message ---
+            st.markdown("---")
+            if n_flagged == 0 and n_missing == 0:
+                st.success(
+                    f"**All clear.** All {n_clean} AOMC stations are reporting "
+                    f"clean METARs with no maintenance flags and no missing reports."
+                )
+            else:
+                parts = []
+                if n_flagged > 0:
+                    parts.append(f"**{n_flagged}** station{'s are' if n_flagged != 1 else ' is'} "
+                                 f"currently reporting the **$** maintenance flag")
+                if n_intermittent > 0:
+                    parts.append(f"**{n_intermittent}** {'are' if n_intermittent != 1 else 'is'} intermittent")
+                if n_missing + n_no_data > 0:
+                    parts.append(f"**{n_missing + n_no_data}** {'are' if n_missing + n_no_data != 1 else 'is'} "
+                                 f"missing scheduled METARs")
+                if n_recovered > 0:
+                    parts.append(f"**{n_recovered}** recently recovered")
+                st.warning(" · ".join(parts) + f". **{n_clean}** stations are reporting clean.")
+
+            # --- Flagged stations list ---
+            flagged_df = wl_summary[wl_summary["status"] == "FLAGGED"].copy()
+            if not flagged_df.empty:
+                st.markdown(f"### 🟠 Flagged Stations ({len(flagged_df)})")
+                st.caption("These stations have the `$` maintenance indicator on their most recent METAR.")
+                display_f = flagged_df[[
+                    "station", "name", "state", "probable_reason",
+                    "flagged", "total", "flag_rate",
+                ]].rename(columns={
+                    "station": "Station", "name": "Name", "state": "State",
+                    "probable_reason": "Probable Reason",
+                    "flagged": "$ Count", "total": "Total", "flag_rate": "Flag %",
+                })
+                st.dataframe(display_f, use_container_width=True,
+                             height=min(35 * len(display_f) + 40, 400),
+                             hide_index=True,
+                             column_config={
+                                 "Flag %": st.column_config.ProgressColumn(
+                                     "Flag %", min_value=0, max_value=100, format="%.0f%%"),
+                             })
+
+            # --- Intermittent ---
+            inter_df = wl_summary[wl_summary["status"] == "INTERMITTENT"].copy()
+            if not inter_df.empty:
+                st.markdown(f"### 🟡 Intermittent ({len(inter_df)})")
+                st.caption("Flagged earlier in the window; latest report is clean but the previous was flagged.")
+                display_i = inter_df[[
+                    "station", "name", "state", "probable_reason",
+                    "flagged", "total",
+                ]].rename(columns={
+                    "station": "Station", "name": "Name", "state": "State",
+                    "probable_reason": "Probable Reason",
+                    "flagged": "$ Count", "total": "Total",
+                })
+                st.dataframe(display_i, use_container_width=True,
+                             height=min(35 * len(display_i) + 40, 300),
+                             hide_index=True)
+
+            # --- Recovered ---
+            recov_df = wl_summary[wl_summary["status"] == "RECOVERED"].copy()
+            if not recov_df.empty:
+                st.markdown(f"### 🟢 Recovered ({len(recov_df)})")
+                st.caption("Were flagged earlier but the last two METARs are clean.")
+                display_r = recov_df[[
+                    "station", "name", "state",
+                    "minutes_since_last_flag",
+                ]].rename(columns={
+                    "station": "Station", "name": "Name", "state": "State",
+                    "minutes_since_last_flag": "Min since last $",
+                })
+                display_r["Min since last $"] = display_r["Min since last $"].apply(
+                    lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—")
+                st.dataframe(display_r, use_container_width=True,
+                             height=min(35 * len(display_r) + 40, 250),
+                             hide_index=True)
+
+            # --- Missing stations list ---
+            missing_df = wl_summary[wl_summary["status"].isin(["MISSING", "NO DATA"])].copy()
+            if not missing_df.empty:
+                st.markdown(f"### 🔴 Missing METARs ({len(missing_df)})")
+                st.caption("These stations have not reported one or more expected hourly METARs.")
+                display_m = missing_df[[
+                    "station", "name", "state",
+                    "missing", "expected_hourly", "missing_hours_utc",
+                    "minutes_since_last_report",
+                ]].rename(columns={
+                    "station": "Station", "name": "Name", "state": "State",
+                    "missing": "Missing", "expected_hourly": "Expected",
+                    "missing_hours_utc": "Missing Hours",
+                    "minutes_since_last_report": "Min since last report",
+                })
+                display_m["Min since last report"] = display_m["Min since last report"].apply(
+                    lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—")
+                st.dataframe(display_m, use_container_width=True,
+                             height=min(35 * len(display_m) + 40, 400),
+                             hide_index=True)
+
+            # --- Clean stations (count only, no list) ---
+            st.markdown("---")
+            st.markdown(
+                f"### ✅ Clean Stations: {n_clean}\n\n"
+                f"These stations are reporting on schedule with no `$` flags "
+                f"and no missing METARs. Not listed individually."
+            )
+
+            # --- Quick links ---
+            st.markdown("---")
+            st.markdown(
+                "**Drill deeper →** Use the other tabs for detailed reports, "
+                "station browsing, and focused $ flag / missing METAR analysis."
+            )
+
+
+# ===========================================================================
+# TAB 1 — Reports
 # ===========================================================================
 
 with tab_reports:
