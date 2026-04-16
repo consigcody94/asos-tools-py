@@ -405,13 +405,56 @@ with st.sidebar:
         /* Captions */
         [data-testid="stCaptionContainer"] { color: #94a3b8 !important; }
 
-        /* Buttons */
-        .stButton > button { color: #f1f5f9 !important; border-color: #475569 !important; }
-        .stButton > button:hover { background: #334155 !important; }
-        .stButton > button[kind="primary"] { background: #0ea5e9 !important;
-            color: #0f172a !important; border: none !important; }
-        [data-testid="stDownloadButton"] > button { color: #e2e8f0 !important;
-            background: #1e293b !important; border-color: #475569 !important; }
+        /* ALL buttons — every variant Streamlit renders */
+        .stButton > button,
+        .stButton > button:focus,
+        .stButton > button:active,
+        [data-testid="stBaseButton-secondary"],
+        [data-testid="stBaseButton-secondary"]:focus,
+        button[kind="secondary"],
+        button[kind="secondary"]:focus {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #475569 !important;
+            -webkit-text-fill-color: #f1f5f9 !important;
+        }
+        .stButton > button:hover,
+        [data-testid="stBaseButton-secondary"]:hover,
+        button[kind="secondary"]:hover {
+            background-color: #334155 !important;
+            border-color: #64748b !important;
+        }
+        /* Primary button keeps accent */
+        .stButton > button[kind="primary"],
+        [data-testid="stBaseButton-primary"] {
+            background-color: #0ea5e9 !important;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border: none !important;
+        }
+        .stButton > button[kind="primary"]:hover,
+        [data-testid="stBaseButton-primary"]:hover {
+            background-color: #38bdf8 !important;
+        }
+        /* Download buttons */
+        [data-testid="stDownloadButton"] > button,
+        [data-testid="stDownloadButton"] > button:focus {
+            color: #e2e8f0 !important;
+            -webkit-text-fill-color: #e2e8f0 !important;
+            background-color: #1e293b !important;
+            border: 1px solid #475569 !important;
+        }
+        [data-testid="stDownloadButton"] > button:hover {
+            background-color: #334155 !important;
+        }
+        /* Button text — catch any nested span/p */
+        .stButton > button span,
+        .stButton > button p,
+        [data-testid="stDownloadButton"] > button span,
+        [data-testid="stDownloadButton"] > button p {
+            color: inherit !important;
+            -webkit-text-fill-color: inherit !important;
+        }
 
         /* Expanders */
         [data-testid="stExpander"] summary { color: #e2e8f0 !important; }
