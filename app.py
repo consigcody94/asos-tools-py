@@ -332,19 +332,70 @@ with st.sidebar:
         .stTabs [data-baseweb="tab"][aria-selected="true"] { color: #f1f5f9 !important; }
         [data-testid="stImage"] { border-color: #334155 !important; }
 
-        /* Inputs, selects, textareas — dark backgrounds + white text */
-        [data-baseweb="select"] { background: #1e293b !important; }
-        [data-baseweb="select"] * { color: #f1f5f9 !important; }
-        [data-baseweb="select"] [data-baseweb="tag"] { background: #334155 !important; }
-        [data-baseweb="input"] { background: #1e293b !important; }
-        [data-baseweb="input"] input { color: #f1f5f9 !important; background: transparent !important; }
-        [data-baseweb="textarea"] textarea { color: #f1f5f9 !important; background: #1e293b !important; }
-        [data-baseweb="popover"] { background: #1e293b !important; }
-        [data-baseweb="popover"] li { color: #e2e8f0 !important; }
-        [data-baseweb="popover"] li:hover { background: #334155 !important; }
-        [data-baseweb="menu"] { background: #1e293b !important; }
-        [data-baseweb="menu"] li { color: #e2e8f0 !important; }
-        [data-baseweb="menu"] li:hover { background: #334155 !important; }
+        /* EVERY form control — nuclear approach to catch all Streamlit variants */
+        [data-baseweb="select"],
+        [data-baseweb="select"] > div,
+        [data-baseweb="select"] > div > div,
+        [data-baseweb="select"] [class*="control"],
+        [data-baseweb="select"] [class*="ValueContainer"],
+        [data-baseweb="select"] [class*="singleValue"],
+        [data-baseweb="select"] [class*="placeholder"],
+        [data-baseweb="select"] [class*="indicatorContainer"],
+        div[data-baseweb="select"] div[role="combobox"],
+        div[data-baseweb="select"] div[role="listbox"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+        [data-baseweb="select"] span,
+        [data-baseweb="select"] div,
+        [data-baseweb="select"] input {
+            color: #f1f5f9 !important;
+        }
+        [data-baseweb="select"] svg { fill: #94a3b8 !important; }
+        [data-baseweb="select"] [data-baseweb="tag"] { background: #334155 !important; color: #f1f5f9 !important; }
+
+        /* Dropdown menus / popovers — every depth */
+        [data-baseweb="popover"],
+        [data-baseweb="popover"] > div,
+        [data-baseweb="menu"],
+        [data-baseweb="menu"] > div,
+        ul[role="listbox"],
+        ul[role="listbox"] > li,
+        div[role="listbox"],
+        div[role="listbox"] > div {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+        }
+        ul[role="listbox"] > li:hover,
+        [data-baseweb="menu"] li:hover,
+        [data-baseweb="popover"] li:hover,
+        div[role="option"]:hover,
+        li[role="option"]:hover {
+            background-color: #334155 !important;
+        }
+        li[role="option"],
+        div[role="option"] { color: #e2e8f0 !important; }
+        li[aria-selected="true"],
+        div[aria-selected="true"] { background-color: #0f172a !important; }
+
+        /* Text inputs */
+        [data-baseweb="input"],
+        [data-baseweb="input"] > div {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+        }
+        [data-baseweb="input"] input {
+            color: #f1f5f9 !important;
+            background: transparent !important;
+            -webkit-text-fill-color: #f1f5f9 !important;
+        }
+        [data-baseweb="textarea"] textarea {
+            color: #f1f5f9 !important;
+            background: #1e293b !important;
+            border-color: #475569 !important;
+            -webkit-text-fill-color: #f1f5f9 !important;
+        }
 
         /* Radio + checkbox + toggle */
         [data-baseweb="radio"] label,
