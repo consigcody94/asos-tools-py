@@ -42,8 +42,18 @@ __all__ = [
     "build_report",
     "build_maintenance_report",
     "build_comparison_report",
+    "build_missing_report",
     "ReportResult",
 ]
+
+# build_missing_report lives in _missing_report.py to avoid a 200-line
+# append to this already-long file. Lazy-import here so the public API
+# surface (from asos_tools.report import build_missing_report) works.
+def __getattr__(name):
+    if name == "build_missing_report":
+        from asos_tools._missing_report import build_missing_report
+        return build_missing_report
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 # -----------------------------------------------------------------------------
@@ -979,8 +989,8 @@ def build_comparison_report(
         f"•  Highest flag rates:  " +
         ", ".join(f"{s} ({r*100:.0f}%)" for s, r in worst.items()),
         f"•  Clean (0% flagged):  " + (", ".join(best) if best else "—"),
-        "•  A trailing $ on a METAR is the ASOS maintenance check indicator; "
-        "treat the associated sensor readings with extra skepticism.",
+        "•  The $ maintenance indicator signals the ASOS self-test detected "
+        "an out-of-tolerance condition. Check the Probable Reason column for details.",
     ]
     for i, line in enumerate(lines):
         ax_txt.text(0.005, 0.72 - i * 0.26, line,

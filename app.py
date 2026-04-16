@@ -25,6 +25,7 @@ from asos_tools.report import (
     build_maintenance_report,
     build_report,
 )
+from asos_tools._missing_report import build_missing_report
 from asos_tools.stations import GROUPS, get_group, list_groups
 from asos_tools.watchlist import build_watchlist, STATUS_ORDER
 
@@ -442,7 +443,8 @@ with tab_reports:
         "Report type",
         ["1-minute dashboard",
          "Maintenance flags ($)",
-         "Flagged vs clean comparison"],
+         "Flagged vs clean comparison",
+         "Missing METARs breakdown"],
         label_visibility="collapsed",
     )
 
@@ -667,16 +669,19 @@ with tab_reports:
                     if len(stations_list) == 1 and total > 0:
                         st.markdown(_flag_strip_html(metars), unsafe_allow_html=True)
 
-                    builder = (build_maintenance_report
-                               if report_type.startswith("Maintenance")
-                               else build_comparison_report)
+                    if report_type.startswith("Maintenance"):
+                        builder, kind = build_maintenance_report, "maintenance"
+                    elif report_type.startswith("Missing"):
+                        builder, kind = build_missing_report, "missing"
+                    else:
+                        builder, kind = build_comparison_report, "comparison"
+
                     with st.spinner("Rendering report…"):
                         png = _render_to_bytes(builder, metars_df=metars,
                                                group_label=group_label,
                                                window_label=window_label)
                     st.image(png, use_container_width=True, output_format="PNG")
 
-                    kind = "maintenance" if report_type.startswith("Maintenance") else "comparison"
                     c1, c2 = st.columns(2)
                     with c1:
                         st.download_button("⬇ Download PNG", data=png,
