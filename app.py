@@ -326,6 +326,194 @@ hr {
     overflow: hidden;
     border: 1px solid rgba(128,128,128,0.12);
 }
+
+/* === OPERATIONS BANNER (top of page) === */
+.ops-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    margin: -0.6rem -0.2rem 0.9rem -0.2rem;
+    background: #1a1f2e;
+    color: #cbd5e1;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.ops-banner-left, .ops-banner-right {
+    display: flex; align-items: center; gap: 0.7rem;
+}
+.banner-pill {
+    background: #00a91c;
+    color: #ffffff;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+.banner-meta {
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+.banner-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #cbd5e1;
+    letter-spacing: 0.02em;
+}
+.status-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.status-label {
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: 0.74rem;
+}
+
+/* === TITLE BLOCK === */
+.ops-title {
+    border-bottom: 2px solid #003366;
+    padding-bottom: 0.7rem;
+    margin-bottom: 1.1rem;
+}
+.ops-title-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: #003366;
+    line-height: 1;
+}
+.ops-title-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 0.25rem;
+    letter-spacing: 0.01em;
+}
+
+/* === NETWORK HEALTH GAUGE === */
+.health-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.health-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.7rem;
+}
+.health-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #64748b;
+    text-transform: uppercase;
+}
+.health-numbers {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-top: 0.2rem;
+}
+.health-pct {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #003366;
+    line-height: 1;
+}
+.health-detail {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.health-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+.health-stat {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    letter-spacing: 0.04em;
+}
+.health-stat .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.health-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.health-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* === FEDERAL FOOTER === */
+.fed-footer {
+    margin-top: 2rem;
+    padding: 1rem 1.2rem;
+    background: #f8fafc;
+    border-top: 3px solid #003366;
+    border-radius: 0 0 8px 8px;
+    font-family: 'Inter', sans-serif;
+}
+.fed-footer-cite {
+    font-size: 0.74rem;
+    color: #475569;
+    line-height: 1.55;
+}
+.fed-footer-cite strong { color: #003366; }
+.fed-footer-meta {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    letter-spacing: 0.04em;
+}
+.fed-footer-meta a {
+    color: #003366;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Print styles for government printouts */
+@media print {
+    [data-testid="stSidebar"], .ops-banner, .stTabs [data-baseweb="tab-list"] { display: none !important; }
+    body { background: #ffffff !important; color: #000000 !important; }
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -701,6 +889,29 @@ with st.sidebar:
         [data-baseweb="datepicker"] { background: #1e293b !important; }
         [data-baseweb="datepicker"] * { color: #e2e8f0 !important; }
         [data-baseweb="calendar"] { background: #1e293b !important; }
+
+        /* Ops banner / title / health card — dark mode */
+        .ops-banner { background: #0a1020 !important; }
+        .ops-title { border-bottom-color: #38bdf8 !important; }
+        .ops-title-name { color: #f8fafc !important; }
+        .ops-title-sub { color: #94a3b8 !important; }
+        .health-card {
+            background: #1a2540 !important;
+            border-color: #2d3a5c !important;
+        }
+        .health-label { color: #94a3b8 !important; }
+        .health-pct { color: #38bdf8 !important; }
+        .health-detail { color: #cbd5e1 !important; }
+        .health-stat { color: #cbd5e1 !important; }
+        .health-bar-track { background: #1f2a44 !important; }
+        .fed-footer {
+            background: #111a2e !important;
+            border-top-color: #38bdf8 !important;
+        }
+        .fed-footer-cite { color: #cbd5e1 !important; }
+        .fed-footer-cite strong { color: #38bdf8 !important; }
+        .fed-footer-meta { color: #94a3b8 !important; border-top-color: #1f2a44 !important; }
+        .fed-footer-meta a { color: #38bdf8 !important; }
         </style>""", unsafe_allow_html=True)
 
     st.caption(
@@ -711,15 +922,87 @@ with st.sidebar:
 
 
 # ===========================================================================
-# Header
+# OPERATIONS HEADER — government NOC dashboard aesthetic
 # ===========================================================================
 
-st.markdown("## O.W.L.")
-st.caption(
-    "Observation Watch Log · "
-    f"{len(AOMC_STATIONS)} federal ASOS stations · "
-    "NOAA / NWS / FAA / DOD"
-)
+# Pre-compute a quick health snapshot for the status banner.
+_health_pct = None
+_status_label = "OPERATIONAL"
+_status_color = "#00a91c"  # USWDS success green
+_health_clean = 0
+_health_total = 0
+_health_problem = 0
+if _HAVE_AOMC:
+    try:
+        _health_ck = _round_3min(datetime.now(timezone.utc))
+        _health_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+        _health_wl = _scan(_health_ids, float(_SCAN_HOURS), _health_ck)
+        if not _health_wl.empty:
+            _hcts = _health_wl["status"].value_counts()
+            _health_clean = int(_hcts.get("CLEAN", 0))
+            _health_total = len(_health_wl)
+            _health_problem = (int(_hcts.get("FLAGGED", 0))
+                               + int(_hcts.get("MISSING", 0))
+                               + int(_hcts.get("NO DATA", 0)))
+            _health_pct = round(_health_clean / _health_total * 100, 1)
+            if _health_pct < 70:
+                _status_label = "DEGRADED"
+                _status_color = "#b50909"  # USWDS error red
+            elif _health_pct < 85:
+                _status_label = "PARTIAL"
+                _status_color = "#ffbe2e"  # USWDS warning yellow
+    except Exception:
+        _status_label = "UNKNOWN"
+        _status_color = "#71767a"  # USWDS gray
+
+# Status banner — sits above everything, like a federal status page.
+_now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+st.markdown(f"""
+<div class="ops-banner">
+  <div class="ops-banner-left">
+    <span class="banner-pill">UNCLASSIFIED</span>
+    <span class="banner-meta">FOR OFFICIAL USE · ASOS NETWORK MONITORING</span>
+  </div>
+  <div class="ops-banner-right">
+    <span class="status-dot" style="background:{_status_color};box-shadow:0 0 8px {_status_color};"></span>
+    <span class="status-label" style="color:{_status_color};">SYSTEM {_status_label}</span>
+    <span class="banner-meta banner-time">{_now_iso}</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Title block.
+st.markdown("""
+<div class="ops-title">
+  <div class="ops-title-name">O.W.L.</div>
+  <div class="ops-title-sub">Observation Watch Log · National ASOS Operations Dashboard</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Network health gauge.
+if _health_pct is not None and _health_total:
+    bar_color = ("#00a91c" if _health_pct >= 85
+                 else ("#ffbe2e" if _health_pct >= 70 else "#b50909"))
+    st.markdown(f"""
+<div class="health-card">
+  <div class="health-row">
+    <div class="health-meta">
+      <div class="health-label">NETWORK HEALTH · LAST {_SCAN_HOURS}H</div>
+      <div class="health-numbers">
+        <span class="health-pct">{_health_pct:.1f}%</span>
+        <span class="health-detail">{_health_clean:,} of {_health_total:,} stations reporting clean</span>
+      </div>
+    </div>
+    <div class="health-stats">
+      <div class="health-stat"><span class="dot" style="background:#00a91c;"></span>{_health_clean:,} CLEAN</div>
+      <div class="health-stat"><span class="dot" style="background:#b50909;"></span>{_health_problem:,} ATTENTION</div>
+    </div>
+  </div>
+  <div class="health-bar-track">
+    <div class="health-bar-fill" style="width:{_health_pct}%;background:{bar_color};"></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ===========================================================================
@@ -727,7 +1010,7 @@ st.caption(
 # ===========================================================================
 
 tab_summary, tab_reports, tab_stations, tab_flags, tab_missing = st.tabs([
-    "Summary", "Reports", "Stations", "$ Flags", "Missing METARs",
+    "SUMMARY", "REPORTS", "STATIONS", "$ FLAGS", "MISSING METARS",
 ])
 
 
@@ -1107,3 +1390,31 @@ with tab_missing:
 Common causes: power outage, communication failure, station
 decommissioned/seasonal, sensor cascade failure, or IEM ingestion lag.
                 """)
+
+
+# ===========================================================================
+# FEDERAL FOOTER — citations, source chain, system metadata
+# ===========================================================================
+
+_now_footer = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+st.markdown(f"""
+<div class="fed-footer">
+  <div class="fed-footer-cite">
+    <strong>Data Source Chain:</strong>
+    NOAA / NCEI ASOS METAR archive →
+    Iowa Environmental Mesonet (mesonet.agron.iastate.edu) →
+    O.W.L. processing layer.
+    <strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository (HOMR)
+    asos-stations.txt — {len(AOMC_STATIONS):,} federally-operated AOMC stations
+    (NWS / FAA / DOD).
+  </div>
+  <div class="fed-footer-meta">
+    O.W.L. — OBSERVATION WATCH LOG · v1.0 ·
+    SYSTEM TIME {_now_footer} ·
+    <a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> ·
+    <a href="https://www.ncei.noaa.gov">NCEI</a> ·
+    <a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> ·
+    <a href="https://mesonet.agron.iastate.edu">IEM</a>
+  </div>
+</div>
+""", unsafe_allow_html=True)
