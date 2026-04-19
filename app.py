@@ -538,8 +538,17 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     line-height: 1.15;
 }
 
-/* Tabs — clean underline style */
-.stTabs [data-baseweb="tab-list"] { gap: 0; }
+/* Tabs — clean underline style + sticky along top of viewport */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--owl-tab-bg, #ffffff);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(0, 51, 102, 0.08);
+    padding-top: 4px;
+}
 .stTabs [data-baseweb="tab"] {
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
@@ -556,6 +565,19 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 }
 .stTabs [data-baseweb="tab"]:hover {
     border-bottom-color: rgba(128,128,128,0.3) !important;
+}
+
+/* Mobile: reduce tab padding + horizontally scroll if crowded */
+@media (max-width: 760px) {
+    .stTabs [data-baseweb="tab-list"] {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 0.55rem 0.75rem !important;
+        font-size: 0.82rem !important;
+        white-space: nowrap;
+    }
 }
 
 /* Tables */
@@ -989,15 +1011,45 @@ with st.sidebar:
             background: #111a2e !important;
         }
 
-        /* Tabs */
+        /* Tabs — sticky bar keeps the dark surface under the blur */
         .stTabs [data-baseweb="tab-list"] {
             border-bottom: 1px solid #1f2a44 !important;
+            background: rgba(10, 16, 32, 0.88) !important;
         }
         .stTabs [data-baseweb="tab"] { color: #94a3b8 !important; }
         .stTabs [data-baseweb="tab"]:hover { color: #cbd5e1 !important; }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             color: #f1f5f9 !important;
             border-bottom-color: #38bdf8 !important;
+        }
+
+        /* Dark-mode widget audit — every input the UI exposes. */
+        .stDateInput input, .stTimeInput input,
+        .stNumberInput input, .stTextInput input, .stTextArea textarea {
+            background: #0f1730 !important;
+            color: #e2e8f0 !important;
+            border-color: #2a3a5c !important;
+        }
+        .stDateInput input::placeholder,
+        .stTextInput input::placeholder { color: #64748b !important; }
+        .stRadio > div, .stCheckbox > label {
+            color: #e2e8f0 !important;
+        }
+        .stSlider [data-baseweb="slider"] div[role="slider"] {
+            background: #38bdf8 !important;
+            border-color: #38bdf8 !important;
+        }
+        /* Date picker popover (BaseWeb calendar) */
+        [data-baseweb="calendar"] {
+            background: #0f1730 !important;
+            color: #e2e8f0 !important;
+        }
+        [data-baseweb="calendar"] button {
+            color: #e2e8f0 !important;
+        }
+        [data-baseweb="calendar"] button[aria-selected="true"] {
+            background: #38bdf8 !important;
+            color: #020617 !important;
         }
 
         /* Images */
@@ -1505,13 +1557,32 @@ with tab_summary:
         _scan_err = None
         needs_fresh = wl is None or (hasattr(wl, "empty") and wl.empty)
         if needs_fresh:
-            with st.spinner("Scanning network… (fetching from IEM)"):
+            # Granular progress via st.status so cold-start users see
+            # what's happening instead of a silent spinner for 60-90s.
+            with st.status("Scanning network...", expanded=False) as scan_status:
                 try:
+                    scan_status.update(
+                        label=f"Fetching METARs for {len(all_ids)} ASOS stations from IEM...",
+                        state="running",
+                    )
                     wl = _scan(all_ids, float(_SCAN_HOURS), ck)
                     if _HAVE_PC and wl is not None and not wl.empty:
+                        scan_status.update(label="Caching results...", state="running")
                         _pc_put(ck, wl, ttl_seconds=600)
+                    scan_status.update(
+                        label=(
+                            f"Scan complete: {len(wl) if wl is not None else 0} stations"
+                            if wl is not None and not wl.empty
+                            else "Scan finished (no data returned)"
+                        ),
+                        state="complete",
+                    )
                 except Exception as exc:
                     _scan_err = exc
+                    scan_status.update(
+                        label=f"Scan failed: {type(exc).__name__}",
+                        state="error",
+                    )
                     logger.exception("Summary scan failed")
                     wl = None
 

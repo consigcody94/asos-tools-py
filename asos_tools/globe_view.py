@@ -274,6 +274,17 @@ _GLOBE_HTML_TEMPLATE = r"""
   #globeViz {{ width: 100%; height: 100%; cursor: grab; }}
   #globeViz:active {{ cursor: grabbing; }}
 
+  /* Mobile: shrink globe, hide non-essential chrome, smaller fonts */
+  @media (max-width: 760px) {{
+    html, body {{ height: 420px; }}
+    .hud-card {{ padding: 6px 10px; }}
+    .hud-clock {{ font-size: 14px; }}
+    .hud-sub, .stat-card, .legend {{ font-size: 10px; }}
+    .legend {{ min-width: 104px; padding: 6px 10px; }}
+    .controls .ctl {{ font-size: 10px; padding: 4px 8px; }}
+    .tk-item {{ font-size: 11px; }}
+  }}
+
   .ovl {{ position: absolute; pointer-events: none; user-select: none;
           font-feature-settings: 'tnum', 'cv11'; }}
 

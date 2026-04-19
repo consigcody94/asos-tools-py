@@ -40,11 +40,11 @@ from typing import Any
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 
+# Switch all logging to structured JSON — one line per record, easy to
+# grep via `jq` and parse by external log aggregators.
+from asos_tools.logging_ext import install_json_logging, log_event
+install_json_logging()
 _log = logging.getLogger("owl.api")
-logging.basicConfig(
-    level=os.environ.get("OWL_LOG_LEVEL", "INFO"),
-    format="%(asctime)s %(name)s %(levelname)s %(message)s",
-)
 
 app = FastAPI(
     title="O.W.L. REST",
@@ -65,6 +65,14 @@ _STATE: dict[str, Any] = {
     "last_tick_flagged": 0,
     "last_tick_duration_s": None,
     "last_error": None,
+    # --- cumulative metrics -------------------------------------------
+    "tick_count_total": 0,           # cron ticks accepted since boot
+    "tick_count_ok": 0,              # ticks that completed without exc
+    "tick_count_failed": 0,          # ticks that raised
+    "tick_count_skipped_overlap": 0, # ticks skipped because one in flight
+    "tick_p50_duration_s": None,
+    "tick_p95_duration_s": None,
+    "tick_durations": [],            # rolling window, last ~50
 }
 
 
@@ -108,6 +116,14 @@ def health() -> dict[str, Any]:
         "scan_in_flight": bool(_STATE.get("scan_in_flight", False)),
         "status_counts": _STATE.get("status_counts", {}),
         "upstream_outage": bool(_STATE.get("upstream_outage", False)),
+        "tick_counts": {
+            "total":           int(_STATE.get("tick_count_total", 0)),
+            "ok":              int(_STATE.get("tick_count_ok", 0)),
+            "failed":          int(_STATE.get("tick_count_failed", 0)),
+            "skipped_overlap": int(_STATE.get("tick_count_skipped_overlap", 0)),
+        },
+        "tick_p50_duration_s": _STATE.get("tick_p50_duration_s"),
+        "tick_p95_duration_s": _STATE.get("tick_p95_duration_s"),
     }
 
 
@@ -220,10 +236,15 @@ def _run_scan() -> None:
             }
         )
 
-        _log.info(
-            "scan ok stations=%d flagged=%d alerts=%d duration=%.2fs",
-            _STATE["last_tick_stations"], flagged, alerts_sent, duration,
+        log_event(
+            "scan.ok",
+            stations=_STATE["last_tick_stations"],
+            flagged=flagged,
+            alerts=alerts_sent,
+            duration_s=round(duration, 2),
+            upstream_outage=_STATE.get("upstream_outage", False),
         )
+        _STATE["tick_count_ok"] += 1
 
     except Exception as exc:  # noqa: BLE001
         duration = time.perf_counter() - start
@@ -235,9 +256,25 @@ def _run_scan() -> None:
                 "last_error": f"{type(exc).__name__}: {exc}",
             }
         )
-        _log.exception("background scan failed")
+        _STATE["tick_count_failed"] += 1
+        log_event("scan.error",
+                  level=logging.ERROR,
+                  exc_type=type(exc).__name__,
+                  exc_msg=str(exc),
+                  duration_s=round(duration, 2))
     finally:
         _STATE["scan_in_flight"] = False
+        # Rolling p50/p95 over the last 50 durations.
+        durs: list[float] = _STATE["tick_durations"]
+        durs.append(round(duration, 2))
+        if len(durs) > 50:
+            del durs[: len(durs) - 50]
+        if durs:
+            srt = sorted(durs)
+            p50_idx = len(srt) // 2
+            p95_idx = max(0, int(len(srt) * 0.95) - 1)
+            _STATE["tick_p50_duration_s"] = srt[p50_idx]
+            _STATE["tick_p95_duration_s"] = srt[p95_idx]
 
 
 @app.post("/api/tick", status_code=202)
@@ -261,7 +298,11 @@ def tick(
     """
     _check_secret(x_owl_secret)
 
+    _STATE["tick_count_total"] += 1
+
     if _STATE.get("scan_in_flight"):
+        _STATE["tick_count_skipped_overlap"] += 1
+        log_event("tick.skipped", reason="scan already in flight")
         return {
             "ok": True,
             "queued": False,
@@ -269,7 +310,35 @@ def tick(
             "started_at": _STATE.get("scan_started_at"),
         }
 
+    # --- Outage cooldown --------------------------------------------
+    # When the last scan classified as an upstream outage (IEM 429'd us,
+    # NCEI also down, etc.), don't hammer those endpoints every 5 min —
+    # wait at least OWL_OUTAGE_COOLDOWN_MIN (default 20) before trying
+    # again.  Spares their rate-limit budget AND our CPU/logs.
+    if _STATE.get("upstream_outage"):
+        cooldown_min = int(os.environ.get("OWL_OUTAGE_COOLDOWN_MIN", "20"))
+        last_at_iso = _STATE.get("last_tick_at")
+        if last_at_iso:
+            try:
+                last_at = datetime.fromisoformat(last_at_iso)
+                elapsed = (datetime.now(timezone.utc) - last_at).total_seconds()
+                if elapsed < cooldown_min * 60:
+                    remaining = int(cooldown_min * 60 - elapsed)
+                    _STATE["tick_count_skipped_overlap"] += 1
+                    log_event("tick.cooldown",
+                              remaining_s=remaining,
+                              reason="upstream outage cooldown")
+                    return {
+                        "ok": True,
+                        "queued": False,
+                        "reason": "upstream outage cooldown",
+                        "retry_after_s": remaining,
+                    }
+            except Exception:
+                pass
+
     background_tasks.add_task(_run_scan)
+    log_event("tick.queued")
     return {
         "ok": True,
         "queued": True,

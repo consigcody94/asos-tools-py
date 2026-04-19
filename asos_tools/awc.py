@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "fetch_metar",
+    "fetch_metars_df",
     "fetch_taf",
     "fetch_airsigmet",
     "fetch_pirep",
@@ -93,6 +94,142 @@ def fetch_metar(ids: Iterable[str], *, hours_back: float = 0,
         if isinstance(data, list):
             out.extend(data)
     return out
+
+
+def fetch_metars_df(
+    ids: Iterable[str],
+    *,
+    hours_back: float = 4.0,
+    chunk_size: int = 100,
+    pause_s: float = 0.25,
+):
+    """Return a :class:`pandas.DataFrame` of METARs, shape-compatible with
+    :func:`asos_tools.metars.fetch_metars`.
+
+    Preferred over the IEM path when IEM is rate-limiting us — AWC is
+    faster (~1.5 s per 100-station chunk), unthrottled in our experience,
+    and returns richer JSON (decoded clouds, flight category, lat/lon).
+
+    Columns returned:
+
+        station          - 3- or 4-letter ICAO (K stripped to match IEM)
+        valid            - tz-aware UTC pandas.Timestamp of the observation
+        metar            - raw METAR string (rawOb)
+        has_maintenance  - True iff rawOb contains the '$' flag
+        wxcodes          - present weather (space-joined string)
+        tmpf, dwpf       - temperature / dewpoint in degrees F
+        sknt, drct       - wind speed (kt) / direction (deg)
+        alti             - altimeter (inHg)
+        vsby             - visibility (statute miles)
+        peak_wind_gust   - wind gust (kt) — AWC field ``wgst``
+        skyc1            - lowest cloud cover code
+        skyl1            - lowest cloud base (ft)
+        flt_cat          - VFR/MVFR/IFR/LIFR (AWC field ``fltCat``)
+        lat, lon         - from AWC (useful for downstream geo joins)
+
+    Returns an empty DataFrame on any failure (logs, never raises).
+    """
+    import pandas as pd
+
+    ids_list = [str(i).strip().upper() for i in ids if str(i).strip()]
+    empty_cols = [
+        "station", "valid", "metar", "has_maintenance",
+        "wxcodes", "tmpf", "dwpf", "sknt", "drct", "alti",
+        "vsby", "peak_wind_gust", "skyc1", "skyl1",
+        "flt_cat", "lat", "lon",
+    ]
+    if not ids_list:
+        return pd.DataFrame(columns=empty_cols)
+
+    def _c_to_f(c):
+        try:
+            return float(c) * 9.0 / 5.0 + 32.0
+        except Exception:
+            return None
+
+    def _mb_to_inhg(mb):
+        try:
+            return float(mb) / 33.8639
+        except Exception:
+            return None
+
+    def _visib_num(v):
+        """AWC returns visibility as float, "10+", or "1/2" sometimes."""
+        if v is None:
+            return None
+        if isinstance(v, (int, float)):
+            return float(v)
+        s = str(v).strip()
+        if s.endswith("+"):
+            return float(s[:-1])
+        try:
+            return float(s)
+        except Exception:
+            return None
+
+    all_rows: list[dict] = []
+    for chunk in _chunks(ids_list, chunk_size):
+        params = {
+            "ids": ",".join(chunk),
+            "format": "json",
+            "hours": str(float(hours_back)),
+            "taf": "false",
+        }
+        data = _get("metar", params, timeout=30)
+        if not isinstance(data, list):
+            continue
+        for rec in data:
+            raw = rec.get("rawOb") or ""
+            obs_ts = rec.get("obsTime")
+            if obs_ts is None:
+                continue
+            try:
+                valid = pd.to_datetime(int(obs_ts), unit="s", utc=True)
+            except Exception:
+                continue
+            icao = (rec.get("icaoId") or "").strip().upper()
+            # Match IEM convention: drop leading K for 4-letter ICAOs.
+            station = icao[1:] if len(icao) == 4 and icao.startswith("K") else icao
+            ceiling_ft = None
+            skyc1 = None
+            for cl in rec.get("clouds") or []:
+                cov = (cl.get("cover") or "").upper()
+                if cov in {"BKN", "OVC", "OVX"}:
+                    ceiling_ft = cl.get("base")
+                    skyc1 = cov
+                    break
+                if skyc1 is None:
+                    skyc1 = cov
+            fc = rec.get("fltCat") or flight_category(
+                _visib_num(rec.get("visib")), ceiling_ft)
+            all_rows.append({
+                "station": station,
+                "valid": valid,
+                "metar": raw,
+                "has_maintenance": "$" in raw,
+                "wxcodes": rec.get("wxString") or "",
+                "tmpf": _c_to_f(rec.get("temp")),
+                "dwpf": _c_to_f(rec.get("dewp")),
+                "sknt": rec.get("wspd"),
+                "drct": rec.get("wdir") if isinstance(rec.get("wdir"), (int, float)) else None,
+                "alti": _mb_to_inhg(rec.get("altim")),
+                "vsby": _visib_num(rec.get("visib")),
+                "peak_wind_gust": rec.get("wgst"),
+                "skyc1": skyc1,
+                "skyl1": ceiling_ft,
+                "flt_cat": fc,
+                "lat": rec.get("lat"),
+                "lon": rec.get("lon"),
+            })
+        if pause_s and chunk is not ids_list[-len(chunk):]:
+            time.sleep(pause_s)
+
+    if not all_rows:
+        return pd.DataFrame(columns=empty_cols)
+    df = pd.DataFrame(all_rows)
+    return df.sort_values(
+        ["valid", "station"], kind="mergesort"
+    ).reset_index(drop=True)
 
 
 def fetch_taf(ids: Iterable[str], *, format_: str = "json") -> list[dict]:

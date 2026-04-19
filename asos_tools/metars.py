@@ -18,6 +18,7 @@ Example
 
 from __future__ import annotations
 
+import os
 import re
 import time
 from datetime import datetime, timezone
@@ -224,6 +225,30 @@ def fetch_metars(
 
     station_list = [normalize_station(s) for s in _stations_as_list(stations)]
 
+    # --------------------------------------------------------------
+    # Primary source: AWC (Aviation Weather Center).  Unthrottled,
+    # JSON, fast (~1.5s per 100-station chunk), federal-authoritative.
+    # IEM becomes a fallback below when AWC is unavailable.
+    # --------------------------------------------------------------
+    if os.environ.get("OWL_METAR_SOURCE", "awc").lower() != "iem":
+        try:
+            from asos_tools.awc import fetch_metars_df as _awc_df
+            # AWC uses full ICAO; normalize_station may have stripped K.
+            icao_ids = ["K" + s if len(s) == 3 and s.isalpha() else s
+                        for s in station_list]
+            hours_back = max(1.0, (end - start).total_seconds() / 3600.0)
+            df = _awc_df(icao_ids, hours_back=hours_back)
+            if df is not None and not df.empty:
+                return df
+            import logging as _lg
+            _lg.getLogger(__name__).warning(
+                "AWC returned empty for %d stations; falling back to IEM",
+                len(icao_ids),
+            )
+        except Exception:
+            import logging as _lg
+            _lg.getLogger(__name__).exception("AWC fetch raised; falling back to IEM")
+
     # Chunk large station lists to stay friendly with IEM's rate limiter.
     # Empirically IEM throttles hard on batch-style requests — even after
     # chunking to 200 we get 429s on a cold start.  Back off to 100/chunk
@@ -245,6 +270,24 @@ def fetch_metars(
             if i + max_chunk < len(station_list):
                 time.sleep(2.0)
         if not frames:
+            # ---- NCEI fallback --------------------------------------
+            # Every IEM chunk came back empty (rate-limited or 5xx).
+            # Try NCEI as a federal-authoritative backup before giving
+            # up entirely.  Slower but independent of IEM.
+            try:
+                from asos_tools.ncei import fetch_metars_ncei
+                import logging as _lg
+                _lg.getLogger(__name__).warning(
+                    "IEM returned empty for all %d chunks; falling back to NCEI",
+                    (len(station_list) + max_chunk - 1) // max_chunk,
+                )
+                ncei_df = fetch_metars_ncei(station_list, start, end)
+                if ncei_df is not None and not ncei_df.empty:
+                    return ncei_df.sort_values(
+                        ["valid", "station"], kind="mergesort"
+                    ).reset_index(drop=True)
+            except Exception:  # noqa: BLE001
+                pass
             return pd.DataFrame(columns=[
                 "station", "valid", "metar", "has_maintenance"
             ])

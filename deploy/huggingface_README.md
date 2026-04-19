@@ -13,47 +13,69 @@ short_description: Federal-grade ASOS network observation & maintenance monitor
 # O.W.L. — Observation Watch Log
 
 Federal-grade monitoring for the ASOS (Automated Surface Observing System)
-network — 920 NOAA / NWS / FAA / DOD stations, maintenance flag detection,
-missing-report surveillance, live METAR/TAF/SIGMET/AIRMET/PIREP, NWS CAP
-alerts, incident report generation.
+network — 920 NOAA / NWS / FAA / DOD stations, live maintenance-flag
+detection, missing-report surveillance, METAR/TAF/SIGMET/AIRMET/PIREP
+overlays, 926 FAA WeatherCams, NWS CAP alerts, scheduled scans, and a
+3D satellite globe as the primary view.
 
-## Architecture (Docker multi-process)
+---
 
-This Space runs **one Docker container, three processes**, coordinated by
-`supervisord` and fronted by an internal `nginx` reverse proxy:
+## Architecture
+
+One Docker container, three processes under `supervisord`, fronted by an
+internal `nginx` reverse proxy:
 
 ```
-Internet -> HF Spaces :7860 -> nginx
-                                 |-- /api/*  -> uvicorn  (FastAPI)
-                                 `-- /*      -> streamlit (UI)
+Internet
+   |
+   v   (HTTPS, HF edge)
+[:7860] nginx  ┬── /api/*  -> uvicorn   (FastAPI, :8000)
+               └── /*      -> streamlit (UI + WebSockets, :8501)
 ```
 
-The FastAPI side-car exposes `/api/health`, `/api/tick`, `/api/sources`,
-`/api/webcams/near`. `/api/tick` is the external-cron webhook that replaces
-in-container APScheduler — a GitHub Actions scheduled workflow
-(`.github/workflows/owl-tick.yml`, runs every 5 min) POSTs to it, so the
-scheduler survives container restarts.
+External scheduler: a GitHub Actions workflow (`.github/workflows/owl-tick.yml`)
+POSTs `/api/tick` every 5 minutes. The FastAPI handler returns `202` immediately
+and runs the scan as a `BackgroundTask`, so the scheduler survives container
+restarts without any in-process APScheduler state.
 
-## Required Space configuration
+### Data sources
 
-Set these under **Settings → Variables and secrets** on the HF Space:
+| Source | Used for | Auth | Trust |
+|---|---|---|---|
+| IEM (Iowa Environmental Mesonet) | METAR + 1-min archive | none | mirror |
+| NCEI Access Services | IEM fallback | none | federal |
+| NWS api.weather.gov | Current conditions + CAP alerts | none (UA required) | federal |
+| AWC Aviation Weather Center | METAR/TAF/SIGMET/AIRMET/PIREP | none | federal |
+| FAA WeatherCams | 926 live airport cameras | browser headers | federal |
+| NOAA / FAA / NTSB / AWC RSS | News ticker | none | federal |
+| NCEI HOMR | 920-station AOMC catalog | none | federal |
 
-| Name                | Type   | Purpose                                                    |
-|---------------------|--------|------------------------------------------------------------|
-| `OWL_CRON_SECRET`   | secret | Shared secret for `/api/tick`; must match a matching secret in the GitHub repo that posts to it |
-| `OWL_ALERT_URLS`    | secret | Optional. Comma-separated Apprise URLs (Slack/Discord/etc) |
-| `OWL_SCAN_HOURS`    | var    | Optional, default `4`. Watchlist look-back window          |
+---
 
-## Optional: persistent cache
+## Space configuration (set these under Settings -> Variables and secrets)
 
-Enable **Persistent Storage** ($5/mo, 20 GB) in Space settings. The container
-mounts it at `/data` and DiskCache writes to `/data/cache`, so 1-min fetches
-and watchlist scans survive rebuilds. Without it, cache is ephemeral under
-`/tmp/owl-cache` and resets on every container restart — still fully
-functional, just cold after rebuilds.
+| Name               | Kind   | Required | Purpose                                        |
+|--------------------|--------|----------|------------------------------------------------|
+| `OWL_CRON_SECRET`  | secret | yes      | Shared secret for `/api/tick`; must match the  GitHub repo secret that fires the cron |
+| `OWL_ALERT_URLS`   | secret | optional | Comma-separated Apprise URLs for Slack/Discord/Teams/PagerDuty notifications |
+| `OWL_SCAN_HOURS`   | var    | optional | Watchlist look-back window (default `4`)       |
+| `OWL_LOG_LEVEL`    | var    | optional | Python log level (default `INFO`)              |
+| `FAA_NOTAM_KEY`    | secret | optional | FAA NOTAM API key for planned-outage overlay   |
+| `IEM_API_BASE`     | var    | optional | Override IEM endpoint (testing only)           |
+| `NCEI_API_BASE`    | var    | optional | Override NCEI endpoint (testing only)          |
+| `OWL_CACHE_DIR`    | var    | optional | DiskCache path (auto-picks `/data` if persistent storage add-on is enabled) |
+
+### Persistent storage (recommended, $5/mo)
+
+Enable **Persistent Storage** in Space settings. The container detects `/data`
+and DiskCache writes there — 1-minute fetches, watchlist scans, and webcam
+thumbnails survive rebuilds. Without it, the cache is ephemeral under
+`/tmp/owl-cache` (works fine, just cold after restarts).
+
+---
 
 ## Links
 
 - Source: https://github.com/consigcody94/asos-tools-py
-- Data: IEM, AWC, NWS, NCEI, FAA (all federal-authoritative or federal-mirror)
-- API: `https://consgicody-asos-tools.hf.space/api/health`
+- Health: https://consgicody-asos-tools.hf.space/api/health
+- Sources registry: https://consgicody-asos-tools.hf.space/api/sources
