@@ -190,6 +190,7 @@ def fetch_metars(
     *,
     timeout: float = 120.0,
     session: requests.Session | None = None,
+    max_chunk: int = 200,
 ) -> pd.DataFrame:
     """Fetch raw METAR/SPECI reports for a UTC date range.
 
@@ -223,6 +224,33 @@ def fetch_metars(
 
     station_list = [normalize_station(s) for s in _stations_as_list(stations)]
 
+    # Chunk large station lists to stay friendly with IEM's rate limiter.
+    # 200 stations per request is well under their per-URL parse cost and
+    # typically under whatever rate-limit budget is applied per source IP.
+    # With max_chunk=200 and a brief inter-chunk sleep, 920 stations ->
+    # 5 requests, ~3 s total (vs. a single request that reliably 429s).
+    if max_chunk and len(station_list) > max_chunk:
+        frames: list[pd.DataFrame] = []
+        for i in range(0, len(station_list), max_chunk):
+            sub = station_list[i : i + max_chunk]
+            df_sub = fetch_metars(
+                sub, start, end,
+                timeout=timeout, session=session,
+                max_chunk=0,  # prevent recursion
+            )
+            if df_sub is not None and not df_sub.empty:
+                frames.append(df_sub)
+            # Polite pause between chunks — IEM publishes no official
+            # per-second limit, but empirically ~3 req/s trips the filter.
+            if i + max_chunk < len(station_list):
+                time.sleep(0.6)
+        if not frames:
+            return pd.DataFrame(columns=[
+                "station", "valid", "metar", "has_maintenance"
+            ])
+        df = pd.concat(frames, ignore_index=True)
+        return df.sort_values(["valid", "station"], kind="mergesort").reset_index(drop=True)
+
     params = {
         "station": ",".join(station_list),
         # Pull raw METAR + parsed fields we use for the decoder + watchlist.
@@ -248,12 +276,36 @@ def fetch_metars(
 
     sess = session or requests.Session()
 
-    # Retry transient 5xx (IEM routinely 503s under load) with backoff.
+    # Retry transient 5xx AND 429 (rate limit) with backoff.
+    # IEM routinely 503s under load; 429 means we (or another tenant on our
+    # source IP, e.g. an HF Space / GH Actions runner) are hitting it too
+    # fast.  Respect the Retry-After header if present, otherwise exponential
+    # backoff.  429s need LONGER backoff than 5xx — the remote is signalling
+    # deliberate throttling, not a transient crash.
     last_exc = None
     body = None
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             resp = sess.get(IEM_ENDPOINT_METAR, params=params, timeout=timeout)
+
+            # Rate-limited.
+            if resp.status_code == 429:
+                last_exc = requests.HTTPError(
+                    f"429 Too Many Requests from IEM", response=resp,
+                )
+                retry_after = resp.headers.get("Retry-After", "")
+                try:
+                    pause = float(retry_after) if retry_after else 0.0
+                except ValueError:
+                    pause = 0.0
+                # Respect server guidance if sensible, else exponential.
+                # Cap at 30 s so a very-long Retry-After doesn't hang the UI.
+                pause = max(pause, 2.0 * (attempt + 1))
+                pause = min(pause, 30.0)
+                time.sleep(pause)
+                continue
+
+            # Server-side flakiness.
             if 500 <= resp.status_code < 600:
                 last_exc = requests.HTTPError(
                     f"{resp.status_code} {resp.reason} from IEM",
@@ -261,6 +313,7 @@ def fetch_metars(
                 )
                 time.sleep(0.8 * (attempt + 1))
                 continue
+
             resp.raise_for_status()
             body = resp.text
             break
