@@ -134,7 +134,7 @@ def tick(x_owl_secret: str | None = Header(default=None)) -> dict[str, Any]:
         end = now
         start_dt = end - timedelta(hours=hours)
 
-        stations = [s["icao"] for s in AOMC_STATIONS]
+        stations = [s["id"] for s in AOMC_STATIONS]
         wl = build_watchlist(stations, start_dt, end)
 
         flagged = 0

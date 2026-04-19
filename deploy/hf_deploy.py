@@ -6,6 +6,24 @@ Usage:
     python deploy/hf_deploy.py [--space-name NAME] [--private]
 
 Reads the token from the HF_TOKEN env var only. Never logs or commits it.
+
+Release #2 architecture: the HF Space runs a multi-process Docker container
+(nginx + streamlit + uvicorn under supervisord), so this script uploads:
+
+  * asos_tools/         Python package (includes api.py + icons.py)
+  * assets/             4K transparent image assets
+  * .streamlit/         Streamlit theme config
+  * deploy/nginx.conf   supervisord + nginx configs referenced by Dockerfile
+  * deploy/supervisord.conf
+  * deploy/entrypoint.sh
+  * app.py, owl_logo.png, requirements.txt, Dockerfile
+  * deploy/huggingface_README.md  -> uploaded as README.md (Space frontmatter)
+
+Intentionally excluded from the Space:
+  * deploy/hf_deploy.py     (this script itself)
+  * deploy/build_*.py       (one-time dev tooling)
+  * .github/                (GitHub Actions, not needed inside the container)
+  * tests/, images/, CLAUDE.md, CHANGELOG, etc.
 """
 
 from __future__ import annotations
@@ -16,6 +34,15 @@ import sys
 from pathlib import Path
 
 from huggingface_hub import HfApi
+
+
+# Files inside deploy/ that MUST be on the HF Space because the Dockerfile
+# references them. deploy/hf_deploy.py and deploy/build_*.py stay local.
+_DEPLOY_FILES_TO_SHIP = [
+    "nginx.conf",
+    "supervisord.conf",
+    "entrypoint.sh",
+]
 
 
 def main() -> int:
@@ -56,7 +83,7 @@ def main() -> int:
     root = Path(__file__).resolve().parent.parent
     print(f"Repo root: {root}")
 
-    # Upload the asos_tools package as a folder.
+    # ---- asos_tools/ package ------------------------------------------------
     print("Uploading asos_tools/ ...")
     api.upload_folder(
         folder_path=str(root / "asos_tools"),
@@ -68,7 +95,19 @@ def main() -> int:
         ignore_patterns=["__pycache__", "*.pyc"],
     )
 
-    # Upload the .streamlit/ theme config.
+    # ---- assets/ (4K images) ------------------------------------------------
+    if (root / "assets").exists():
+        print("Uploading assets/ ...")
+        api.upload_folder(
+            folder_path=str(root / "assets"),
+            path_in_repo="assets",
+            repo_id=repo_id,
+            repo_type="space",
+            commit_message="Upload 4K transparent assets",
+            token=token,
+        )
+
+    # ---- .streamlit/ --------------------------------------------------------
     if (root / ".streamlit").exists():
         print("Uploading .streamlit/ ...")
         api.upload_folder(
@@ -80,7 +119,23 @@ def main() -> int:
             token=token,
         )
 
-    # Upload top-level single files.
+    # ---- deploy/ runtime configs (nginx, supervisord, entrypoint) ----------
+    for fname in _DEPLOY_FILES_TO_SHIP:
+        src = root / "deploy" / fname
+        if not src.exists():
+            print(f"WARN: deploy/{fname} missing; skipping", file=sys.stderr)
+            continue
+        print(f"Uploading deploy/{fname}")
+        api.upload_file(
+            path_or_fileobj=str(src),
+            path_in_repo=f"deploy/{fname}",
+            repo_id=repo_id,
+            repo_type="space",
+            commit_message=f"Upload deploy/{fname}",
+            token=token,
+        )
+
+    # ---- Top-level single files --------------------------------------------
     for local, remote, msg in [
         ("app.py", "app.py", "Upload Streamlit app"),
         ("owl_logo.png", "owl_logo.png", "Upload O.W.L. logo"),
@@ -101,7 +156,10 @@ def main() -> int:
 
     print()
     print(f"Done.  Live URL: https://huggingface.co/spaces/{repo_id}")
-    print("First build takes ~2 minutes; refresh the URL until you see the app.")
+    print("First multi-process build takes ~3-4 min.  Watch the build log at:")
+    print(f"  https://huggingface.co/spaces/{repo_id}/logs/build")
+    print("Then curl /api/health to confirm the FastAPI side-car is live:")
+    print(f"  curl https://{owner}-{args.space_name}.hf.space/api/health")
     return 0
 
 
