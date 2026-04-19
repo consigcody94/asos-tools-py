@@ -378,6 +378,52 @@ _GLOBE_HTML_TEMPLATE = r"""
   .ctl:hover {{ background: rgba(56, 189, 248, 0.16); color: #f1f5f9; }}
   .ctl.on   {{ background: rgba(56, 189, 248, 0.22);
                border-color: #38bdf8; color: #f1f5f9; }}
+
+  /* Regional preset buttons — left side, vertical stack */
+  .regions {{ position: absolute; top: 90px; left: 14px;
+              display: flex; flex-direction: column; gap: 4px;
+              pointer-events: auto; }}
+  .rg-title {{ color: #38bdf8; font-weight: 600;
+               text-transform: uppercase; letter-spacing: 0.1em;
+               font-size: 10px; margin-bottom: 2px; }}
+  .rg-btn {{ text-align: left; min-width: 110px;
+             font-size: 10.5px; padding: 5px 10px; }}
+  .rg-btn.active {{ background: rgba(56, 189, 248, 0.28);
+                    border-color: #38bdf8; color: #f1f5f9; }}
+
+  /* Persistent station card — shown on click (vs transient hover tooltip) */
+  .card {{ position: absolute; top: 90px; right: 14px;
+           width: 300px; max-width: 90vw;
+           background: rgba(2, 6, 23, 0.92);
+           border: 1px solid rgba(56, 189, 248, 0.35);
+           border-radius: 8px; padding: 14px 16px;
+           backdrop-filter: blur(6px); pointer-events: auto;
+           display: none;
+           box-shadow: 0 8px 28px rgba(0,0,0,0.6); }}
+  .card.open {{ display: block; }}
+  .card .close {{ position: absolute; top: 6px; right: 8px;
+                  color: #64748b; cursor: pointer; font-size: 16px;
+                  line-height: 1; padding: 2px 4px; }}
+  .card .close:hover {{ color: #f1f5f9; }}
+  .card .hd {{ display: flex; align-items: baseline; gap: 8px;
+               margin-bottom: 8px; }}
+  .card .cd-id {{ font-family: 'JetBrains Mono', ui-monospace, monospace;
+                  font-size: 20px; font-weight: 700; color: #38bdf8; }}
+  .card .cd-badge {{ padding: 2px 8px; border-radius: 3px;
+                     font-size: 10px; font-weight: 700;
+                     letter-spacing: 0.08em; text-transform: uppercase; }}
+  .card .cd-sub {{ font-size: 12px; color: #94a3b8;
+                   margin-bottom: 10px; }}
+  .card .cd-reason {{ font-size: 11px; color: #cbd5e1;
+                      padding: 6px 8px; background: rgba(56,189,248,0.08);
+                      border-left: 2px solid #38bdf8;
+                      border-radius: 2px; margin-bottom: 10px; }}
+  .card .cd-metar {{ font-family: 'JetBrains Mono', ui-monospace, monospace;
+                     font-size: 10.5px; line-height: 1.45;
+                     color: #e2e8f0;
+                     background: rgba(15, 23, 42, 0.72);
+                     padding: 8px 10px; border-radius: 4px;
+                     word-break: break-all; }}
 </style>
 </head>
 <body>
@@ -400,12 +446,37 @@ _GLOBE_HTML_TEMPLATE = r"""
   <button class="ctl"    id="reset-btn">RESET VIEW</button>
 </div>
 
+<!-- Regional preset buttons — "too many circles to go through" mitigation -->
+<div class="ovl regions">
+  <div class="rg-title">REGION</div>
+  <button class="ctl rg-btn" data-lat="38"    data-lng="-97"   data-alt="2.3">CONUS</button>
+  <button class="ctl rg-btn" data-lat="42"    data-lng="-72"   data-alt="1.1">NORTHEAST</button>
+  <button class="ctl rg-btn" data-lat="32"    data-lng="-84"   data-alt="1.1">SOUTHEAST</button>
+  <button class="ctl rg-btn" data-lat="41"    data-lng="-93"   data-alt="1.1">CENTRAL</button>
+  <button class="ctl rg-btn" data-lat="38"    data-lng="-110"  data-alt="1.1">WEST</button>
+  <button class="ctl rg-btn" data-lat="64"    data-lng="-150"  data-alt="1.0">ALASKA</button>
+  <button class="ctl rg-btn" data-lat="20.7"  data-lng="-157"  data-alt="0.7">HAWAII</button>
+  <button class="ctl rg-btn" data-lat="18"    data-lng="-66"   data-alt="0.7">CARIBBEAN</button>
+</div>
+
 <div class="ovl legend">
   <div class="title">Status</div>
   {legend_rows}
 </div>
 
 <div class="tip" id="tip"></div>
+
+<!-- Persistent station card shown on click -->
+<div class="card ovl" id="card">
+  <span class="close" id="card-close">X</span>
+  <div class="hd">
+    <span class="cd-id"    id="cd-id">----</span>
+    <span class="cd-badge" id="cd-badge">---</span>
+  </div>
+  <div class="cd-sub"    id="cd-sub"></div>
+  <div class="cd-reason" id="cd-reason" style="display:none;"></div>
+  <div class="cd-metar"  id="cd-metar"></div>
+</div>
 
 {news_strip}
 
@@ -455,11 +526,22 @@ _GLOBE_HTML_TEMPLATE = r"""
   const tip = document.getElementById('tip');
   const hoverInfo = document.getElementById('hover-info');
 
+  // ----- Persistent click card ------------------------------------------
+  const card        = document.getElementById('card');
+  const cdId        = document.getElementById('cd-id');
+  const cdBadge     = document.getElementById('cd-badge');
+  const cdSub       = document.getElementById('cd-sub');
+  const cdReason    = document.getElementById('cd-reason');
+  const cdMetar     = document.getElementById('cd-metar');
+  document.getElementById('card-close').addEventListener('click', () => {{
+    card.classList.remove('open');
+  }});
+
   world
     .onPointHover(p => {{
       if (!p) {{
         tip.style.display = 'none';
-        hoverInfo.textContent = 'hover a point';
+        hoverInfo.textContent = 'hover or click a point';
         return;
       }}
       hoverInfo.innerHTML = `<b style="color:${{p.color}}">${{p.station}}</b> &middot; ${{p.status}}`;
@@ -471,22 +553,56 @@ _GLOBE_HTML_TEMPLATE = r"""
     }})
     .onPointClick((p, ev) => {{
       if (!p) return;
-      // Tell the parent (Streamlit page) which station to drill into.
+
+      // Fill + open the persistent card.
+      cdId.textContent = p.station;
+      cdBadge.textContent = p.status;
+      cdBadge.style.background = p.color;
+      cdBadge.style.color = '#020617';
+      cdSub.textContent =
+        (p.name || '') + (p.state ? ', ' + p.state : '');
+      if (p.reason) {{
+        cdReason.textContent = p.reason;
+        cdReason.style.display = 'block';
+      }} else {{
+        cdReason.style.display = 'none';
+      }}
+      cdMetar.textContent = p.latest_metar || '(no recent METAR)';
+      card.classList.add('open');
+
+      // Also inform the parent Streamlit page so the drill panel below
+      // the globe can update its selectbox to match.
       try {{
         window.parent.postMessage({{
           type: 'owl.station.click',
-          station: p.station,
-          name:    p.name,
-          state:   p.state,
-          status:  p.status,
+          station: p.station, name: p.name,
+          state: p.state, status: p.status,
         }}, '*');
       }} catch (e) {{ console.warn('postMessage failed', e); }}
 
-      // Quick visual feedback: zoom the camera to the point.
+      // Zoom the camera to the point.
       world.pointOfView({{
         lat: p.lat, lng: p.lon, altitude: 0.95,
       }}, 900);
     }});
+
+  // ----- Region preset buttons -----------------------------------------
+  document.querySelectorAll('.rg-btn').forEach(btn => {{
+    btn.addEventListener('click', () => {{
+      const lat = parseFloat(btn.dataset.lat);
+      const lng = parseFloat(btn.dataset.lng);
+      const alt = parseFloat(btn.dataset.alt);
+      world.pointOfView({{ lat, lng, altitude: alt }}, 900);
+      document.querySelectorAll('.rg-btn.active').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Stop auto-rotate when user picks a region.
+      const ctrls = world.controls();
+      if (ctrls.autoRotate) {{
+        ctrls.autoRotate = false;
+        rotateBtn.classList.remove('on');
+      }}
+    }});
+  }});
 
   // Track mouse for tooltip positioning.
   document.getElementById('globeViz').addEventListener('mousemove', e => {{

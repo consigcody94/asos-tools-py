@@ -1411,23 +1411,74 @@ def _fmt_wl(wl, statuses):
     return _arrow_safe(df)
 
 
+#: Per-status cell background/foreground for the Status column.
+_STATUS_CELL_STYLES = {
+    "MISSING":      {"bg": "#fee2e2", "fg": "#7f1d1d"},
+    "NO DATA":      {"bg": "#fecaca", "fg": "#7f1d1d"},
+    "FLAGGED":      {"bg": "#fef3c7", "fg": "#78350f"},
+    "INTERMITTENT": {"bg": "#ffedd5", "fg": "#7c2d12"},
+    "RECOVERED":    {"bg": "#dbeafe", "fg": "#1e40af"},
+    "CLEAN":        {"bg": "#dcfce7", "fg": "#14532d"},
+}
+
+
+def _style_status(df: pd.DataFrame, status_col: str) -> "pd.io.formats.style.Styler":
+    """Return a pandas Styler that colors the status column by enum value."""
+    def _row_style(row):
+        styles = [""] * len(row)
+        if status_col in row.index:
+            v = str(row[status_col]).upper().strip()
+            s = _STATUS_CELL_STYLES.get(v)
+            if s:
+                idx = list(row.index).index(status_col)
+                styles[idx] = (
+                    f"background-color:{s['bg']};color:{s['fg']};"
+                    "font-weight:700;letter-spacing:0.04em;font-size:11px;"
+                    "text-align:center;"
+                )
+        return styles
+    return df.style.apply(_row_style, axis=1)
+
+
 def _grid(df: pd.DataFrame, *, height: int = 380, key: str = "grid",
           selection: bool = False, pinned: list[str] | None = None,
-          status_col: str | None = "status"):
-    """Render a DataFrame as streamlit-aggrid if available, else st.dataframe.
+          status_col: str | None = "status",
+          prefer_aggrid: bool = False):
+    """Render a DataFrame — uses ``st.dataframe`` by default.
 
-    The AgGrid builder adds sort/filter/resize on every column, color
-    codes a status column, and is vastly faster with large tables.
+    Native Streamlit tables are robust, accessible, and don't get silently
+    blanked by the deep iframe nesting on HF Spaces.  AgGrid is still
+    available (pass ``prefer_aggrid=True``) for the Stations catalog where
+    filter UX matters most.
+
+    The Status column, if present, is styled via pandas Styler with the
+    same color palette the globe uses.
     """
     if df is None or df.empty:
         st.caption("(no rows)")
         return None
+
     # Arrow-safety pass — required for pandas 3.x (large_string dtypes).
     df = _arrow_safe(df)
-    if not _HAVE_AGGRID:
+
+    # ----- Default path: st.dataframe (robust, native) ------------------
+    if not prefer_aggrid or not _HAVE_AGGRID:
+        if status_col and status_col in df.columns:
+            try:
+                styled = _style_status(df, status_col)
+                st.dataframe(
+                    styled,
+                    use_container_width=True,
+                    height=height,
+                    hide_index=True,
+                )
+                return None
+            except Exception:
+                logger.exception("status styling failed; rendering plain df")
         st.dataframe(df, use_container_width=True, height=height, hide_index=True)
         return None
 
+    # ----- Opt-in: AgGrid (for big filterable tables) --------------------
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_default_column(
         filterable=True, sortable=True, resizable=True,
@@ -1447,7 +1498,6 @@ def _grid(df: pd.DataFrame, *, height: int = 380, key: str = "grid",
         if col in df.columns:
             gb.configure_column(col, pinned="left", width=95)
 
-    # Color the status column by watchlist state.
     if status_col and status_col in df.columns:
         js = """
 function(params) {
@@ -1463,24 +1513,14 @@ function(params) {
   };
   const s = map[v];
   if (!s) return null;
-  return {
-    'backgroundColor': s.bg,
-    'color': s.fg,
-    'fontWeight': '700',
-    'letterSpacing': '0.04em',
-    'fontSize': '11px',
-    'textAlign': 'center',
-  };
+  return {'backgroundColor': s.bg, 'color': s.fg,
+          'fontWeight': '700', 'letterSpacing': '0.04em',
+          'fontSize': '11px', 'textAlign': 'center'};
 }
 """
-        # IMPORTANT: st-aggrid 1.x requires JsCode(...) for JS callbacks.
-        # Pre-1.0 dict syntax {"function": js_src} is silently wrong and
-        # blanks the grid iframe.
         gb.configure_column(status_col, cellStyle=JsCode(js))
 
     opts = gb.build()
-    # streamlit-aggrid 1.x only accepts: streamlit / alpine / balham / material.
-    # There is no "alpine-dark" — that value raises ValueError and blanks the grid.
     is_dark = bool(st.session_state.get("dark_mode"))
     theme = "balham" if is_dark else "alpine"
     try:
