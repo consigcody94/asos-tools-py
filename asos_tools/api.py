@@ -107,6 +107,7 @@ def health() -> dict[str, Any]:
         "cache_dir": os.environ.get("OWL_CACHE_DIR", "(unset)"),
         "scan_in_flight": bool(_STATE.get("scan_in_flight", False)),
         "status_counts": _STATE.get("status_counts", {}),
+        "upstream_outage": bool(_STATE.get("upstream_outage", False)),
     }
 
 
@@ -154,6 +155,29 @@ def _run_scan() -> None:
             status_counts = {k: int(v) for k, v in s.value_counts().items()}
         _STATE["status_counts"] = status_counts
 
+        # ---- Circuit breaker: detect IEM-wide outage ------------------
+        # If EVERY station classified as MISSING, the upstream (IEM)
+        # returned nothing — typically because we were rate-limited (429)
+        # or IEM was 503-ing.  Don't dispatch 920 MISSING alerts in that
+        # case, and flag the health endpoint so operators can see why.
+        all_missing = (
+            len(status_counts) == 1
+            and "MISSING" in status_counts
+            and status_counts["MISSING"] >= 50  # guard against genuinely-dark small deployments
+        )
+        if all_missing:
+            _log.warning(
+                "scan returned 100%% MISSING - treating as upstream outage "
+                "(IEM rate-limited or 503). Suppressing %d MISSING alerts.",
+                status_counts["MISSING"],
+            )
+            _STATE["upstream_outage"] = True
+            # Replace the bogus flagged count with zero so downstream
+            # dashboards don't light up red on a data-source problem.
+            flagged = 0
+        else:
+            _STATE["upstream_outage"] = False
+
         # Fire Apprise notifications if configured + severity warrants.
         # Dispatch one alert per newly-flagged station; missing-data rows
         # get a distinct MISSING alert. Both are no-ops if OWL_ALERT_URLS
@@ -167,7 +191,11 @@ def _run_scan() -> None:
             )
 
             urls = load_urls_from_env()
-            if urls and wl is not None and not wl.empty and "status" in wl.columns:
+            # Skip the alert loop entirely if we've detected an upstream
+            # outage — the MISSING classifications are bogus in that state.
+            if (urls and wl is not None and not wl.empty
+                    and "status" in wl.columns
+                    and not _STATE.get("upstream_outage", False)):
                 for _, row in wl.iterrows():
                     status = str(row.get("status", "")).upper()
                     if status == "FLAGGED":

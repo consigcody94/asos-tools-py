@@ -190,7 +190,7 @@ def fetch_metars(
     *,
     timeout: float = 120.0,
     session: requests.Session | None = None,
-    max_chunk: int = 200,
+    max_chunk: int = 100,
 ) -> pd.DataFrame:
     """Fetch raw METAR/SPECI reports for a UTC date range.
 
@@ -225,10 +225,10 @@ def fetch_metars(
     station_list = [normalize_station(s) for s in _stations_as_list(stations)]
 
     # Chunk large station lists to stay friendly with IEM's rate limiter.
-    # 200 stations per request is well under their per-URL parse cost and
-    # typically under whatever rate-limit budget is applied per source IP.
-    # With max_chunk=200 and a brief inter-chunk sleep, 920 stations ->
-    # 5 requests, ~3 s total (vs. a single request that reliably 429s).
+    # Empirically IEM throttles hard on batch-style requests — even after
+    # chunking to 200 we get 429s on a cold start.  Back off to 100/chunk
+    # with 2s inter-chunk pause: 920 stations -> 10 chunks, ~25-35 s total,
+    # which is well within IEM's tolerance.
     if max_chunk and len(station_list) > max_chunk:
         frames: list[pd.DataFrame] = []
         for i in range(0, len(station_list), max_chunk):
@@ -240,10 +240,10 @@ def fetch_metars(
             )
             if df_sub is not None and not df_sub.empty:
                 frames.append(df_sub)
-            # Polite pause between chunks — IEM publishes no official
-            # per-second limit, but empirically ~3 req/s trips the filter.
+            # Polite pause between chunks.  2s is conservative; if IEM
+            # stops throttling this can come back down.
             if i + max_chunk < len(station_list):
-                time.sleep(0.6)
+                time.sleep(2.0)
         if not frames:
             return pd.DataFrame(columns=[
                 "station", "valid", "metar", "has_maintenance"
@@ -275,6 +275,15 @@ def fetch_metars(
     }
 
     sess = session or requests.Session()
+    # Descriptive User-Agent — IEM prefers this over the default
+    # "python-requests/..." which gets rate-limited more aggressively.
+    sess.headers.update({
+        "User-Agent": (
+            "owl.observation-watch-log/1.0 "
+            "(+github.com/consigcody94/asos-tools-py)"
+        ),
+        "Accept": "text/csv,text/plain,*/*",
+    })
 
     # Retry transient 5xx AND 429 (rate limit) with backoff.
     # IEM routinely 503s under load; 429 means we (or another tenant on our
