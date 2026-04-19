@@ -347,15 +347,21 @@ _GLOBE_HTML_TEMPLATE = r"""
              overflow: hidden;
              backdrop-filter: blur(4px);
              pointer-events: auto; }}
+  /* The inner strip contains the item list duplicated exactly once.
+     Animating from 0 to -50% scrolls through the first copy while the
+     second copy slides into view — when -50% is reached, the wrapping
+     to 0 is visually seamless because the first and second copies are
+     identical at that boundary. No `padding-left: 100%` head-spacer,
+     which used to cause a visible "jump/restart" when the animation
+     wrapped. */
   .tk-inner {{ display: flex; align-items: center; height: 100%;
                white-space: nowrap; gap: 26px;
-               padding-left: 100%;
-               animation: tk-scroll 60s linear infinite;
+               animation: tk-scroll 35s linear infinite;
                will-change: transform; }}
   .ticker:hover .tk-inner {{ animation-play-state: paused; }}
   @keyframes tk-scroll {{
-    from {{ transform: translateX(0); }}
-    to   {{ transform: translateX(-50%); }}
+    0%   {{ transform: translate3d(0, 0, 0); }}
+    100% {{ transform: translate3d(-50%, 0, 0); }}
   }}
   .tk-item {{ color: #cbd5e1; font-size: 12px; text-decoration: none;
               flex-shrink: 0; letter-spacing: 0.01em; }}

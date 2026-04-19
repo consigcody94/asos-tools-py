@@ -208,6 +208,57 @@ def _cached_news(ck: str = "") -> list[dict]:
         return []
 
 
+def _render_status_glossary(key_suffix: str = "", expanded: bool = False) -> None:
+    """Collapsible legend defining every status enum the watchlist uses.
+
+    Call this anywhere a user sees status badges — Summary tab,
+    AOMC Controllers tab, Reports tab, etc. — so they can look up what
+    "RECOVERED" or "INTERMITTENT" actually means without leaving the page.
+
+    Parameters
+    ----------
+    key_suffix
+        Unique suffix for this instance's Streamlit widget key, so
+        repeated expanders on the same page don't collide.
+    expanded
+        Whether to open the expander by default.
+    """
+    with st.expander("Status definitions", expanded=expanded):
+        st.markdown(
+            """
+Every ASOS station in the watchlist is classified into exactly one of
+these six states for the scan window (default: last 4 hours). Order
+below is worst -> best; the Stations Requiring Attention table sorts
+the same way.
+
+| Status | Meaning | What to do |
+|---|---|---|
+| **MISSING** (red) | At least one scheduled hourly METAR did not arrive. The station may be silent — worse than flagged because you have no data at all. | Verify comms / power / the ASOS controller. Check NOTAMs for planned outages. |
+| **FLAGGED** (amber) | The most recent METAR ended with `$`, the ASOS self-diagnostic indicator. A sensor is out-of-tolerance *right now*. | Decode `$` remarks (RVRNO, PWINO, etc.) to identify which sensor. Open a maintenance ticket. |
+| **INTERMITTENT** (yellow) | METARs in the window mix flagged and clean, and the *latest* report is flagged. The sensor is oscillating in and out of tolerance — unstable. | Same root causes as FLAGGED. Often the last stage before a total sensor failure. |
+| **RECOVERED** (cyan) | Station *was* flagged earlier in the window, but the **last two METARs are clean**. The sensor is back online. | Verify the fix persisted (watch through the next scheduled report). If possible, log what was done so the incident is traceable. |
+| **CLEAN** (green) | Zero `$` flags AND zero missing hours in the window. Nominal operation. | Nothing. |
+| **NO DATA** (slate) | IEM returned zero observations for this station within the window. Usually means the station has been offline for weeks, is decommissioned, or is in a remote area with sparse reporting. | If unexpected, escalate — this is rarer than MISSING and typically points to a long-running problem. |
+
+---
+
+**Scan window & timing:**
+
+- Default window = the last **4 hours** (configurable on AOMC Controllers tab).
+- ASOS routine METARs are scheduled once per hour, typically at HH:51Z.
+- A "missing hour" = zero METARs between the top of that hour and the next.
+- SPECI (special) reports filed at HH:47 or later count toward the *next* scheduled hour, which is why you occasionally see a single late-filed METAR satisfy two adjacent buckets.
+
+**Worst-first ordering** in the attention table:
+
+`MISSING > FLAGGED > INTERMITTENT > RECOVERED > CLEAN > NO DATA`
+
+Within each status, rows are sorted by severity (more missing hours first, then higher flag rate first, then alphabetical by station ID).
+            """,
+            unsafe_allow_html=False,
+        )
+
+
 def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     """Render the station-detail panel below the globe.
 
@@ -1813,6 +1864,9 @@ with tab_summary:
                 if nr: msg.append(f"**{nr}** recovered")
                 st.warning(" · ".join(msg) + f" · **{nc}** clean (not listed)")
 
+            # ---- Status definitions (collapsed, above the attention table) ----
+            _render_status_glossary(key_suffix="summary", expanded=False)
+
             # ---- Status tables (use AgGrid where available) ----
             attention = _fmt_wl(wl, ["MISSING", "NO DATA", "FLAGGED", "INTERMITTENT", "RECOVERED"])
             if not attention.empty:
@@ -1846,6 +1900,7 @@ with tab_aomc:
         "ASOS Operations and Monitoring Center view — intended for "
         "controllers responsible for the 920 federally-operated stations."
     )
+    _render_status_glossary(key_suffix="aomc", expanded=False)
 
     if _HAVE_AOMC:
         # Use a wider default scan for controllers.
