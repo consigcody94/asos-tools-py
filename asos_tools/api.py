@@ -137,9 +137,14 @@ def _run_scan() -> None:
         # rows with name/state for the alert body.
         wl = build_watchlist(AOMC_STATIONS, hours=hours, end=now)
 
+        # Status enum (from watchlist.STATUS_ORDER):
+        #   MISSING, FLAGGED, INTERMITTENT  -> needs attention
+        #   RECOVERED, CLEAN                 -> healthy
+        #   NO DATA                          -> uncategorized
         flagged = 0
+        attention_states = {"MISSING", "FLAGGED", "INTERMITTENT"}
         if wl is not None and not wl.empty and "status" in wl.columns:
-            flagged = int((wl["status"] != "ok").sum())
+            flagged = int(wl["status"].isin(attention_states).sum())
 
         # Fire Apprise notifications if configured + severity warrants.
         # Dispatch one alert per newly-flagged station; missing-data rows
@@ -156,11 +161,11 @@ def _run_scan() -> None:
             urls = load_urls_from_env()
             if urls and wl is not None and not wl.empty and "status" in wl.columns:
                 for _, row in wl.iterrows():
-                    status = row.get("status", "ok")
-                    if status == "flagged":
+                    status = str(row.get("status", "")).upper()
+                    if status == "FLAGGED":
                         sent, _ = send_flag_alert(row.to_dict(), urls=urls)
                         alerts_sent += sent
-                    elif status in ("missing", "silent"):
+                    elif status == "MISSING":
                         sent, _ = send_missing_alert(row.to_dict(), urls=urls)
                         alerts_sent += sent
         except Exception as e:  # noqa: BLE001
