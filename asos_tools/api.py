@@ -105,6 +105,8 @@ def health() -> dict[str, Any]:
         "last_error": _STATE["last_error"],
         "data_stale": stale,
         "cache_dir": os.environ.get("OWL_CACHE_DIR", "(unset)"),
+        "scan_in_flight": bool(_STATE.get("scan_in_flight", False)),
+        "status_counts": _STATE.get("status_counts", {}),
     }
 
 
@@ -142,9 +144,15 @@ def _run_scan() -> None:
         #   RECOVERED, CLEAN                 -> healthy
         #   NO DATA                          -> uncategorized
         flagged = 0
+        status_counts: dict[str, int] = {}
         attention_states = {"MISSING", "FLAGGED", "INTERMITTENT"}
         if wl is not None and not wl.empty and "status" in wl.columns:
-            flagged = int(wl["status"].isin(attention_states).sum())
+            # Normalize just in case the enum ever drifts in case.
+            s = wl["status"].astype(str).str.upper().str.strip()
+            flagged = int(s.isin(attention_states).sum())
+            # Full histogram for debugging via /api/health.
+            status_counts = {k: int(v) for k, v in s.value_counts().items()}
+        _STATE["status_counts"] = status_counts
 
         # Fire Apprise notifications if configured + severity warrants.
         # Dispatch one alert per newly-flagged station; missing-data rows
