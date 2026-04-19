@@ -351,62 +351,51 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     if probable_reason:
         st.caption(f"**Probable reason:** {probable_reason}")
 
-    # --- METAR + webcams + alerts in columns ------------------------------
-    col_metar, col_cams = st.columns([1.0, 1.0])
+    # --- METAR — full width (no column split above webcams) ---------------
+    st.markdown("**Latest METAR**")
+    if latest_metar:
+        st.code(latest_metar, language=None)
+    else:
+        st.caption("No recent METAR available for this station.")
 
-    with col_metar:
-        st.markdown("**Latest METAR**")
-        if latest_metar:
-            st.code(latest_metar, language=None)
-        else:
-            st.caption("No recent METAR available for this station.")
+    # --- Webcams — single horizontal row, 4 thumbs side by side ----------
+    # Stacking METAR above webcams (instead of splitting left/right)
+    # eliminates the big grey dead-space we were seeing when one outer
+    # column was much shorter than the other.
+    st.markdown("**Nearest FAA WeatherCams** (within 25 NM)")
+    if _HAVE_WEBCAMS and lat is not None and lon is not None:
+        try:
+            cams = owl_webcams.cameras_near(
+                float(lat), float(lon), radius_nm=25.0, limit=4,
+            )
+        except Exception:
+            logger.exception("webcam lookup failed")
+            cams = []
 
-    with col_cams:
-        st.markdown("**Nearest FAA WeatherCams** (within 25 NM)")
-        if _HAVE_WEBCAMS and lat is not None and lon is not None:
-            try:
-                cams = owl_webcams.cameras_near(
-                    float(lat), float(lon), radius_nm=25.0, limit=4,
-                )
-            except Exception:
-                logger.exception("webcam lookup failed")
-                cams = []
-
-            if cams:
-                # Render 1-4 webcams in flat rows of 2. Creating a fresh
-                # st.columns() PER row avoids the nested-columns height
-                # padding bug where Streamlit allocates the max row height
-                # to every cell, producing big grey bands below short cells.
-                def _render_cam(col, cam):
+        if cams:
+            # One column per camera up to 4; Streamlit distributes width
+            # evenly and each cell sizes to its own content naturally.
+            cam_cols = st.columns(min(4, len(cams)))
+            for i, cam in enumerate(cams[:4]):
+                with cam_cols[i]:
                     try:
                         img_url = owl_webcams.latest_image_url(cam["id"])
                     except Exception:
                         img_url = None
-                    with col:
-                        if img_url:
-                            st.image(img_url, use_container_width=True)
-                        st.caption(
-                            f"{cam.get('site_name','')} · "
-                            f"{cam.get('direction','')} · "
-                            f"{cam.get('distance_nm','?')} NM"
-                        )
-
-                # Row 1: first 2 cameras.
-                r1 = st.columns(2)
-                for i, cam in enumerate(cams[:2]):
-                    _render_cam(r1[i], cam)
-                # Row 2: cams 2-3, only if we have them.
-                if len(cams) > 2:
-                    r2 = st.columns(2)
-                    for i, cam in enumerate(cams[2:4]):
-                        _render_cam(r2[i], cam)
-            else:
-                st.caption("No FAA WeatherCams within 25 NM of this station.")
+                    if img_url:
+                        st.image(img_url, use_container_width=True)
+                    st.caption(
+                        f"**{cam.get('site_name','')}** · "
+                        f"{cam.get('direction','')} · "
+                        f"{cam.get('distance_nm','?')} NM"
+                    )
         else:
-            st.caption(
-                "Webcam lookup unavailable — either FAA API is unreachable "
-                "or this station has no known lat/lon."
-            )
+            st.caption("No FAA WeatherCams within 25 NM of this station.")
+    else:
+        st.caption(
+            "Webcam lookup unavailable — either FAA API is unreachable "
+            "or this station has no known lat/lon."
+        )
 
     # --- CAP alerts (active) ----------------------------------------------
     if _HAVE_CAPS and state:
