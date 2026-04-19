@@ -68,5 +68,7 @@ jobs:
       - name: Verify health afterwards
         run: |
           set -u
+          # FastAPI serializes JSON compactly ("status":"ok", no space);
+          # match both formats so this stays robust across serializer changes.
           curl -sS --max-time 30 "$OWL_URL/api/health" | tee /dev/stderr \
-            | grep -q '"status": "ok"'
+            | grep -Eq '"status"\s*:\s*"ok"'
