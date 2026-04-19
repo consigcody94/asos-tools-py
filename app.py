@@ -202,10 +202,135 @@ def _cached_news(ck: str = "") -> list[dict]:
     if not _HAVE_NEWS:
         return []
     try:
-        return fetch_noaa_faa_headlines(limit=20, sort="time") or []
+        return owl_news.fetch_noaa_faa_headlines(limit=20, sort="time") or []
     except Exception:
         logger.exception("news fetch failed")
         return []
+
+
+def _render_drill_panel(sid: str, plk: dict, wl) -> None:
+    """Render the station-detail panel below the globe.
+
+    Shows: status badge + name/state, latest METAR, nearest FAA webcams
+    (up to 4 thumbnails that auto-link to the FAA portal), and any
+    active NWS CAP alerts for the station's state.
+    """
+    station = plk.get(sid) or {}
+    name = (station.get("name") or "").title()
+    state = station.get("state") or ""
+    lat = station.get("lat")
+    lon = station.get("lon")
+
+    # Status from the watchlist row, if present.
+    status = "NO DATA"
+    latest_metar = ""
+    probable_reason = ""
+    try:
+        row = wl[wl["station"] == sid]
+        if not row.empty:
+            status = str(row.iloc[0].get("status") or "NO DATA").upper()
+            latest_metar = str(row.iloc[0].get("latest_metar") or "")
+            probable_reason = str(row.iloc[0].get("probable_reason") or "")
+    except Exception:
+        pass
+
+    # Status badge color (matches globe_view.STATUS_COLORS).
+    badge_colors = {
+        "MISSING":      "#dc2626",
+        "FLAGGED":      "#f59e0b",
+        "INTERMITTENT": "#eab308",
+        "RECOVERED":    "#06b6d4",
+        "CLEAN":        "#22c55e",
+        "NO DATA":      "#64748b",
+    }
+    bc = badge_colors.get(status, "#64748b")
+
+    # --- Header row --------------------------------------------------------
+    st.markdown(
+        f"""
+        <div style="display:flex;align-items:center;gap:14px;
+                    padding:10px 14px;
+                    background:rgba(2,6,23,0.06);
+                    border-left:4px solid {bc};
+                    border-radius:4px;margin-top:8px;">
+          <div style="font-family:'JetBrains Mono',ui-monospace,monospace;
+                      font-size:20px;font-weight:600;color:#0f172a;">
+            {sid}
+          </div>
+          <div style="flex:1;color:#334155;">{name} &middot; {state}</div>
+          <span style="background:{bc};color:#fff;padding:3px 10px;
+                       border-radius:3px;font-size:11px;font-weight:600;
+                       letter-spacing:0.08em;">{status}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if probable_reason:
+        st.caption(f"**Probable reason:** {probable_reason}")
+
+    # --- METAR + webcams + alerts in columns ------------------------------
+    col_metar, col_cams = st.columns([1.0, 1.0])
+
+    with col_metar:
+        st.markdown("**Latest METAR**")
+        if latest_metar:
+            st.code(latest_metar, language=None)
+        else:
+            st.caption("No recent METAR available for this station.")
+
+    with col_cams:
+        st.markdown("**Nearest FAA WeatherCams** (within 25 NM)")
+        if _HAVE_WEBCAMS and lat is not None and lon is not None:
+            try:
+                cams = owl_webcams.cameras_near(
+                    float(lat), float(lon), radius_nm=25.0, limit=4,
+                )
+            except Exception:
+                logger.exception("webcam lookup failed")
+                cams = []
+
+            if cams:
+                # Render up to 4 thumbnails in a 2-column grid.
+                grid = st.columns(2)
+                for idx, cam in enumerate(cams):
+                    with grid[idx % 2]:
+                        try:
+                            img_url = owl_webcams.latest_image_url(cam["id"])
+                        except Exception:
+                            img_url = None
+                        if img_url:
+                            st.image(img_url, use_container_width=True)
+                        cap = (
+                            f"{cam.get('site_name','')} · "
+                            f"{cam.get('direction','')} · "
+                            f"{cam.get('distance_nm','?')} NM"
+                        )
+                        st.caption(cap)
+            else:
+                st.caption("No FAA WeatherCams within 25 NM of this station.")
+        else:
+            st.caption(
+                "Webcam lookup unavailable — either FAA API is unreachable "
+                "or this station has no known lat/lon."
+            )
+
+    # --- CAP alerts (active) ----------------------------------------------
+    if _HAVE_CAPS and state:
+        st.markdown("**Active NWS CAP Alerts** for this region")
+        try:
+            alerts = owl_caps.alerts_for_state(state)[:5]
+        except Exception:
+            logger.exception("CAP fetch failed")
+            alerts = []
+        if alerts:
+            for a in alerts:
+                sev = a.get("severity", "Unknown")
+                event = a.get("event") or "Alert"
+                headline = a.get("headline") or ""
+                st.markdown(f"- **{event}** ({sev}) — {headline}")
+        else:
+            st.caption("No active CAP alerts for this state.")
 
 
 def _wlabel(days: int) -> str:
@@ -1444,6 +1569,36 @@ with tab_summary:
                     "focus a station · hover ticker to pause. Auto-rotation "
                     "stops on interaction."
                 )
+
+                # ---- Station drill panel (below the globe) --------------
+                # A selectbox drives the panel on the server side — sturdier
+                # than an iframe->Streamlit postMessage bridge, and Ag/UX-
+                # wise it doubles as a search-by-keystroke control.
+                st.markdown("##### Drill into a station")
+                plk = {s["id"]: s for s in AOMC_STATIONS if s.get("id")}
+                options = sorted(plk.keys())
+                # Default to the most severe flagged station if available.
+                default_idx = 0
+                try:
+                    flagged_first = wl.sort_values("status").iloc[0]
+                    sid_flagged = str(flagged_first.get("station", ""))
+                    if sid_flagged in options:
+                        default_idx = options.index(sid_flagged)
+                except Exception:
+                    pass
+                drill_sid = st.selectbox(
+                    "Station",
+                    options,
+                    index=default_idx,
+                    key="globe_drill_sid",
+                    format_func=lambda s: (
+                        f"{s} · "
+                        f"{(plk.get(s, {}).get('name') or '').title()}"
+                        f" · {plk.get(s, {}).get('state') or ''}"
+                    ),
+                )
+                if drill_sid:
+                    _render_drill_panel(drill_sid, plk, wl)
             elif _HAVE_FOLIUM:
                 # Fallback: 2D Folium map if Globe.gl module isn't available.
                 st.subheader("National ASOS Status Map (2D fallback)")
