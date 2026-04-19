@@ -130,12 +130,11 @@ def tick(x_owl_secret: str | None = Header(default=None)) -> dict[str, Any]:
         from asos_tools.stations import AOMC_STATIONS
         from asos_tools.watchlist import build_watchlist
 
-        hours = int(os.environ.get("OWL_SCAN_HOURS", "4"))
-        end = now
-        start_dt = end - timedelta(hours=hours)
+        hours = float(os.environ.get("OWL_SCAN_HOURS", "4"))
 
-        stations = [s["id"] for s in AOMC_STATIONS]
-        wl = build_watchlist(stations, start_dt, end)
+        # Pass the full AOMC dicts so build_watchlist can enrich
+        # rows with name/state for the alert body.
+        wl = build_watchlist(AOMC_STATIONS, hours=hours, end=now)
 
         flagged = 0
         if wl is not None and not wl.empty and "status" in wl.columns:
