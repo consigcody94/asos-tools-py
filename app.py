@@ -208,6 +208,37 @@ def _cached_news(ck: str = "") -> list[dict]:
         return []
 
 
+def _section_help(
+    title: str,
+    *,
+    what: str,
+    who: list[str] | None = None,
+    how: list[str] | None = None,
+    output: str | None = None,
+    expanded: bool = False,
+) -> None:
+    """Render a standard "help + who uses it + how to use" expander.
+
+    Used at the top of every tab / major section so that both experts
+    (who skip it) and new users (who expand it) can understand what the
+    section does and how to drive it.  Keeping a single helper means
+    visual style stays consistent across the whole app.
+    """
+    with st.expander(title, expanded=expanded):
+        out = ["**What it is.**  " + what.strip()]
+        if who:
+            out.append("\n**Who uses it:**\n")
+            for item in who:
+                out.append(f"- {item}")
+        if how:
+            out.append("\n**How to use it:**\n")
+            for i, step in enumerate(how, 1):
+                out.append(f"{i}. {step}")
+        if output:
+            out.append("\n**What the output means.**  " + output.strip())
+        st.markdown("\n".join(out), unsafe_allow_html=False)
+
+
 def _render_status_glossary(key_suffix: str = "", expanded: bool = False) -> None:
     """Collapsible legend defining every status enum the watchlist uses.
 
@@ -342,22 +373,33 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                 cams = []
 
             if cams:
-                # Render up to 4 thumbnails in a 2-column grid.
-                grid = st.columns(2)
-                for idx, cam in enumerate(cams):
-                    with grid[idx % 2]:
-                        try:
-                            img_url = owl_webcams.latest_image_url(cam["id"])
-                        except Exception:
-                            img_url = None
+                # Render 1-4 webcams in flat rows of 2. Creating a fresh
+                # st.columns() PER row avoids the nested-columns height
+                # padding bug where Streamlit allocates the max row height
+                # to every cell, producing big grey bands below short cells.
+                def _render_cam(col, cam):
+                    try:
+                        img_url = owl_webcams.latest_image_url(cam["id"])
+                    except Exception:
+                        img_url = None
+                    with col:
                         if img_url:
                             st.image(img_url, use_container_width=True)
-                        cap = (
+                        st.caption(
                             f"{cam.get('site_name','')} · "
                             f"{cam.get('direction','')} · "
                             f"{cam.get('distance_nm','?')} NM"
                         )
-                        st.caption(cap)
+
+                # Row 1: first 2 cameras.
+                r1 = st.columns(2)
+                for i, cam in enumerate(cams[:2]):
+                    _render_cam(r1[i], cam)
+                # Row 2: cams 2-3, only if we have them.
+                if len(cams) > 2:
+                    r2 = st.columns(2)
+                    for i, cam in enumerate(cams[2:4]):
+                        _render_cam(r2[i], cam)
             else:
                 st.caption("No FAA WeatherCams within 25 NM of this station.")
         else:
@@ -1685,6 +1727,32 @@ if (_HAVE_SCHED
 # ===========================================================================
 
 with tab_summary:
+    _section_help(
+        "About the Summary tab",
+        what=(
+            "The single-pane operational overview of the entire ASOS network. "
+            "Shows a live 4-hour scan of all 920 federally-operated stations, "
+            "rendered as a 3D globe with status-colored points, a news/alerts "
+            "ticker, a click-to-drill station panel, a KPI row, and a sortable "
+            "table of every station currently requiring attention."
+        ),
+        who=[
+            "**NOC duty officers** — glance at the gauge + KPI row, spot the worst stations on the globe, drill into one in under 5 seconds.",
+            "**AOMC controllers** — triage which stations need attention this shift before moving to the detailed Controllers tab.",
+            "**NWS forecasters** — confirm a specific station is healthy before citing its METAR in a discussion.",
+            "**Leadership / briefers** — export the summary KPIs for shift-change briefings.",
+            "**First-time visitors** — the tab to open first to orient yourself.",
+        ],
+        how=[
+            "Check the **Network Health** gauge for the overall % clean.",
+            "Use the **REGION** buttons (CONUS / Northeast / West / Alaska / etc.) on the globe to zoom to an area of interest.",
+            "Hover a point for a quick tooltip, or **click it** for a persistent card with the latest METAR + status reason.",
+            "Use the **Drill into a station** selectbox below the globe to open the full station panel (METAR + webcams + CAP alerts).",
+            "Open the **Status definitions** expander if any status label is unclear.",
+            "Scroll to the **Stations Requiring Attention** table to see every non-clean station, worst-first.",
+        ],
+    )
+
     if not _HAVE_AOMC:
         st.error("AOMC catalog not loaded. Restart the app or contact your administrator.")
     else:
@@ -1899,6 +1967,30 @@ with tab_aomc:
     st.caption(
         "ASOS Operations and Monitoring Center view — intended for "
         "controllers responsible for the 920 federally-operated stations."
+    )
+    _section_help(
+        "About the AOMC Controllers tab",
+        what=(
+            "A per-station deep-dive intended for technicians whose job is "
+            "keeping the 920-station ASOS fleet healthy. Three sub-tabs "
+            "(METARs, Missing METARs, Maintenance Flags) partition the "
+            "fleet so you can focus on one operational concern at a time. "
+            "Each sub-tab shows a sortable, filterable, CSV-exportable table "
+            "plus a 'Build PDF Briefing' button for shift handoffs."
+        ),
+        who=[
+            "**AOMC controllers** (primary audience) — the whole tab exists for you.",
+            "**Field maintenance techs** — pull the Maintenance Flags table, sort by latest flag time, drive to the nearest flagged station.",
+            "**Ops managers** — export the PDF briefing at shift-change so the oncoming controller has exactly the info the offgoing one was working from.",
+            "**QA / compliance** — archive the CSV exports to prove the fleet was monitored.",
+        ],
+        how=[
+            "Pick a **Scan window** (1h for 'right now', 24h for an end-of-shift report).",
+            "Open the sub-tab matching your concern: **METARs** for the full live feed, **Missing METARs** for silent stations, **Maintenance Flags** for the `$` stations.",
+            "Use the table's column headers to sort/filter. Right-click a row to copy/export; click **Download CSV** for the whole view.",
+            "Click **Build PDF Briefing** to generate a shift-handoff document including every flagged/missing station with decoded reasons.",
+            "Open the **Status definitions** expander below if any label is unclear.",
+        ],
     )
     _render_status_glossary(key_suffix="aomc", expanded=False)
 
@@ -2121,6 +2213,38 @@ with tab_reports:
     st.caption(
         "Generate 1-minute dashboards, maintenance analyses, and formal "
         "DOCX/PDF incident reports."
+    )
+    _section_help(
+        "About the Reports tab",
+        what=(
+            "On-demand reports for a single station or a group of stations "
+            "over any date range. Produces three artifact types: (a) a "
+            "matplotlib **dashboard PNG** with wind rose + time series + "
+            "annotated events; (b) a **Missing METAR** report for "
+            "availability audits; (c) a **formal DOCX/PDF incident report** "
+            "with an executive summary, per-station timelines, `$` evidence, "
+            "sensor-code breakdowns, and recommendations."
+        ),
+        who=[
+            "**AOMC controllers** — generate the daily dashboard PNG for stations that tripped `$` overnight.",
+            "**Incident investigators** — produce the formal DOCX when a station had a maintenance event that requires a paper trail.",
+            "**Shift supervisors** — pull a Missing METAR report to document availability compliance.",
+            "**Program managers** — ZIP a 7-day dashboard bundle for a whole region for a monthly review.",
+            "**Researchers** — export the underlying 1-minute CSV for further analysis.",
+        ],
+        how=[
+            "Pick a **station or group** (Long Island, Front Range, etc.) and a **date range**.",
+            "Choose the **report type**: Dashboard / Maintenance / Missing / Incident.",
+            "Click **Generate** — the report appears inline with a download button.",
+            "For multi-station jobs use the **Bulk ZIP** option to bundle every report into one archive.",
+            "Incident reports accept a free-text 'Controller observations' field that feeds directly into the DOCX narrative.",
+        ],
+        output=(
+            "Dashboards are PNG (1500×1000 px, publication-quality). "
+            "Incident reports are DOCX/PDF with NOAA-blue banners and "
+            "FOUO-style headings. All filenames encode station + date range, "
+            "so a shift's worth of reports sorts chronologically."
+        ),
     )
 
     # --- Inline report configuration (moved from sidebar) ----------------
@@ -2379,6 +2503,34 @@ with tab_stations:
         f"{len(AOMC_STATIONS)} stations from NCEI HOMR — "
         "NWS / FAA / DOD operated ASOS sites."
     )
+    _section_help(
+        "About the Stations tab",
+        what=(
+            "The master directory of every federally-operated ASOS station "
+            "in the network. Each row is pulled from NCEI HOMR (NOAA's "
+            "authoritative Historical Observing Metadata Repository). "
+            "Fields include ICAO call, NCDC/WBAN IDs, operator (NWS/FAA/DOD), "
+            "lat/lon, elevation, begin-of-operation date, and station type."
+        ),
+        who=[
+            "**Controllers looking up a station** — search by ICAO, name, or state to pull metadata.",
+            "**Analysts comparing stations** — filter by state/operator to compose custom groups.",
+            "**Researchers** — export the full directory as CSV for offline analysis.",
+            "**Newcomers learning the network** — browse to get a sense of the station footprint.",
+        ],
+        how=[
+            "Use the **search box** to filter by ICAO, name, state, or operator.",
+            "Click any column header to **sort**.",
+            "Check a row's checkbox (if selection is enabled) to preview its location on the map.",
+            "Use **Download CSV** to export the currently-filtered view.",
+        ],
+        output=(
+            "The table is rendered with the full AgGrid feature set (sort, "
+            "filter, resize, pin) because a 920-row directory genuinely "
+            "benefits from interactive filtering. Elsewhere in the app we "
+            "use st.dataframe; here AgGrid is the right tool."
+        ),
+    )
     if _HAVE_AOMC:
         c1, c2 = st.columns([3, 1])
         with c1:
@@ -2425,6 +2577,35 @@ with tab_fcst:
     st.caption(
         "Aviation weather ops console. Cross-sources live data from the "
         "Aviation Weather Center, NWS CAP alerts, and the ASOS network."
+    )
+    _section_help(
+        "About the NWS Forecasters tab",
+        what=(
+            "A four-pane aviation weather ops console. Pane 1 shows national "
+            "hazards (SIGMETs, AIRMETs, G-AIRMETs, TFRs). Pane 2 gives a "
+            "side-by-side METAR + TAF view for any station. Pane 3 rolls up "
+            "the entire AOMC fleet by flight category (VFR/MVFR/IFR/LIFR). "
+            "Pane 4 shows active NWS CAP alerts nationwide, filterable by "
+            "severity."
+        ),
+        who=[
+            "**NWS aviation forecasters** — primary audience; build the morning hazard brief.",
+            "**ATC facility supervisors** — scan National Hazards before coordinating around weather with AOMC.",
+            "**Pilots / dispatchers preparing a flight** — pull the TAF + nearby PIREPs for a destination.",
+            "**Emergency managers** — Active Alerts shows every NWS CAP warning in force right now.",
+            "**Anyone wanting 'is KXYZ flyable right now'** — Station TAF/METAR gives the cleanest single-page answer.",
+        ],
+        how=[
+            "Start at **National Hazards** to see what's being watched fleet-wide.",
+            "Switch to **Station TAF/METAR**, enter or pick an ICAO, and read current + forecast conditions.",
+            "Use **Flight Category Rollup** to see how many stations are in each category right now (red flags if IFR/LIFR > baseline).",
+            "Check **Active Alerts** last — filter by severity (Extreme/Severe/Moderate/Minor) to focus on actionable threats.",
+        ],
+        output=(
+            "Everything in this tab comes from the federal Aviation Weather "
+            "Center (aviationweather.gov) and NWS api.weather.gov — no "
+            "scraping, all authoritative primary sources, refreshed live."
+        ),
     )
     fcst_ck = _session_data_key()
 
@@ -2631,6 +2812,28 @@ with tab_admin:
         "System operations: alert routing, background scheduler, "
         "persistent cache, anomaly detection."
     )
+    _section_help(
+        "About the Admin tab",
+        what=(
+            "Operator-level controls that affect the whole app, not just a "
+            "single station. Five sub-tabs partition the responsibilities: "
+            "**Alerts** (notification routing), **Scheduler** (background "
+            "scans), **Cache** (data freshness + storage), **Anomaly "
+            "Detection** (per-station deep analysis), and **Data Sources** "
+            "(every upstream feed O.W.L. consumes)."
+        ),
+        who=[
+            "**System administrators** — primary audience; own the service health.",
+            "**Ops engineers / DevOps** — watch scheduler, cache stats, and tick metrics here.",
+            "**Incident responders** — use Anomaly Detection to find the precursor to a reported issue.",
+            "**Compliance auditors** — use Data Sources to prove every data point has a federal / authoritative origin.",
+        ],
+        how=[
+            "Walk the sub-tabs left-to-right: Alerts -> Scheduler -> Cache -> Anomaly -> Data Sources.",
+            "Each sub-tab has its own 'What this is + who uses it' expander inside.",
+            "Changes here take effect on next scan (cache) or next session (alerts).",
+        ],
+    )
 
     if True:
         admin_tabs = st.tabs([
@@ -2639,6 +2842,33 @@ with tab_admin:
 
         # -- Alerts ------------------------------------------------------
         with admin_tabs[0]:
+            _section_help(
+                "About Alerts",
+                what=(
+                    "Configure where O.W.L. sends notifications when a "
+                    "watchlist scan detects a newly-flagged or missing "
+                    "station. Uses the Apprise library, which speaks 70+ "
+                    "downstream services (Slack, Discord, Teams, email, "
+                    "SMS via Twilio, PagerDuty, Pushover, Telegram, etc.) "
+                    "via a unified URL scheme."
+                ),
+                who=[
+                    "**NOC team leads** — wire Slack or Teams so shift members get a ping when a new `$` fires.",
+                    "**On-call engineers** — add a PagerDuty URL for severity-Severe CAP alerts.",
+                    "**Solo controllers** — use Pushover or SMS for after-hours alerts.",
+                ],
+                how=[
+                    "Set the `OWL_ALERT_URLS` env var on the HF Space (comma-separated Apprise URLs).",
+                    "Use the **Send test alert** button to verify wiring end-to-end before the next scan fires.",
+                    "Rotate or disable channels by updating the env var and restarting the Space.",
+                ],
+                output=(
+                    "One alert per newly-flagged station per scan. Missing "
+                    "stations get a distinct MISSING alert. No spam — the "
+                    "circuit breaker suppresses the bulk-alert flood when "
+                    "the whole fleet classifies as MISSING (upstream outage)."
+                ),
+            )
             st.markdown("#### Notification routing (Apprise)")
             st.caption(
                 "Set the `OWL_ALERT_URLS` environment variable "
@@ -2680,6 +2910,34 @@ with tab_admin:
                 "Refreshes the whole-network watchlist every 3 minutes so "
                 "the Summary tab loads instantly."
             )
+            _section_help(
+                "About Scheduler",
+                what=(
+                    "Two scheduling layers run in parallel: (a) an optional "
+                    "in-container **APScheduler** that refreshes the "
+                    "watchlist periodically and pushes results into the "
+                    "DiskCache, and (b) an external **GitHub Actions cron** "
+                    "that POSTs `/api/tick` every 5 minutes and survives "
+                    "container restarts. The external cron is the primary; "
+                    "APScheduler is legacy and disabled unless "
+                    "`OWL_ENABLE_BG_REFRESH=1`."
+                ),
+                who=[
+                    "**Ops engineers** — watch tick cadence, p50/p95 duration, failure counts.",
+                    "**Admins setting up a new deploy** — confirm the external cron secret is in place and the first tick landed green.",
+                    "**Incident responders after an outage** — check `upstream_outage` flag and last_error to see why scans stopped.",
+                ],
+                how=[
+                    "The external cron is already configured via `.github/workflows/owl-tick.yml` — just keep `OWL_CRON_SECRET` synced between HF Space secrets and GitHub repo secrets.",
+                    "To enable the in-container scheduler additionally, set `OWL_ENABLE_BG_REFRESH=1` on the HF Space.",
+                    "Use `/api/health` (or the metrics shown below) to verify tick frequency and success rate.",
+                ],
+                output=(
+                    "The metrics panel below shows total/ok/failed/overlap "
+                    "tick counts and p50/p95 scan duration. A healthy "
+                    "deployment is >98% ok rate with p95 < 30s (AWC primary)."
+                ),
+            )
             if _HAVE_SCHED:
                 status = scheduler_status()
                 if not status.get("available"):
@@ -2707,6 +2965,32 @@ with tab_admin:
             st.caption(
                 "Watchlist scans are cached to disk so they survive Space "
                 "restarts and kick-starts after code pushes."
+            )
+            _section_help(
+                "About Cache",
+                what=(
+                    "A SQLite-backed key-value store (DiskCache) used to "
+                    "persist the most recent whole-network watchlist scan. "
+                    "Without it every page load would trigger a fresh AWC "
+                    "fetch; with it, repeat visits and multi-user views "
+                    "render in milliseconds from cached data."
+                ),
+                who=[
+                    "**All users** benefit indirectly — the cache is why the Summary tab loads instantly after a warm scan.",
+                    "**Admins** watch the hit/miss rate and disk usage to decide if the $5/mo Persistent Storage add-on is worthwhile.",
+                    "**Incident responders** — can force-clear the cache to rule it out as a cause of stale data.",
+                ],
+                how=[
+                    "The cache dir defaults to `/tmp/owl-cache` (ephemeral) or `/data/cache` if the HF Persistent Storage add-on is enabled.",
+                    "Click **Clear cache** to evict everything — next scan repopulates.",
+                    "Size limit is 200 MB (LRU eviction).  Hit rate in a warm cache is typically >95%.",
+                ],
+                output=(
+                    "Three numbers tell you if the cache is healthy: **hit "
+                    "rate** (>85% is fine), **items** (~1-10 in steady state "
+                    "— we only cache per-session watchlist snapshots), and "
+                    "**size MB** (well under the 200 MB cap)."
+                ),
             )
             if _HAVE_PC:
                 stats = _pc_stats()
@@ -2870,6 +3154,34 @@ than `$`, and with no false positives during normal diurnal cycles.
             st.caption(
                 "Every number shown anywhere in O.W.L. traces back to "
                 "one of these public feeds. Click to visit the source."
+            )
+            _section_help(
+                "About Data Sources",
+                what=(
+                    "The public registry of every upstream feed O.W.L. "
+                    "consumes, with their trust tier (federal authoritative / "
+                    "federal mirror / academic) and update cadence. Used for "
+                    "transparency — any statistic in the app can be traced "
+                    "back to a source row here."
+                ),
+                who=[
+                    "**Compliance auditors** — prove every number has a federal / authoritative origin.",
+                    "**Users who want to verify a specific METAR** — click through to the source feed for the raw data.",
+                    "**Admins evaluating outage impact** — see at a glance which features depend on which upstream source.",
+                    "**Researchers citing O.W.L. data** — get the exact URL for the footnote.",
+                ],
+                how=[
+                    "Browse the table — rows are ordered by how critical the source is (METAR > News > Webcams).",
+                    "Click a URL to open the source's landing page.",
+                    "Cross-reference the **Used for** column with whichever O.W.L. feature you're auditing.",
+                ],
+                output=(
+                    "Three trust tiers: **federal** (the authoritative "
+                    "source, usually NOAA/NWS/FAA/NCEI); **mirror** (a "
+                    "reliable non-federal copy, e.g. IEM); **academic** "
+                    "(university research services). No commercial or "
+                    "scraped sources are in the pipeline."
+                ),
             )
             if _HAVE_SOURCES and DATA_SOURCES:
                 src_rows = []
