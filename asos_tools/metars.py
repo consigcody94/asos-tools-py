@@ -19,6 +19,7 @@ Example
 from __future__ import annotations
 
 import re
+import time
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Iterable, Union
@@ -246,10 +247,36 @@ def fetch_metars(
     }
 
     sess = session or requests.Session()
-    resp = sess.get(IEM_ENDPOINT_METAR, params=params, timeout=timeout)
-    resp.raise_for_status()
 
-    body = resp.text
+    # Retry transient 5xx (IEM routinely 503s under load) with backoff.
+    last_exc = None
+    body = None
+    for attempt in range(3):
+        try:
+            resp = sess.get(IEM_ENDPOINT_METAR, params=params, timeout=timeout)
+            if 500 <= resp.status_code < 600:
+                last_exc = requests.HTTPError(
+                    f"{resp.status_code} {resp.reason} from IEM",
+                    response=resp,
+                )
+                time.sleep(0.8 * (attempt + 1))
+                continue
+            resp.raise_for_status()
+            body = resp.text
+            break
+        except (requests.ConnectionError, requests.Timeout) as e:
+            last_exc = e
+            time.sleep(0.8 * (attempt + 1))
+            continue
+    if body is None:
+        # All retries exhausted — return empty DataFrame rather than raising.
+        # Upstream callers get a usable (if empty) result; logs capture why.
+        import logging
+        logging.getLogger(__name__).warning(
+            "IEM unavailable after 3 retries: %s", last_exc,
+        )
+        return pd.DataFrame(columns=["station", "valid", "metar", "has_maintenance"])
+
     if not body:
         return pd.DataFrame(columns=["station", "valid", "metar", "has_maintenance"])
 

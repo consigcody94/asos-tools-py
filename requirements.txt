@@ -1,6 +1,29 @@
-pandas>=2.0
+pandas>=2.2,<3.1
 requests>=2.28
 matplotlib>=3.7
-streamlit>=1.30
+streamlit>=1.40,<2.0
 numpy>=1.24
 python-docx>=1.0
+pyarrow>=14,<24
+
+# --- Tier 1 (visible integrations) ---
+folium>=0.16
+streamlit-folium>=0.20
+streamlit-aggrid>=1.2,<2.0
+apprise>=1.7
+fpdf2>=2.7
+
+# --- Tier 3 (operational maturity) ---
+streamlit-authenticator>=0.3
+apscheduler>=3.10
+stumpy>=1.12
+diskcache>=5.6
+
+# --- Release #1 additions: extra data sources ---
+feedparser>=6.0
+
+# --- Release #2 additions: FastAPI side-car (multi-process HF container) ---
+# Hosts /api/tick, /api/health, /api/sources, /api/webcams/near behind nginx.
+# Kept deliberately minimal; no starlette-sessions, no sqlalchemy etc.
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.27,<1.0

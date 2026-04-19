@@ -1,0 +1,69 @@
+name: OWL Scheduled Tick
+
+# External cron replacement for in-container APScheduler. Runs every 5
+# minutes, POSTs to /api/tick on the live HF Space. The tick handler
+# executes a full watchlist scan and fires Apprise alerts for any newly
+# flagged stations. Because the scheduler lives OUTSIDE the container,
+# no state is lost when HF restarts/rebuilds.
+
+on:
+  schedule:
+    # */5 * * * * — every 5 minutes. GitHub Actions minimum is 5 min.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # allow manual fire from the Actions tab
+
+# Concurrency: if a tick takes longer than 5 min, skip the next one
+# rather than overlapping.
+concurrency:
+  group: owl-tick
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tick:
+    name: Trigger scheduled scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      OWL_URL: https://consgicody-asos-tools.hf.space
+
+    steps:
+      - name: Fire /api/tick
+        id: tick
+        env:
+          OWL_CRON_SECRET: ${{ secrets.OWL_CRON_SECRET }}
+        run: |
+          set -u
+          if [ -z "${OWL_CRON_SECRET:-}" ]; then
+            echo "::error::OWL_CRON_SECRET repo secret is not set"
+            exit 2
+          fi
+
+          # -sS : quiet progress, still show errors.
+          # -w  : print http status at the end.
+          # -o  : capture body for logging.
+          body_file="$(mktemp)"
+          http_code=$(curl -sS -o "$body_file" -w "%{http_code}" \
+              --max-time 180 \
+              -X POST \
+              -H "X-OWL-Secret: $OWL_CRON_SECRET" \
+              -H "Content-Type: application/json" \
+              "$OWL_URL/api/tick" \
+              || echo "000")
+
+          echo "HTTP $http_code"
+          cat "$body_file"
+          echo
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Tick failed with HTTP $http_code"
+            exit 1
+          fi
+
+      - name: Verify health afterwards
+        run: |
+          set -u
+          curl -sS --max-time 30 "$OWL_URL/api/health" | tee /dev/stderr \
+            | grep -q '"status": "ok"'

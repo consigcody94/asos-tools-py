@@ -26,6 +26,99 @@ from asos_tools.nws import get_current_conditions
 from asos_tools.stations import GROUPS, get_group, list_groups
 from asos_tools.watchlist import build_watchlist
 
+# --- Tier 1 + Tier 3 integrations ---
+try:
+    from streamlit_folium import st_folium
+    from asos_tools.map_view import build_status_map, STATUS_COLORS
+    _HAVE_FOLIUM = True
+except ImportError:
+    _HAVE_FOLIUM = False
+
+try:
+    from st_aggrid import (
+        AgGrid, GridOptionsBuilder, GridUpdateMode,
+        ColumnsAutoSizeMode, JsCode,
+    )
+    _HAVE_AGGRID = True
+except ImportError:
+    _HAVE_AGGRID = False
+
+try:
+    from asos_tools import alerts as owl_alerts
+    _HAVE_APPRISE = True
+except ImportError:
+    _HAVE_APPRISE = False
+
+try:
+    from asos_tools.pdf_export import build_watchlist_pdf, build_report_pdf
+    _HAVE_PDF = True
+except ImportError:
+    _HAVE_PDF = False
+
+# Auth module intentionally not imported — app is public.
+_HAVE_AUTH = False
+
+try:
+    from asos_tools.scheduler import (
+        get_scheduler, schedule_watchlist_refresh, scheduler_status,
+    )
+    _HAVE_SCHED = True
+except ImportError:
+    _HAVE_SCHED = False
+
+try:
+    from asos_tools.persistent_cache import (
+        put_watchlist as _pc_put, get_watchlist as _pc_get,
+        cache_stats as _pc_stats, clear_cache as _pc_clear,
+    )
+    _HAVE_PC = True
+except ImportError:
+    _HAVE_PC = False
+
+try:
+    from asos_tools.anomaly import detect_anomalies
+    _HAVE_ANOMALY = True
+except ImportError:
+    _HAVE_ANOMALY = False
+
+# --- Release #1 new data sources ---
+try:
+    from asos_tools import awc as owl_awc
+    _HAVE_AWC = True
+except ImportError:
+    _HAVE_AWC = False
+
+try:
+    from asos_tools import alerts_feed as owl_caps
+    _HAVE_CAPS = True
+except ImportError:
+    _HAVE_CAPS = False
+
+try:
+    from asos_tools import news as owl_news
+    _HAVE_NEWS = True
+except ImportError:
+    _HAVE_NEWS = False
+
+try:
+    from asos_tools.sources import SOURCES as DATA_SOURCES
+    _HAVE_SOURCES = True
+except ImportError:
+    DATA_SOURCES = []
+    _HAVE_SOURCES = False
+
+try:
+    from asos_tools import webcams as owl_webcams
+    _HAVE_WEBCAMS = True
+except ImportError:
+    _HAVE_WEBCAMS = False
+
+try:
+    from asos_tools.ncei import fetch_metars_ncei, service_available as _ncei_avail
+    _HAVE_NCEI = True
+except ImportError:
+    _HAVE_NCEI = False
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -50,9 +143,34 @@ _MAX_CUSTOM_DAYS = 365
 
 
 def _round_3min(dt: datetime) -> str:
-    """Round to nearest 3-min boundary — matches scan cache TTL."""
+    """Round to nearest 3-min boundary — kept for compatibility with
+    the scheduler's cache-key format, NOT used as a live cache key.
+
+    Live cache keys come from :func:`_session_data_key` which only
+    changes when the user hits the Refresh button.
+    """
     return dt.replace(second=0, microsecond=0,
                       minute=(dt.minute // 3) * 3).isoformat()
+
+
+def _session_data_key() -> str:
+    """Return the cache key for all upstream data lookups this session.
+
+    The key is set on first render of the session (using the current UTC
+    time), then stays fixed until the user clicks Refresh — at which
+    point we bump the key AND call ``st.cache_data.clear()``. Because
+    ``@st.cache_data`` is keyed by positional args, a new key value
+    forces a fresh fetch without relying on time-based expiration.
+    """
+    if "_data_key" not in st.session_state:
+        st.session_state["_data_key"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return st.session_state["_data_key"]
+
+
+def _bump_data_key() -> None:
+    """Invalidate all cached fetches — called by the Refresh button."""
+    st.session_state["_data_key"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    st.cache_data.clear()
 
 
 def _round_5min(dt: datetime) -> datetime:
@@ -66,32 +184,80 @@ def _wlabel(days: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Cached fetches (perf fixes applied)
+# Cached fetches — FETCH-ON-DEMAND MODEL
 # ---------------------------------------------------------------------------
+# All upstream data fetches use ``ttl=None`` (no time-based expiration).
+# The cache only invalidates when the user clicks the sidebar "Refresh"
+# button (which calls ``st.cache_data.clear()``), or when cache-key inputs
+# change (e.g., a different station or time window).
+#
+# This means:
+#   - Page loads: data fetched ONCE per session, then served from cache.
+#   - Streamlit reruns (tab switch, widget click): cache hit, no network.
+#   - User explicit refresh: cache cleared, next render re-fetches.
+# No background polling, no timed expiration.
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=None, show_spinner=False)
 def _fetch_1min(station, start, end):
     return fetch_1min(station, start, end)
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=None, show_spinner=False)
 def _fetch_metars(stations_key, start, end):
     return fetch_metars(list(stations_key), start, end)
 
-@st.cache_data(ttl=120, show_spinner=False)
+@st.cache_data(ttl=None, show_spinner=False)
 def _fetch_nws(station_id):
     # Security: validate station ID before passing to NWS URL path.
     if not re.fullmatch(r"[A-Z0-9]{3,6}", station_id.strip().upper()):
         return None
     return get_current_conditions(station_id)
 
-@st.cache_data(ttl=180, show_spinner=False)
+@st.cache_data(ttl=None, show_spinner=False)
 def _scan(station_ids, hours, cache_key):
-    """Watchlist scan. cache_key is rounded to 3-min to match TTL."""
+    """Watchlist scan. cache_key comes from session-scoped _scan_key()."""
     end = datetime.fromisoformat(cache_key).replace(tzinfo=timezone.utc)
     return build_watchlist(
         [_AOMC_META.get(sid, {"id": sid}) for sid in station_ids],
         hours=hours, end=end,
     )
+
+
+# ---- Cached wrappers for Release #1 data sources (all session-long) ----
+@st.cache_data(ttl=None, show_spinner=False)
+def _awc_airsigmet(_cache_key: str):
+    if not _HAVE_AWC:
+        return []
+    return owl_awc.fetch_airsigmet()
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _awc_pirep(_cache_key: str):
+    if not _HAVE_AWC:
+        return []
+    return owl_awc.fetch_pirep(age_hours=2)
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _awc_metar_bulk(ids_tuple, _cache_key: str):
+    if not _HAVE_AWC:
+        return []
+    return owl_awc.fetch_metar(list(ids_tuple))
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _awc_taf(station_id: str, _cache_key: str):
+    if not _HAVE_AWC:
+        return []
+    return owl_awc.fetch_taf([station_id])
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _caps_active(_cache_key: str):
+    if not _HAVE_CAPS:
+        return []
+    return owl_caps.fetch_active_alerts()
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _news_headlines(_cache_key: str, limit: int = 30):
+    if not _HAVE_NEWS:
+        return []
+    return owl_news.fetch_noaa_faa_headlines(limit=limit)
 
 
 def _render(builder, **kw):
@@ -561,7 +727,7 @@ with st.sidebar:
     # ---- Quick network pulse (cached at 3-min boundary) ----
     if _HAVE_AOMC:
         all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-        ck = _round_3min(datetime.now(timezone.utc))
+        ck = _session_data_key()
         try:
             pulse = _scan(all_ids, 4.0, ck)
             if not pulse.empty:
@@ -577,117 +743,30 @@ with st.sidebar:
             st.warning("Network scan unavailable")
 
     st.divider()
-
-    # ---- Report controls ----
-    st.markdown("#### Report Settings")
-
-    report_type = st.selectbox(
-        "Report type",
-        ["1-min dashboard", "Maintenance ($)", "Flagged vs clean",
-         "Missing METARs", "Incident report (DOCX)"],
+    st.markdown(
+        '<div style="font-size:0.72rem;color:#64748b;line-height:1.45;">'
+        'Pick a workflow from the tabs above. Different NOAA groups '
+        '(AOMC controllers, forecasters, administrators) each have '
+        'their own section.</div>',
+        unsafe_allow_html=True,
     )
 
-    smode = st.radio("Station source", ["Single", "Group", "Custom"],
-                     horizontal=True, label_visibility="collapsed")
-
-    stations_list: list[str] = []
-    group_label = ""
-
-    if smode == "Single":
-        aomc_toggle = st.toggle("AOMC stations only", value=True) if _HAVE_AOMC else False
-        if _HAVE_CATALOG:
-            pool = ([s for s in ALL_ASOS_STATIONS if s["id"] in AOMC_IDS]
-                    if aomc_toggle else ALL_ASOS_STATIONS)
-            pool_ids = [s["id"] for s in pool]
-            _plk = {s["id"]: s for s in pool}  # O(1) lookup (was O(n²))
-            sid = st.selectbox(
-                "Station", pool_ids,
-                index=pool_ids.index("KJFK") if "KJFK" in pool_ids else 0,
-                format_func=lambda s: (
-                    f"{s} · {_short_name(_plk.get(s, {}).get('name', ''))} · "
-                    f"{_plk.get(s, {}).get('state', '')}"
-                ),
-                help="Select by ICAO ID, name, or state",
-            )
-        else:
-            sid = st.text_input("ICAO ID", "KJFK").strip().upper()
-        stations_list = [sid]
-        group_label = sid
-    elif smode == "Group":
-        grp = st.selectbox("Preset group", list_groups(),
-                           format_func=lambda s: s.replace("_", " ").title())
-        stations_list = list(get_group(grp))
-        group_label = grp.replace("_", " ").title()
-        st.caption(f"{len(stations_list)} stations")
-    else:
-        raw = st.text_area("Station IDs (comma or newline)", "KJFK, KLGA, KEWR",
-                           height=68)
-        stations_list = [s.strip().upper() for s in raw.replace(",", "\n").splitlines() if s.strip()]
-        group_label = ", ".join(stations_list[:3]) + ("…" if len(stations_list) > 3 else "")
-        st.caption(f"{len(stations_list)} stations")
-
-    wmode = st.selectbox(
-        "Time window",
-        ["1 day", "7 days", "14 days", "30 days", "Custom"],
-        index=1,
-    )
-    if wmode == "Custom":
-        today = datetime.now(timezone.utc).date()
-        c1, c2 = st.columns(2)
-        with c1:
-            sd = st.date_input("From", today - timedelta(days=7))
-        with c2:
-            ed = st.date_input("To", today)
-        start = datetime.combine(sd, datetime.min.time(), tzinfo=timezone.utc)
-        end = datetime.combine(ed, datetime.min.time(), tzinfo=timezone.utc)
-        span = (end - start).days
-        if span > _MAX_CUSTOM_DAYS:
-            st.error(f"Date range too large ({span} days). Maximum is {_MAX_CUSTOM_DAYS} days.")
-        elif span <= 0:
-            st.error("End date must be after start date.")
-        wlabel = _wlabel(span)
-    else:
-        days = {"1 day": 1, "7 days": 7, "14 days": 14, "30 days": 30}[wmode]
-        end = _round_5min(datetime.now(timezone.utc))
-        start = _round_5min(end - timedelta(days=days))
-        wlabel = _wlabel(days)
-
-    go = st.button("Generate", type="primary", use_container_width=True)
-
-    # ---- Live weather for single station ----
-    if smode == "Single" and stations_list:
-        st.divider()
-        cond = _fetch_nws(stations_list[0])
-        if cond:
-            st.markdown(f"#### {stations_list[0]} Now")
-            st.caption(cond.get("description", ""))
-            wc1, wc2 = st.columns(2)
-            wc1.metric("Temp",
-                       f"{cond['temp_f']:.0f}°F" if cond.get("temp_f") is not None else "—")
-            wc2.metric("Dew",
-                       f"{cond['dewpoint_f']:.0f}°F" if cond.get("dewpoint_f") is not None else "—")
-            wc1, wc2 = st.columns(2)
-            w_spd = cond.get("wind_speed_kt")
-            w_dir = cond.get("wind_direction")
-            wc1.metric("Wind",
-                       f"{w_dir:.0f}° / {w_spd:.0f} kt" if w_spd is not None else "—")
-            wc2.metric("Vis",
-                       f"{cond['visibility_mi']:.0f}mi" if cond.get("visibility_mi") is not None else "—")
-            sky = cond.get("sky", "")
-            if sky and sky != "CLR":
-                st.caption(f"Sky: {sky}")
-            ts = cond.get("timestamp", "")
-            if ts:
-                st.caption(f"Obs: {ts[:16]}Z")
-        else:
-            st.caption(f"NWS data unavailable for {stations_list[0]}")
-
-    # ---- Sidebar footer ----
+    # ---- Sidebar footer (refresh + theme) ----
     st.divider()
+    # Show when data was last loaded (session key == load time).
+    _loaded_iso = st.session_state.get("_data_key", "—")
+    try:
+        _loaded_dt = datetime.fromisoformat(_loaded_iso).replace(tzinfo=timezone.utc)
+        _loaded_display = _loaded_dt.strftime("%Y-%m-%d %H:%M:%SZ")
+    except Exception:
+        _loaded_display = _loaded_iso
+    st.caption(f"Data loaded: **{_loaded_display}**")
+
     fc1, fc2 = st.columns(2)
     with fc1:
-        if st.button("Refresh", use_container_width=True):
-            st.cache_data.clear()
+        if st.button("Refresh", use_container_width=True,
+                     help="Clear cached data and re-fetch from upstream sources."):
+            _bump_data_key()
             st.rerun()
     with fc2:
         # Dark mode toggle — Streamlit handles the rest via
@@ -962,7 +1041,7 @@ _health_total = 0
 _health_problem = 0
 if _HAVE_AOMC:
     try:
-        _health_ck = _round_3min(datetime.now(timezone.utc))
+        _health_ck = _session_data_key()
         _health_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
         _health_wl = _scan(_health_ids, float(_SCAN_HOURS), _health_ck)
         if not _health_wl.empty:
@@ -974,10 +1053,11 @@ if _HAVE_AOMC:
                                + int(_hcts.get("NO DATA", 0)))
             _health_pct = round(_health_clean / _health_total * 100, 1)
             if _health_pct < 70:
-                _status_label = "DEGRADED"
+                # Softer wording than "DEGRADED" — follows NWS advisory vocabulary.
+                _status_label = "REDUCED CAPACITY"
                 _status_color = "#b50909"  # USWDS error red
             elif _health_pct < 85:
-                _status_label = "PARTIAL"
+                _status_label = "MONITORING"
                 _status_color = "#ffbe2e"  # USWDS warning yellow
     except Exception:
         _status_label = "UNKNOWN"
@@ -1040,8 +1120,9 @@ if _health_pct is not None and _health_total:
 # Tabs
 # ===========================================================================
 
-tab_summary, tab_reports, tab_stations, tab_flags, tab_missing = st.tabs([
-    "SUMMARY", "REPORTS", "STATIONS", "$ FLAGS", "MISSING METARS",
+tab_summary, tab_aomc, tab_reports, tab_stations, tab_fcst, tab_admin = st.tabs([
+    "SUMMARY", "AOMC CONTROLLERS", "REPORTS", "STATIONS",
+    "NWS FORECASTERS", "ADMIN",
 ])
 
 
@@ -1049,27 +1130,65 @@ tab_summary, tab_reports, tab_stations, tab_flags, tab_missing = st.tabs([
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-def _scan_ui(key):
-    c1, c2 = st.columns(2)
-    with c1:
-        hours = st.selectbox("Window", [1, 2, 4, 6, 12, 24], index=2,
-                             format_func=lambda h: f"Last {h}h", key=f"{key}_h")
-    with c2:
-        scope = st.selectbox("Scope", ["All AOMC", "By state", "Preset group"],
-                             key=f"{key}_sc")
-    if scope == "By state":
-        states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
-        pick = st.selectbox("State", states, key=f"{key}_st")
-        ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("state") == pick)
-    elif scope == "Preset group":
-        g = st.selectbox("Group", list_groups(),
-                         format_func=lambda s: s.replace("_", " ").title(),
-                         key=f"{key}_grp")
-        ids = tuple(sid for sid in get_group(g) if sid in AOMC_IDS) or tuple(get_group(g))
-    else:
-        ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-    ck = _round_3min(datetime.now(timezone.utc))
-    return ids, hours, ck
+try:
+    import pyarrow as _pa
+    _ARROW_STR_DT = pd.ArrowDtype(_pa.string())
+except Exception:  # pragma: no cover
+    _ARROW_STR_DT = None
+
+
+def _arrow_safe(df: pd.DataFrame) -> pd.DataFrame:
+    """Coerce columns into types Streamlit's Arrow JS frontend can deserialize.
+
+    pandas 3.0 defaults to Arrow ``large_string`` (type 20) for all string
+    columns, which Streamlit's ArrowTable.js reader rejects with
+    ``Uncaught Error: Unrecognized type: "LargeUtf8" (20)``.
+
+    Fix: convert every string-ish / list-valued column to
+    ``pd.ArrowDtype(pa.string())``, which serializes to regular Arrow
+    ``string`` (type 5) — supported by the frontend.
+
+    Returns a copy; safe on empty / None.
+    """
+    if df is None or getattr(df, "empty", True):
+        return df
+    df = df.copy()
+    for col in df.columns:
+        dt = str(df[col].dtype).lower()
+        # ---- timedelta -> total_seconds as float ------------------------
+        if "timedelta" in dt:
+            df[col] = df[col].dt.total_seconds().astype("float64")
+            continue
+        # ---- categorical -> string -------------------------------------
+        if "category" in dt:
+            df[col] = df[col].astype("object").astype(str)
+            dt = str(df[col].dtype).lower()   # fallthrough to string path
+        # ---- strings of any flavour ------------------------------------
+        is_stringy = (
+            dt == "object" or dt == "str" or "string" in dt
+            or "large" in dt or "utf" in dt
+        )
+        if is_stringy:
+            # Flatten list/tuple/set cells, then force a small-string
+            # Arrow dtype so st.dataframe's Arrow transport works.
+            def _coerce(v):
+                if v is None:
+                    return None
+                if isinstance(v, float) and pd.isna(v):
+                    return None
+                if isinstance(v, (list, tuple, set)):
+                    return ", ".join(str(x) for x in v)
+                return str(v)
+            values = [_coerce(v) for v in df[col].tolist()]
+            if _ARROW_STR_DT is not None:
+                try:
+                    df[col] = pd.array(values, dtype=_ARROW_STR_DT)
+                    continue
+                except Exception:
+                    pass
+            # Fallback: plain object dtype.
+            df[col] = pd.Series(values, index=df.index, dtype="object")
+    return df
 
 
 def _fmt_wl(wl, statuses):
@@ -1082,11 +1201,140 @@ def _fmt_wl(wl, statuses):
         lambda t: t.strftime("%H:%MZ") if pd.notna(t) else "—")
     for c in ["minutes_since_last_flag", "minutes_since_last_report"]:
         df[c] = df[c].apply(lambda m: f"{m:.0f}" if m is not None and pd.notna(m) else "—")
-    return df
+    # Flatten any list-valued columns (missing_hours_utc) into strings.
+    return _arrow_safe(df)
+
+
+def _grid(df: pd.DataFrame, *, height: int = 380, key: str = "grid",
+          selection: bool = False, pinned: list[str] | None = None,
+          status_col: str | None = "status"):
+    """Render a DataFrame as streamlit-aggrid if available, else st.dataframe.
+
+    The AgGrid builder adds sort/filter/resize on every column, color
+    codes a status column, and is vastly faster with large tables.
+    """
+    if df is None or df.empty:
+        st.caption("(no rows)")
+        return None
+    # Arrow-safety pass — required for pandas 3.x (large_string dtypes).
+    df = _arrow_safe(df)
+    if not _HAVE_AGGRID:
+        st.dataframe(df, use_container_width=True, height=height, hide_index=True)
+        return None
+
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(
+        filterable=True, sortable=True, resizable=True,
+        floatingFilter=True, wrapText=False, autoHeight=False,
+    )
+    gb.configure_grid_options(
+        domLayout="normal",
+        rowHeight=30,
+        headerHeight=36,
+        floatingFiltersHeight=32,
+        animateRows=True,
+        suppressMenuHide=False,
+    )
+    if selection:
+        gb.configure_selection(selection_mode="single", use_checkbox=False)
+    for col in (pinned or []):
+        if col in df.columns:
+            gb.configure_column(col, pinned="left", width=95)
+
+    # Color the status column by watchlist state.
+    if status_col and status_col in df.columns:
+        js = """
+function(params) {
+  if (!params.value) return null;
+  const v = String(params.value).toUpperCase();
+  const map = {
+    'MISSING':      {bg:'#fee2e2', fg:'#7f1d1d'},
+    'NO DATA':      {bg:'#fecaca', fg:'#7f1d1d'},
+    'FLAGGED':      {bg:'#fef3c7', fg:'#78350f'},
+    'INTERMITTENT': {bg:'#ffedd5', fg:'#7c2d12'},
+    'RECOVERED':    {bg:'#dbeafe', fg:'#1e40af'},
+    'CLEAN':        {bg:'#dcfce7', fg:'#14532d'},
+  };
+  const s = map[v];
+  if (!s) return null;
+  return {
+    'backgroundColor': s.bg,
+    'color': s.fg,
+    'fontWeight': '700',
+    'letterSpacing': '0.04em',
+    'fontSize': '11px',
+    'textAlign': 'center',
+  };
+}
+"""
+        # IMPORTANT: st-aggrid 1.x requires JsCode(...) for JS callbacks.
+        # Pre-1.0 dict syntax {"function": js_src} is silently wrong and
+        # blanks the grid iframe.
+        gb.configure_column(status_col, cellStyle=JsCode(js))
+
+    opts = gb.build()
+    # streamlit-aggrid 1.x only accepts: streamlit / alpine / balham / material.
+    # There is no "alpine-dark" — that value raises ValueError and blanks the grid.
+    is_dark = bool(st.session_state.get("dark_mode"))
+    theme = "balham" if is_dark else "alpine"
+    try:
+        result = AgGrid(
+            df,
+            gridOptions=opts,
+            height=height,
+            theme=theme,
+            update_mode=GridUpdateMode.SELECTION_CHANGED if selection else GridUpdateMode.NO_UPDATE,
+            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+            allow_unsafe_jscode=True,
+            key=key,
+        )
+        return result
+    except Exception as e:
+        logger.exception("AgGrid render failed; falling back to st.dataframe")
+        st.warning(
+            f"Interactive grid unavailable ({type(e).__name__}); "
+            "showing simple table instead."
+        )
+        st.dataframe(df, use_container_width=True, height=height, hide_index=True)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Background refresh scheduler (Tier 3)
+# ---------------------------------------------------------------------------
+
+def _sched_refresh_job():
+    """Pre-compute the network-wide watchlist scan and push to diskcache."""
+    try:
+        if not _HAVE_AOMC:
+            return
+        end = datetime.now(timezone.utc)
+        ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+        wl = build_watchlist(
+            [_AOMC_META.get(sid, {"id": sid}) for sid in ids],
+            hours=float(_SCAN_HOURS), end=end,
+        )
+        ck = _round_3min(end)
+        if _HAVE_PC:
+            _pc_put(ck, wl, ttl_seconds=600)
+    except Exception:
+        logger.exception("Scheduled refresh failed")
+
+
+#: Background scheduler disabled by default — O.W.L. is fetch-on-demand.
+#: Set ``OWL_ENABLE_BG_REFRESH=1`` to re-enable the 3-min refresh job.
+import os as _os
+if (_HAVE_SCHED
+        and _os.environ.get("OWL_ENABLE_BG_REFRESH") == "1"
+        and "sched_started" not in st.session_state):
+    _sched = get_scheduler()
+    if _sched is not None:
+        schedule_watchlist_refresh(_sched, _sched_refresh_job, interval_minutes=3)
+        st.session_state["sched_started"] = True
 
 
 # ===========================================================================
-# SUMMARY
+# SUMMARY — public landing page. Interactive US map + KPIs + status tables.
 # ===========================================================================
 
 with tab_summary:
@@ -1094,13 +1342,36 @@ with tab_summary:
         st.error("AOMC catalog not loaded. Restart the app or contact your administrator.")
     else:
         all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
-        ck = _round_3min(datetime.now(timezone.utc))
+        ck = _session_data_key()
 
-        with st.spinner("Scanning network…"):
-            wl = _scan(all_ids, float(_SCAN_HOURS), ck)
+        # Prefer persistent-cache hit first (populated by scheduler); fall
+        # back to the in-process cached scan. Wrap in try/except so an
+        # upstream outage (IEM 503) doesn't blow up the whole page.
+        wl = _pc_get(ck) if _HAVE_PC else None
+        _scan_err = None
+        needs_fresh = wl is None or (hasattr(wl, "empty") and wl.empty)
+        if needs_fresh:
+            with st.spinner("Scanning network… (fetching from IEM)"):
+                try:
+                    wl = _scan(all_ids, float(_SCAN_HOURS), ck)
+                    if _HAVE_PC and wl is not None and not wl.empty:
+                        _pc_put(ck, wl, ttl_seconds=600)
+                except Exception as exc:
+                    _scan_err = exc
+                    logger.exception("Summary scan failed")
+                    wl = None
 
-        if wl.empty:
-            st.warning("No data returned. Check network connectivity.")
+        if wl is None or wl.empty:
+            if _scan_err is not None:
+                st.error(
+                    f"**Network scan temporarily unavailable.** Upstream "
+                    f"data feed (IEM) returned an error: `{type(_scan_err).__name__}`. "
+                    "The app will retry automatically on the next refresh."
+                )
+                st.caption("Other tabs (Reports, Forecasters, Stations) may still work "
+                           "using independent data sources.")
+            else:
+                st.warning("No data returned. Check network connectivity.")
         else:
             cts = wl["status"].value_counts()
             nf = int(cts.get("FLAGGED", 0))
@@ -1109,6 +1380,38 @@ with tab_summary:
             nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
             nc = int(cts.get("CLEAN", 0))
 
+            # ---- Interactive US map (Tier 1 #1) ----
+            if _HAVE_FOLIUM:
+                st.subheader("National ASOS Status Map")
+                with st.spinner("Rendering map…"):
+                    fmap = build_status_map(
+                        wl, AOMC_STATIONS,
+                        cluster=True,
+                        dark=bool(st.session_state.get("dark_mode")),
+                        height_px=480,
+                    )
+                # st_folium returns last clicked object on each rerun; we
+                # use that to drill from map to report.
+                click = st_folium(
+                    fmap,
+                    height=480,
+                    use_container_width=True,
+                    returned_objects=["last_object_clicked_tooltip"],
+                    key="summary_map",
+                )
+                if click and click.get("last_object_clicked_tooltip"):
+                    clicked = str(click["last_object_clicked_tooltip"]).split(" ")[0]
+                    if clicked:
+                        st.caption(
+                            f"Selected: `{clicked}` — open the **Reports** tab "
+                            f"and enter this station ID for the full 1-min dashboard."
+                        )
+            else:
+                st.caption("Interactive map unavailable (streamlit-folium not installed).")
+
+            st.divider()
+
+            # ---- KPI metric row ----
             c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("Clean", nc)
             c2.metric("Flagged ($)", nf)
@@ -1129,82 +1432,347 @@ with tab_summary:
                 if nr: msg.append(f"**{nr}** recovered")
                 st.warning(" · ".join(msg) + f" · **{nc}** clean (not listed)")
 
-            # Flagged
-            flagged = _fmt_wl(wl, ["FLAGGED"])
-            if not flagged.empty:
-                st.subheader(f"Flagged Stations ({len(flagged)})")
-                st.dataframe(
-                    flagged[["station", "name", "state", "probable_reason",
-                             "flagged", "total", "flag_rate"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "probable_reason": "Reason",
-                        "flagged": "$", "total": "Total", "flag_rate": "Rate %",
-                    }),
-                    use_container_width=True, hide_index=True,
-                    height=min(36 * len(flagged) + 38, 460),
-                    column_config={
-                        "Rate %": st.column_config.ProgressColumn(
-                            min_value=0, max_value=100, format="%.0f%%"),
-                    })
+            # ---- Status tables (use AgGrid where available) ----
+            attention = _fmt_wl(wl, ["MISSING", "NO DATA", "FLAGGED", "INTERMITTENT", "RECOVERED"])
+            if not attention.empty:
+                st.subheader(f"Stations Requiring Attention ({len(attention)})")
+                show = attention[[
+                    "station", "name", "state", "status", "probable_reason",
+                    "flagged", "total", "flag_rate",
+                    "latest_time", "latest_flag_time",
+                ]].rename(columns={
+                    "station": "Station", "name": "Name", "state": "ST",
+                    "status": "Status", "probable_reason": "Reason",
+                    "flagged": "$", "total": "Total", "flag_rate": "Rate %",
+                    "latest_time": "Latest", "latest_flag_time": "Last $",
+                })
+                _grid(show, height=420, key="sum_attn",
+                      pinned=["Station"], status_col="Status")
 
-            # Intermittent
-            inter = _fmt_wl(wl, ["INTERMITTENT"])
-            if not inter.empty:
-                st.subheader(f"Intermittent ({len(inter)})")
-                st.dataframe(
-                    inter[["station", "name", "state", "probable_reason"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "probable_reason": "Reason",
-                    }),
-                    use_container_width=True, hide_index=True,
-                    height=min(36 * len(inter) + 38, 220))
-
-            # Recovered
-            recov = _fmt_wl(wl, ["RECOVERED"])
-            if not recov.empty:
-                st.subheader(f"Recovered ({len(recov)})")
-                st.dataframe(
-                    recov[["station", "name", "state", "minutes_since_last_flag"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "minutes_since_last_flag": "Min since $",
-                    }),
-                    use_container_width=True, hide_index=True,
-                    height=min(36 * len(recov) + 38, 220))
-
-            # Missing
-            miss = _fmt_wl(wl, ["MISSING", "NO DATA"])
-            if not miss.empty:
-                st.subheader(f"Missing METARs ({len(miss)})")
-                st.dataframe(
-                    miss[["station", "name", "state", "missing",
-                          "expected_hourly", "missing_hours_utc",
-                          "minutes_since_last_report"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "missing": "Gaps", "expected_hourly": "Expected",
-                        "missing_hours_utc": "Missing Hours",
-                        "minutes_since_last_report": "Min since report",
-                    }),
-                    use_container_width=True, hide_index=True,
-                    height=min(36 * len(miss) + 38, 460))
-
-            st.divider()
             st.caption(
                 f"**{nc} stations** reporting clean — not listed. "
-                "Use the other tabs for detailed analysis."
+                "Use the **AOMC Controllers** tab for detailed per-category views."
             )
 
 
 # ===========================================================================
-# REPORTS
+# AOMC CONTROLLERS — auth-gated; 3 sub-tabs: METARs / Missing METARs / Flags
+# ===========================================================================
+
+with tab_aomc:
+    st.markdown("### AOMC Controller Workstation")
+    st.caption(
+        "ASOS Operations and Monitoring Center view — intended for "
+        "controllers responsible for the 920 federally-operated stations."
+    )
+
+    if _HAVE_AOMC:
+        # Use a wider default scan for controllers.
+        aomc_hours = st.selectbox(
+            "Scan window",
+            [1, 2, 4, 6, 12, 24],
+            index=2,
+            format_func=lambda h: f"Last {h} hours",
+            key="aomc_hours",
+        )
+        aomc_ck = _session_data_key()
+        aomc_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+        wl_aomc = None
+        _aomc_err = None
+        with st.spinner(f"Scanning {len(aomc_ids)} stations over {aomc_hours}h…"):
+            try:
+                wl_aomc = _scan(aomc_ids, float(aomc_hours), aomc_ck)
+            except Exception as exc:
+                _aomc_err = exc
+                logger.exception("AOMC scan failed")
+
+        if wl_aomc is None or wl_aomc.empty:
+            if _aomc_err is not None:
+                st.error(
+                    f"**Controller scan temporarily unavailable.** Upstream "
+                    f"IEM METAR feed returned `{type(_aomc_err).__name__}`. "
+                    "Retry in a moment — IEM is intermittent under load."
+                )
+            else:
+                st.warning("No data returned.")
+        else:
+            cts = wl_aomc["status"].value_counts()
+            nf = int(cts.get("FLAGGED", 0))
+            nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
+            nr = int(cts.get("RECOVERED", 0))
+            ni = int(cts.get("INTERMITTENT", 0))
+            nc = int(cts.get("CLEAN", 0))
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Clean", nc)
+            c2.metric("Flagged ($)", nf)
+            c3.metric("Missing", nm)
+            c4.metric("Recovered", nr)
+            c5.metric("Interm.", ni)
+
+            sub_metars, sub_missing, sub_flags = st.tabs([
+                "METARs", "Missing METARs", "Maintenance Flags",
+            ])
+
+            # -- Sub-tab A: METARs (latest METAR per station) ---------------
+            with sub_metars:
+                st.markdown(
+                    "**Latest METAR for every reporting station.** "
+                    "Filter, sort, and pin columns as needed; export via "
+                    "the right-click menu."
+                )
+                metars_df = wl_aomc[[
+                    "station", "name", "state", "status", "probable_reason",
+                    "flagged", "total", "flag_rate", "minutes_since_last_report",
+                    "latest_metar",
+                ]].copy().rename(columns={
+                    "station": "Station", "name": "Name", "state": "ST",
+                    "status": "Status", "probable_reason": "Reason",
+                    "flagged": "$", "total": "Total", "flag_rate": "Rate %",
+                    "minutes_since_last_report": "Min since report",
+                    "latest_metar": "Latest METAR",
+                })
+                # Cast object to string for clean display
+                metars_df["Latest METAR"] = metars_df["Latest METAR"].fillna("").astype(str)
+                _grid(metars_df, height=520, key="aomc_metars",
+                      pinned=["Station"], status_col="Status")
+                st.download_button(
+                    "Download CSV",
+                    metars_df.to_csv(index=False).encode(),
+                    f"aomc_metars_{aomc_hours}h.csv",
+                    "text/csv",
+                )
+
+            # -- Sub-tab B: Missing METARs ----------------------------------
+            with sub_missing:
+                st.markdown(
+                    "**Stations missing scheduled hourly METARs.** "
+                    "ASOS routine: one report per hour near HH:51Z. "
+                    "A silent station is more critical than a flagged one."
+                )
+                view = _fmt_wl(wl_aomc, ["MISSING", "NO DATA"])
+                if view.empty:
+                    st.success("No stations are currently missing scheduled METARs.")
+                else:
+                    show = view[[
+                        "station", "name", "state", "status",
+                        "missing", "expected_hourly", "missing_hours_utc",
+                        "minutes_since_last_report",
+                    ]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "status": "Status",
+                        "missing": "Gaps", "expected_hourly": "Expected",
+                        "missing_hours_utc": "Missing Hours",
+                        "minutes_since_last_report": "Min since report",
+                    })
+                    _grid(show, height=500, key="aomc_missing",
+                          pinned=["Station"], status_col="Status")
+                    st.download_button(
+                        "Download CSV",
+                        show.to_csv(index=False).encode(),
+                        f"aomc_missing_{aomc_hours}h.csv",
+                        "text/csv",
+                    )
+                    if _HAVE_APPRISE:
+                        if st.button("Notify alert recipients",
+                                     key="aomc_missing_notify",
+                                     help="Send an Apprise alert for each missing station."):
+                            sent_total, failed_total = 0, 0
+                            for _, row in view.iterrows():
+                                s, f = owl_alerts.send_missing_alert(row)
+                                sent_total += s
+                                failed_total += f
+                            if sent_total:
+                                st.success(f"Sent {sent_total} missing-station alerts.")
+                            elif failed_total:
+                                st.error(f"All {failed_total} alert deliveries failed.")
+                            else:
+                                st.info("No Apprise URLs configured — set `OWL_ALERT_URLS` env var.")
+                with st.expander("Why do METARs go missing?"):
+                    st.markdown("""
+Common causes: power outage, communication failure, station
+decommissioned/seasonal, sensor cascade failure, or IEM ingestion lag.
+                    """)
+
+            # -- Sub-tab C: Maintenance Flags ($) ---------------------------
+            with sub_flags:
+                st.markdown(
+                    "**Stations with the `$` maintenance-check indicator.** "
+                    "The `$` flag signals an out-of-tolerance condition — "
+                    "it does not necessarily mean data is inaccurate."
+                )
+                show_clean = st.checkbox("Include clean", key="aomc_flags_c")
+                keep = ["FLAGGED", "INTERMITTENT", "RECOVERED"]
+                if show_clean:
+                    keep.append("CLEAN")
+                view = _fmt_wl(wl_aomc, keep)
+                if view.empty:
+                    st.success("No stations are currently flagged.")
+                else:
+                    show = view[[
+                        "station", "name", "state", "status",
+                        "probable_reason", "flagged", "total", "flag_rate",
+                        "latest_time", "latest_flag_time",
+                    ]].rename(columns={
+                        "station": "Station", "name": "Name", "state": "ST",
+                        "status": "Status", "probable_reason": "Reason",
+                        "flagged": "$", "total": "Total", "flag_rate": "Rate %",
+                        "latest_time": "Latest", "latest_flag_time": "Last $",
+                    })
+                    _grid(show, height=500, key="aomc_flags",
+                          pinned=["Station"], status_col="Status")
+                    st.download_button(
+                        "Download CSV",
+                        show.to_csv(index=False).encode(),
+                        f"aomc_flags_{aomc_hours}h.csv",
+                        "text/csv",
+                    )
+                    if _HAVE_APPRISE:
+                        if st.button("Notify alert recipients",
+                                     key="aomc_flags_notify",
+                                     help="Send an Apprise alert for each flagged station."):
+                            sent_total, failed_total = 0, 0
+                            for _, row in view[view["status"] == "FLAGGED"].iterrows():
+                                s, f = owl_alerts.send_flag_alert(row)
+                                sent_total += s
+                                failed_total += f
+                            if sent_total:
+                                st.success(f"Sent {sent_total} flag alerts.")
+                            elif failed_total:
+                                st.error(f"All {failed_total} alert deliveries failed.")
+                            else:
+                                st.info("No Apprise URLs configured — set `OWL_ALERT_URLS` env var.")
+
+                with st.expander("What does `$` mean?"):
+                    st.markdown("""
+The `$` is the ASOS maintenance-check indicator. Sensor-specific codes
+decoded from METAR remarks: **RVRNO** (RVR), **PWINO** (precip ID),
+**PNO** (precip gauge), **FZRANO** (freezing rain), **TSNO** (lightning),
+**VISNO** (visibility), **CHINO** (ceilometer). Most flags show
+"Internal check" — tolerance drift with no specific sensor code
+in the remarks.
+                    """)
+
+            # PDF export for the whole AOMC watchlist
+            if _HAVE_PDF:
+                st.divider()
+                st.markdown("**Export shift summary**")
+                ccol1, ccol2 = st.columns([1, 2])
+                with ccol1:
+                    if st.button("Build PDF briefing", key="aomc_pdf_btn",
+                                 type="primary"):
+                        st.session_state["aomc_pdf"] = build_watchlist_pdf(
+                            wl_aomc, title="O.W.L. AOMC Shift Briefing",
+                            window_hours=aomc_hours, group_label="All AOMC",
+                        )
+                with ccol2:
+                    if st.session_state.get("aomc_pdf"):
+                        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%MZ")
+                        st.download_button(
+                            "Download PDF",
+                            data=st.session_state["aomc_pdf"],
+                            file_name=f"owl_aomc_briefing_{ts}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True,
+                        )
+
+
+# ===========================================================================
+# REPORTS — station-level reports (1-min dashboard, $ analysis, incident)
 # ===========================================================================
 
 with tab_reports:
+    st.markdown("### Station Reports")
+    st.caption(
+        "Generate 1-minute dashboards, maintenance analyses, and formal "
+        "DOCX/PDF incident reports."
+    )
+
+    # --- Inline report configuration (moved from sidebar) ----------------
+    with st.container():
+        rc1, rc2 = st.columns([1, 1])
+        with rc1:
+            report_type = st.selectbox(
+                "Report type",
+                ["1-min dashboard", "Maintenance ($)", "Flagged vs clean",
+                 "Missing METARs", "Incident report (DOCX)"],
+                key="rep_type",
+            )
+            smode = st.radio("Station source", ["Single", "Group", "Custom"],
+                             horizontal=True, key="rep_smode")
+        with rc2:
+            wmode = st.selectbox(
+                "Time window",
+                ["1 day", "7 days", "14 days", "30 days", "Custom"],
+                index=1, key="rep_wmode",
+            )
+            if wmode == "Custom":
+                today = datetime.now(timezone.utc).date()
+                dc1, dc2 = st.columns(2)
+                with dc1:
+                    sd = st.date_input("From", today - timedelta(days=7),
+                                       key="rep_sd")
+                with dc2:
+                    ed = st.date_input("To", today, key="rep_ed")
+                start = datetime.combine(sd, datetime.min.time(), tzinfo=timezone.utc)
+                end = datetime.combine(ed, datetime.min.time(), tzinfo=timezone.utc)
+                span = (end - start).days
+                if span > _MAX_CUSTOM_DAYS:
+                    st.error(f"Date range too large ({span} days). Max {_MAX_CUSTOM_DAYS}.")
+                elif span <= 0:
+                    st.error("End date must be after start date.")
+                wlabel = _wlabel(max(span, 1))
+            else:
+                days = {"1 day": 1, "7 days": 7, "14 days": 14, "30 days": 30}[wmode]
+                end = _round_5min(datetime.now(timezone.utc))
+                start = _round_5min(end - timedelta(days=days))
+                wlabel = _wlabel(days)
+
+        stations_list: list[str] = []
+        group_label = ""
+
+        if smode == "Single":
+            aomc_toggle = st.toggle("AOMC stations only", value=True, key="rep_aomc_tog") if _HAVE_AOMC else False
+            if _HAVE_CATALOG:
+                pool = ([s for s in ALL_ASOS_STATIONS if s["id"] in AOMC_IDS]
+                        if aomc_toggle else ALL_ASOS_STATIONS)
+                pool_ids = [s["id"] for s in pool]
+                _plk = {s["id"]: s for s in pool}
+                sid = st.selectbox(
+                    "Station", pool_ids,
+                    index=pool_ids.index("KJFK") if "KJFK" in pool_ids else 0,
+                    format_func=lambda s: (
+                        f"{s} · {_short_name(_plk.get(s, {}).get('name', ''))} · "
+                        f"{_plk.get(s, {}).get('state', '')}"
+                    ),
+                    key="rep_sid",
+                )
+            else:
+                sid = st.text_input("ICAO ID", "KJFK", key="rep_sid_txt").strip().upper()
+            stations_list = [sid]
+            group_label = sid
+        elif smode == "Group":
+            grp = st.selectbox("Preset group", list_groups(),
+                               format_func=lambda s: s.replace("_", " ").title(),
+                               key="rep_grp")
+            stations_list = list(get_group(grp))
+            group_label = grp.replace("_", " ").title()
+            st.caption(f"{len(stations_list)} stations")
+        else:
+            raw = st.text_area("Station IDs (comma or newline)", "KJFK, KLGA, KEWR",
+                               height=68, key="rep_raw")
+            stations_list = [s.strip().upper() for s in
+                             raw.replace(",", "\n").splitlines() if s.strip()]
+            group_label = ", ".join(stations_list[:3]) + ("…" if len(stations_list) > 3 else "")
+            st.caption(f"{len(stations_list)} stations")
+
+        go = st.button("Generate report", type="primary",
+                       use_container_width=True, key="rep_go")
+
+    st.divider()
+
     if not go:
-        st.info("Configure report settings in the sidebar and click **Generate**.")
+        st.info("Pick a report type, station(s), and window, then click **Generate report**.")
     else:
-        # Build a STABLE skeleton first. All slots exist with reserved space
-        # before any slow fetch runs. Content is then filled into the
-        # placeholders, which prevents the page from growing progressively.
         kpi_slot = st.empty()
         report_slot = st.empty()
         download_slot = st.empty()
@@ -1212,52 +1780,39 @@ with tab_reports:
 
         try:
             if report_type == "Incident report (DOCX)":
-                # DOCX incident investigation — runs a fresh METAR fetch per
-                # station and builds a formatted Word document for download.
                 if not stations_list:
-                    report_slot.error("Select at least one station in the sidebar.")
+                    report_slot.error("Select at least one station.")
                 else:
-                    # Use window span for the investigation hours.
                     span_hours = max(1.0, (end - start).total_seconds() / 3600)
-
                     with kpi_slot.container():
                         c1, c2, c3 = st.columns(3)
                         c1.metric("Stations", len(stations_list))
                         c2.metric("Window", wlabel)
-                        c3.metric("Investigation Depth",
-                                  f"{span_hours:.0f}h")
-
-                    with st.spinner(
-                            f"Investigating {len(stations_list)} station(s) "
-                            f"over {span_hours:.0f} hours…"):
+                        c3.metric("Investigation depth", f"{span_hours:.0f}h")
+                    with st.spinner(f"Investigating {len(stations_list)} station(s)…"):
                         docx_bytes = generate_incident_docx(
                             stations_list, hours=span_hours, end=end)
-
                     with report_slot.container():
                         st.success(
                             f"Incident investigation complete. "
-                            f"Report: {len(docx_bytes):,} bytes · "
-                            f"{len(stations_list)} station(s)."
+                            f"Report: {len(docx_bytes):,} bytes · {len(stations_list)} station(s)."
                         )
                         st.info(
-                            "The DOCX report includes:  "
-                            "executive summary · per-station incident timelines · "
-                            "raw $ METAR evidence callouts · sensor code breakdown · "
-                            "root-cause analysis of missing downstream tickets · "
-                            "recommendations · methodology."
+                            "The DOCX report includes: executive summary · per-station "
+                            "incident timelines · raw $ METAR evidence · sensor code "
+                            "breakdown · root-cause analysis · recommendations."
                         )
-
                     ts = end.strftime("%Y%m%d_%H%MZ")
                     slug = "_".join(s.lower() for s in stations_list[:4])
                     if len(stations_list) > 4:
                         slug += f"_plus{len(stations_list) - 4}"
                     with download_slot.container():
                         st.download_button(
-                            "⬇ Download incident report (DOCX)",
+                            "Download incident report (DOCX)",
                             data=docx_bytes,
                             file_name=f"Incident_Report_{slug}_{ts}.docx",
-                            mime="application/vnd.openxmlformats-officedocument"
-                                 ".wordprocessingml.document",
+                            mime=("application/vnd.openxmlformats-officedocument."
+                                  "wordprocessingml.document"),
                             use_container_width=True,
                         )
 
@@ -1275,25 +1830,45 @@ with tab_reports:
                         c2.metric("Name", _short_name(name))
                         c3.metric("Window", wlabel)
                         c4.metric("Observations", f"{len(df):,}")
-
                     with st.spinner("Rendering…"):
                         png = _render(build_report, df=df, window_label=wlabel,
                                       station_id=stn, station_name=name)
                     report_slot.image(png, use_container_width=True)
-
                     with download_slot.container():
-                        c1, c2 = st.columns(2)
-                        c1.download_button("Download PNG", png,
-                                           f"{stn}_{wlabel.replace(' ', '')}.png",
-                                           "image/png", use_container_width=True)
-                        c2.download_button("Download CSV",
-                                           df.to_csv(index=False).encode(),
-                                           f"{stn}_{wlabel.replace(' ', '')}.csv",
-                                           "text/csv", use_container_width=True)
-
+                        dc1, dc2, dc3 = st.columns(3)
+                        dc1.download_button(
+                            "Download PNG", png,
+                            f"{stn}_{wlabel.replace(' ', '')}.png",
+                            "image/png", use_container_width=True,
+                        )
+                        dc2.download_button(
+                            "Download CSV",
+                            df.to_csv(index=False).encode(),
+                            f"{stn}_{wlabel.replace(' ', '')}.csv",
+                            "text/csv", use_container_width=True,
+                        )
+                        if _HAVE_PDF:
+                            pdf_bytes = build_report_pdf(
+                                png,
+                                title=f"{stn} — 1-Minute Dashboard",
+                                subtitle=f"{_short_name(name)} · {wlabel} · {len(df):,} obs",
+                                body_text=(
+                                    f"1-minute ASOS observations for {stn} "
+                                    f"({_short_name(name)}) over the "
+                                    f"{wlabel} ending "
+                                    f"{end.strftime('%Y-%m-%d %H:%MZ')}."
+                                ),
+                            )
+                            dc3.download_button(
+                                "Download PDF", pdf_bytes,
+                                f"{stn}_{wlabel.replace(' ', '')}.pdf",
+                                "application/pdf", use_container_width=True,
+                            )
                     with preview_slot.container():
                         with st.expander("Data preview (50 rows)"):
-                            st.dataframe(df.head(50), use_container_width=True, height=300)
+                            st.dataframe(_arrow_safe(df.head(50)),
+                                         use_container_width=True, height=300)
+
             else:
                 with st.spinner("Fetching METARs…"):
                     metars = _fetch_metars(tuple(stations_list), start, end)
@@ -1317,28 +1892,49 @@ with tab_reports:
                         png = _render(builder, metars_df=metars,
                                       group_label=group_label, window_label=wlabel)
                     report_slot.image(png, use_container_width=True)
-
                     slug = group_label.lower().replace(" ", "-").replace(",", "")
                     with download_slot.container():
-                        c1, c2 = st.columns(2)
-                        c1.download_button("Download PNG", png,
-                                           f"{slug}_{wlabel.replace(' ', '')}_{kind}.png",
-                                           "image/png", use_container_width=True)
-                        c2.download_button("Download CSV",
-                                           metars.to_csv(index=False).encode(),
-                                           f"{slug}_{wlabel.replace(' ', '')}_metars.csv",
-                                           "text/csv", use_container_width=True)
-
+                        dc1, dc2, dc3 = st.columns(3)
+                        dc1.download_button(
+                            "Download PNG", png,
+                            f"{slug}_{wlabel.replace(' ', '')}_{kind}.png",
+                            "image/png", use_container_width=True,
+                        )
+                        dc2.download_button(
+                            "Download CSV",
+                            metars.to_csv(index=False).encode(),
+                            f"{slug}_{wlabel.replace(' ', '')}_metars.csv",
+                            "text/csv", use_container_width=True,
+                        )
+                        if _HAVE_PDF:
+                            pdf_bytes = build_report_pdf(
+                                png,
+                                title=f"{report_type} — {group_label}",
+                                subtitle=f"{wlabel} · {len(metars):,} METARs · "
+                                         f"{metars['station'].nunique()} stations",
+                                body_text=(
+                                    f"METAR-derived report ({report_type}) for "
+                                    f"{group_label} over the {wlabel} ending "
+                                    f"{end.strftime('%Y-%m-%d %H:%MZ')}."
+                                ),
+                            )
+                            dc3.download_button(
+                                "Download PDF", pdf_bytes,
+                                f"{slug}_{wlabel.replace(' ', '')}_{kind}.pdf",
+                                "application/pdf", use_container_width=True,
+                            )
                     with preview_slot.container():
                         with st.expander("METAR data preview (50 rows)"):
-                            st.dataframe(metars.head(50), use_container_width=True, height=300)
+                            st.dataframe(_arrow_safe(metars.head(50)),
+                                         use_container_width=True, height=300)
+
         except Exception as e:
             logger.exception("Report generation failed")
             st.error(f"Could not generate report: {e}. Check station ID and time window.")
 
 
 # ===========================================================================
-# STATIONS
+# STATIONS — AOMC directory (AgGrid)
 # ===========================================================================
 
 with tab_stations:
@@ -1351,10 +1947,11 @@ with tab_stations:
         c1, c2 = st.columns([3, 1])
         with c1:
             q = st.text_input("Search", placeholder="ID, name, or county",
-                              label_visibility="collapsed")
+                              label_visibility="collapsed", key="stn_q")
         with c2:
             states = sorted({s.get("state") for s in AOMC_STATIONS if s.get("state")})
-            sf = st.selectbox("State", ["All"] + states, label_visibility="collapsed")
+            sf = st.selectbox("State", ["All"] + states,
+                              label_visibility="collapsed", key="stn_sf")
 
         rows = AOMC_STATIONS
         if sf != "All":
@@ -1366,7 +1963,7 @@ with tab_stations:
                     or qu in (s.get("name") or "").upper()
                     or qu in (s.get("county") or "").upper()]
 
-        st.caption(f"{len(rows)} stations")
+        st.caption(f"{len(rows):,} stations")
         df = pd.DataFrame([{
             "ICAO": s.get("id"), "Call": s.get("call"),
             "Name": s.get("name"), "State": s.get("state"),
@@ -1374,8 +1971,9 @@ with tab_stations:
             "Lon": s.get("lon"), "Elev (ft)": s.get("elev_ft"),
             "WBAN": s.get("wban"), "Types": s.get("station_types"),
         } for s in rows])
-        st.dataframe(df, use_container_width=True, height=580, hide_index=True)
-        if rows:
+        _grid(df, height=580, key="stn_grid", pinned=["ICAO"],
+              status_col=None)
+        if not df.empty:
             st.download_button("Download CSV", df.to_csv(index=False).encode(),
                                "aomc_stations.csv", "text/csv")
     else:
@@ -1383,108 +1981,430 @@ with tab_stations:
 
 
 # ===========================================================================
-# $ FLAGS
+# NWS FORECASTERS — aviation-oriented regional summary
 # ===========================================================================
 
-with tab_flags:
-    st.subheader("$ Maintenance Flag Watchlist")
+with tab_fcst:
+    st.markdown("### NWS Forecaster Workstation")
     st.caption(
-        "Stations with the $ maintenance-check indicator. "
-        "The $ flag signals an out-of-tolerance condition — "
-        "it does not mean the data is inaccurate."
+        "Aviation weather ops console. Cross-sources live data from the "
+        "Aviation Weather Center, NWS CAP alerts, and the ASOS network."
     )
-    if _HAVE_AOMC:
-        ids, hours, ck = _scan_ui("fl")
-        with st.spinner(f"Scanning {len(ids)} stations…"):
-            wl_f = _scan(ids, float(hours), ck)
-        if wl_f.empty:
-            st.warning("No data returned. Verify station IDs are valid and the time window is within the last 30 days.")
-        else:
-            cts = wl_f["status"].value_counts()
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Flagged", int(cts.get("FLAGGED", 0)))
-            c2.metric("Intermittent", int(cts.get("INTERMITTENT", 0)))
-            c3.metric("Recovered", int(cts.get("RECOVERED", 0)))
-            c4.metric("Clean", int(cts.get("CLEAN", 0)))
-            st.caption(f"Scanned {datetime.now(timezone.utc):%H:%M:%S UTC}")
+    fcst_ck = _session_data_key()
 
-            show_clean = st.checkbox("Include clean", key="fl_c")
-            keep = ["FLAGGED", "INTERMITTENT", "RECOVERED"]
-            if show_clean: keep.append("CLEAN")
-            view = _fmt_wl(wl_f, keep)
-            if not view.empty:
-                st.dataframe(
-                    view[["station", "name", "state",
-                          "probable_reason", "flagged", "total", "flag_rate",
-                          "latest_time", "latest_flag_time"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "probable_reason": "Reason",
-                        "flagged": "$", "total": "Total", "flag_rate": "Rate %",
-                        "latest_time": "Latest", "latest_flag_time": "Last $",
-                    }),
-                    use_container_width=True, height=540, hide_index=True,
-                    column_config={
-                        "Rate %": st.column_config.ProgressColumn(
-                            min_value=0, max_value=100, format="%.0f%%"),
+    fcst_a, fcst_b, fcst_c, fcst_d = st.tabs([
+        "National Hazards", "Station TAF / METAR",
+        "Flight Category Rollup", "Active Alerts",
+    ])
+
+    # ---- A. National Hazards (SIGMET + AIRMET + PIREP) -----------------
+    with fcst_a:
+        st.markdown("**Active SIGMETs & AIRMETs** (AWC)")
+        if _HAVE_AWC:
+            with st.spinner("Fetching AWC airsigmets…"):
+                sigs = _awc_airsigmet(fcst_ck)
+            if sigs:
+                rows = []
+                for s in sigs:
+                    rows.append({
+                        "Type": s.get("airSigmetType") or s.get("hazard") or "?",
+                        "Hazard": s.get("hazard") or "",
+                        "Severity": s.get("severity") or "",
+                        "Area": (s.get("area") or s.get("rawAirSigmet") or "")[:80],
+                        "Valid From": s.get("validTimeFrom") or "",
+                        "Valid To":   s.get("validTimeTo") or "",
                     })
-                st.download_button("Download CSV", view.to_csv(index=False).encode(),
-                                   f"flags_{hours}h.csv", "text/csv")
-            with st.expander("What does $ mean?"):
-                st.markdown("""
-The `$` is the ASOS maintenance-check indicator. Sensor-specific codes
-decoded from METAR remarks: RVRNO (RVR), PWINO (precip ID), PNO (precip
-gauge), FZRANO (freezing rain), TSNO (lightning), VISNO (visibility),
-CHINO (ceilometer). Most flags show "Internal check" — tolerance drift
-with no specific sensor code in the remarks.
-                """)
+                _grid(pd.DataFrame(rows), height=280, key="fc_sigs",
+                      pinned=["Type"], status_col="Severity")
+            else:
+                st.success("No active SIGMETs or AIRMETs at this time.")
 
-
-# ===========================================================================
-# MISSING METARS
-# ===========================================================================
-
-with tab_missing:
-    st.subheader("Missing METAR Monitor")
-    st.caption(
-        "Stations that missed scheduled hourly METARs. "
-        "ASOS routine: one report per hour at ~HH:51Z. "
-        "A silent station is more critical than a flagged one."
-    )
-    if _HAVE_AOMC:
-        ids, hours, ck = _scan_ui("ms")
-        with st.spinner(f"Scanning {len(ids)} stations…"):
-            wl_m = _scan(ids, float(hours), ck)
-        if wl_m.empty:
-            st.warning("No data returned. Verify station IDs are valid and the time window is within the last 30 days.")
+            st.divider()
+            st.markdown("**Recent PIREPs** (last 2 hours, CONUS)")
+            with st.spinner("Fetching pilot reports…"):
+                pireps = _awc_pirep(fcst_ck)
+            if pireps:
+                pr_rows = []
+                for p in pireps[:60]:
+                    pr_rows.append({
+                        "Station": p.get("icaoId") or "",
+                        "Type":    p.get("pirepType") or "",
+                        "FL":      p.get("fltLvl") or "",
+                        "Aircraft":p.get("acType") or "",
+                        "Turb":    p.get("tbInt1") or "",
+                        "Icing":   p.get("icgInt1") or "",
+                        "Report":  (p.get("rawOb") or "")[:200],
+                    })
+                _grid(pd.DataFrame(pr_rows), height=340, key="fc_pireps",
+                      pinned=["Station"], status_col=None)
+            else:
+                st.caption("No PIREPs in the last 2 hours.")
         else:
-            cts = wl_m["status"].value_counts()
-            nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Missing", nm)
-            c2.metric("Reporting", len(wl_m) - nm)
-            c3.metric("Total", len(wl_m))
-            st.caption(f"Scanned {datetime.now(timezone.utc):%H:%M:%S UTC}")
+            st.error("AWC client not installed.")
 
-            show_ok = st.checkbox("Include reporting", key="ms_ok")
-            view = _fmt_wl(wl_m, list(wl_m["status"].unique()) if show_ok else ["MISSING", "NO DATA"])
-            if not view.empty:
-                st.dataframe(
-                    view[["station", "name", "state",
-                          "missing", "expected_hourly", "missing_hours_utc",
-                          "minutes_since_last_report"]].rename(columns={
-                        "station": "Station", "name": "Name", "state": "ST",
-                        "missing": "Gaps", "expected_hourly": "Expected",
-                        "missing_hours_utc": "Missing Hours",
-                        "minutes_since_last_report": "Min since report",
-                    }),
-                    use_container_width=True, height=540, hide_index=True)
-                st.download_button("Download CSV", view.to_csv(index=False).encode(),
-                                   f"missing_{hours}h.csv", "text/csv")
-            with st.expander("Why do METARs go missing?"):
-                st.markdown("""
-Common causes: power outage, communication failure, station
-decommissioned/seasonal, sensor cascade failure, or IEM ingestion lag.
-                """)
+    # ---- B. Station TAF / METAR lookup ---------------------------------
+    with fcst_b:
+        st.markdown("**Station lookup** — live METAR + TAF from AWC")
+        fc_sid = st.text_input(
+            "ICAO ID", "KJFK", key="fcst_sid",
+            help="Enter any ICAO; works globally for AWC-covered stations.",
+        ).strip().upper()
+        if fc_sid and re.fullmatch(r"[A-Z0-9]{3,6}", fc_sid):
+            if _HAVE_AWC:
+                with st.spinner(f"Fetching {fc_sid}…"):
+                    metars = _awc_metar_bulk((fc_sid,), fcst_ck)
+                    tafs = _awc_taf(fc_sid, fcst_ck)
+                # Current METAR summary
+                if metars:
+                    m = metars[0]
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Temp",
+                              f"{m.get('temp', '—')}°C" if m.get('temp') is not None else "—")
+                    c2.metric("Dew",
+                              f"{m.get('dewp', '—')}°C" if m.get('dewp') is not None else "—")
+                    c3.metric("Wind",
+                              f"{m.get('wdir','—')}° / {m.get('wspd','—')} kt" if m.get('wspd') is not None else "—")
+                    c4.metric("Vis",
+                              f"{m.get('visib','—')} SM" if m.get('visib') is not None else "—")
+                    fc = owl_awc.flight_category(
+                        float(m.get('visib')) if isinstance(m.get('visib'), (int, float)) else None,
+                        float(m.get('ceil')) if isinstance(m.get('ceil'), (int, float)) else None,
+                    )
+                    fc_color = {"VFR": "#00a91c", "MVFR": "#38bdf8",
+                                "IFR": "#ffbe2e", "LIFR": "#b50909"}.get(fc, "#64748b")
+                    st.markdown(
+                        f'<div style="margin:8px 0;padding:6px 12px;background:{fc_color};'
+                        f'color:#fff;font-weight:700;border-radius:6px;display:inline-block;">'
+                        f'Flight category: {fc}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.code((m.get("rawOb") or "(no METAR text)"), language="text")
+                else:
+                    st.warning(f"No AWC METAR for {fc_sid}.")
+                # TAF
+                if tafs:
+                    t = tafs[0]
+                    st.markdown("**TAF** (Terminal Aerodrome Forecast)")
+                    raw_taf = t.get("rawTAF") or t.get("rawOb") or ""
+                    st.code(raw_taf or "(no TAF)", language="text")
+                else:
+                    st.caption(f"No TAF available for {fc_sid}.")
+            else:
+                st.error("AWC client not installed.")
+        elif fc_sid:
+            st.error("Invalid ICAO (must be 3–6 letters/digits).")
+
+    # ---- C. Flight Category Rollup (derive from watchlist) -------------
+    with fcst_c:
+        st.markdown("**AOMC Network flight-category & state rollup**")
+        if _HAVE_AOMC:
+            all_ids = tuple(s["id"] for s in AOMC_STATIONS if s.get("id"))
+            wl_fc = _pc_get(fcst_ck) if _HAVE_PC else None
+            _fc_err = None
+            if wl_fc is None or (hasattr(wl_fc, "empty") and wl_fc.empty):
+                with st.spinner("Scanning network…"):
+                    try:
+                        wl_fc = _scan(all_ids, float(_SCAN_HOURS), fcst_ck)
+                    except Exception as exc:
+                        _fc_err = exc
+                        logger.exception("Forecaster flight-category scan failed")
+                        wl_fc = None
+            if wl_fc is None or wl_fc.empty:
+                if _fc_err is not None:
+                    st.error(
+                        f"Rollup unavailable: {type(_fc_err).__name__}. "
+                        "Try the National Hazards or Station TAF sub-tabs "
+                        "— those use AWC, an independent source."
+                    )
+                else:
+                    st.warning("No data available.")
+            else:
+                by_state = (
+                    wl_fc.assign(bad=wl_fc["status"].isin(
+                        ["MISSING", "NO DATA", "FLAGGED", "INTERMITTENT"]))
+                    .groupby("state", dropna=True)
+                    .agg(
+                        stations=("station", "count"),
+                        clean=("status", lambda s: (s == "CLEAN").sum()),
+                        flagged=("status", lambda s: (s == "FLAGGED").sum()),
+                        missing=("status", lambda s: s.isin(
+                            ["MISSING", "NO DATA"]).sum()),
+                        bad=("bad", "sum"),
+                    )
+                    .reset_index().sort_values("bad", ascending=False)
+                )
+                by_state["health_pct"] = (100.0 * by_state["clean"] / by_state["stations"]).round(1)
+                rename = {
+                    "state": "ST", "stations": "Stations", "clean": "Clean",
+                    "flagged": "Flagged", "missing": "Missing",
+                    "bad": "Needs Attn", "health_pct": "Health %",
+                }
+                _grid(by_state[list(rename)].rename(columns=rename),
+                      height=460, key="fcst_by_state", pinned=["ST"],
+                      status_col=None)
+        else:
+            st.error("AOMC catalog not loaded.")
+
+    # ---- D. Active NWS CAP alerts -------------------------------------
+    with fcst_d:
+        st.markdown("**Active NWS alerts** (api.weather.gov)")
+        if _HAVE_CAPS:
+            with st.spinner("Fetching active alerts…"):
+                alerts = _caps_active(fcst_ck)
+            st.caption(f"{len(alerts):,} active alerts nationally.")
+            if alerts:
+                # Filter
+                events = sorted({a.get("event") for a in alerts if a.get("event")})
+                sel_events = st.multiselect(
+                    "Event type filter", events,
+                    default=[e for e in events if "Warning" in e or "Tornado" in e][:5],
+                    key="fcst_caps_ev",
+                )
+                sevs = ["Extreme", "Severe", "Moderate", "Minor", "Unknown"]
+                sel_sevs = st.multiselect(
+                    "Severity filter", sevs, default=["Extreme", "Severe"],
+                    key="fcst_caps_sev",
+                )
+                shown = [a for a in alerts
+                         if (not sel_events or a.get("event") in sel_events)
+                         and (not sel_sevs or a.get("severity") in sel_sevs)]
+                rows = []
+                for a in shown[:400]:
+                    rows.append({
+                        "Event": a.get("event") or "",
+                        "Severity": a.get("severity") or "Unknown",
+                        "Urgency": a.get("urgency") or "",
+                        "Area": (a.get("area_desc") or "")[:100],
+                        "Sent":  str(a.get("sent") or ""),
+                        "Expires": str(a.get("expires") or ""),
+                        "Sender": a.get("sender") or "",
+                    })
+                _grid(pd.DataFrame(rows), height=500, key="fc_caps",
+                      pinned=["Event"], status_col="Severity")
+        else:
+            st.error("CAP alerts client not installed.")
+
+
+# ===========================================================================
+# ADMIN — alerts, scheduler, cache, anomaly detection (auth-gated)
+# ===========================================================================
+
+with tab_admin:
+    st.markdown("### Administrator Console")
+    st.caption(
+        "System operations: alert routing, background scheduler, "
+        "persistent cache, anomaly detection."
+    )
+
+    if True:
+        admin_tabs = st.tabs([
+            "Alerts", "Scheduler", "Cache", "Anomaly Detection", "Data Sources",
+        ])
+
+        # -- Alerts ------------------------------------------------------
+        with admin_tabs[0]:
+            st.markdown("#### Notification routing (Apprise)")
+            st.caption(
+                "Set the `OWL_ALERT_URLS` environment variable "
+                "(comma-separated) to route alerts to Slack, Discord, "
+                "Teams, email, PagerDuty, webhooks, and more."
+            )
+            if _HAVE_APPRISE:
+                urls = owl_alerts.load_urls_from_env()
+                if urls:
+                    st.success(f"{len(urls)} recipient URL(s) configured.")
+                    for u in urls:
+                        # Hide credentials in the display.
+                        masked = u.split("://")[0] + "://***"
+                        st.code(masked, language="")
+                else:
+                    st.warning("No recipients configured. Set `OWL_ALERT_URLS`.")
+
+                with st.expander("Supported services & URL formats"):
+                    for name, template in owl_alerts.SUPPORTED_SERVICES.items():
+                        st.markdown(f"**{name}** — `{template}`")
+
+                if st.button("Send test alert", key="adm_test_alert",
+                             type="primary"):
+                    sent, failed = owl_alerts.send_test_alert()
+                    if sent:
+                        st.success(f"Test alert delivered to {sent} recipient(s).")
+                    elif failed:
+                        st.error(f"All {failed} deliveries failed. "
+                                 "Check the URLs and logs.")
+                    else:
+                        st.info("No URLs configured. Set `OWL_ALERT_URLS` first.")
+            else:
+                st.error("Apprise is not installed.")
+
+        # -- Scheduler ---------------------------------------------------
+        with admin_tabs[1]:
+            st.markdown("#### Background scheduler (APScheduler)")
+            st.caption(
+                "Refreshes the whole-network watchlist every 3 minutes so "
+                "the Summary tab loads instantly."
+            )
+            if _HAVE_SCHED:
+                status = scheduler_status()
+                if not status.get("available"):
+                    st.error(status.get("reason") or "Scheduler unavailable.")
+                else:
+                    cc1, cc2, cc3 = st.columns(3)
+                    cc1.metric("Running", "YES" if status.get("running") else "NO")
+                    cc2.metric("Jobs", len(status.get("jobs", [])))
+                    cc3.metric("Engine", "APScheduler")
+                    for j in status.get("jobs", []):
+                        st.markdown(f"**{j.get('id')}**")
+                        st.caption(f"Trigger: {j.get('trigger')}")
+                        st.caption(f"Next run: {j.get('next_run') or '—'}")
+                        st.caption(f"Last run: {j.get('last_run') or '—'}")
+                        if j.get("last_error"):
+                            st.error(f"Last error: {j['last_error']}")
+                        else:
+                            st.success("Last run healthy.")
+            else:
+                st.error("APScheduler is not installed.")
+
+        # -- Cache -------------------------------------------------------
+        with admin_tabs[2]:
+            st.markdown("#### Persistent cache (DiskCache)")
+            st.caption(
+                "Watchlist scans are cached to disk so they survive Space "
+                "restarts and kick-starts after code pushes."
+            )
+            if _HAVE_PC:
+                stats = _pc_stats()
+                if stats.get("available"):
+                    cc1, cc2, cc3, cc4 = st.columns(4)
+                    cc1.metric("Items", stats.get("items", 0))
+                    cc2.metric("Size (MB)", f"{stats.get('size_mb', 0):.2f}")
+                    cc3.metric("Hit rate",
+                               f"{stats.get('hit_rate', 0):.1f}%")
+                    cc4.metric("Hits / misses",
+                               f"{stats.get('hits', 0)} / {stats.get('misses', 0)}")
+                    st.caption(f"Directory: `{stats.get('directory', '?')}`")
+                    st.caption(f"Snapshot at: {stats.get('as_of', '?')}")
+                    if st.button("Clear cache", key="adm_cache_clear"):
+                        n = _pc_clear()
+                        st.success(f"Cleared {n} cached item(s).")
+                else:
+                    st.error(stats.get("reason")
+                             or stats.get("error")
+                             or "Cache unavailable.")
+            else:
+                st.error("DiskCache is not installed.")
+
+        # -- Anomaly Detection -------------------------------------------
+        with admin_tabs[3]:
+            st.markdown("#### Anomaly detection (STUMPY Matrix Profile)")
+            st.caption(
+                "Find the most unusual subsequence in a single station's "
+                "1-minute time series — surfaces sensor drift or data "
+                "glitches that $ alone wouldn't catch."
+            )
+            if _HAVE_ANOMALY:
+                ac1, ac2, ac3 = st.columns([1, 1, 1])
+                with ac1:
+                    if _HAVE_CATALOG:
+                        pool_ids = [s["id"] for s in AOMC_STATIONS if s.get("id")]
+                        _plk2 = _AOMC_META
+                        a_sid = st.selectbox(
+                            "Station", pool_ids,
+                            index=pool_ids.index("KJFK") if "KJFK" in pool_ids else 0,
+                            format_func=lambda s: (
+                                f"{s} · {_short_name(_plk2.get(s, {}).get('name', ''))}"
+                            ),
+                            key="an_sid",
+                        )
+                    else:
+                        a_sid = st.text_input("ICAO ID", "KJFK",
+                                              key="an_sid_txt").strip().upper()
+                with ac2:
+                    a_col = st.selectbox(
+                        "Column",
+                        ["temp_2m_f", "dew_point_f", "wind_speed_2m_mph",
+                         "pressure_hg"],
+                        key="an_col",
+                    )
+                with ac3:
+                    a_win = st.selectbox(
+                        "Window (min)", [15, 30, 60, 120],
+                        index=1, key="an_win",
+                    )
+                a_days = st.slider("Lookback (days)", 1, 14, 3, key="an_days")
+
+                if st.button("Scan for anomalies", key="an_run",
+                             type="primary"):
+                    end_a = datetime.now(timezone.utc)
+                    start_a = end_a - timedelta(days=a_days)
+                    with st.spinner(f"Fetching {a_sid} and running matrix profile…"):
+                        df_a = _fetch_1min(a_sid, start_a, end_a)
+                        if df_a.empty:
+                            st.error("No 1-min data for this station/window.")
+                        else:
+                            result = detect_anomalies(
+                                df_a, column=a_col, window_minutes=a_win,
+                            )
+                            if not result.has_anomaly:
+                                st.info(
+                                    "No significant anomalies detected. "
+                                    "Try a longer lookback or a different column."
+                                )
+                            else:
+                                rc1, rc2, rc3 = st.columns(3)
+                                rc1.metric("Score", f"{result.discord_score:.2f}")
+                                rc2.metric("Window",
+                                           f"{result.window_minutes} min")
+                                rc3.metric("Observations",
+                                           f"{result.n_points:,}")
+                                if result.discord_time is not None:
+                                    st.caption(
+                                        f"Most unusual period starts at "
+                                        f"**{result.discord_time:%Y-%m-%d %H:%MZ}** "
+                                        f"({result.column})."
+                                    )
+                                if result.top_k_times:
+                                    st.markdown("**Top-k anomalies**")
+                                    tk = pd.DataFrame({
+                                        "Rank": range(1, len(result.top_k_scores) + 1),
+                                        "Start (UTC)": result.top_k_times,
+                                        "Score": [f"{s:.2f}"
+                                                  for s in result.top_k_scores],
+                                    })
+                                    st.dataframe(_arrow_safe(tk),
+                                                 use_container_width=True,
+                                                 hide_index=True)
+            else:
+                st.error("STUMPY is not installed.")
+
+        # -- Data Sources --------------------------------------------------
+        with admin_tabs[4]:
+            st.markdown("#### Upstream data sources")
+            st.caption(
+                "Every number shown anywhere in O.W.L. traces back to "
+                "one of these public feeds. Click to visit the source."
+            )
+            if _HAVE_SOURCES and DATA_SOURCES:
+                src_rows = []
+                for s in DATA_SOURCES:
+                    src_rows.append({
+                        "Source": s.get("name", ""),
+                        "Trust": (s.get("trust", "") or "").title(),
+                        "Used for": s.get("used_for", ""),
+                        "Auth": s.get("auth", ""),
+                        "Cadence": s.get("cadence", ""),
+                        "URL": s.get("url", ""),
+                        "Notes": s.get("notes", ""),
+                    })
+                _grid(pd.DataFrame(src_rows), height=500, key="adm_sources",
+                      pinned=["Source"], status_col="Trust")
+            else:
+                st.warning("Source registry not loaded.")
+
+        st.divider()
+        st.caption("Public demo mode — all controls open to anyone. "
+                   "For deployments requiring access control, wire "
+                   "Apprise alerts through an authenticated reverse proxy.")
 
 
 # ===========================================================================
@@ -1504,7 +2424,7 @@ _footer_html = (
     'stations (NWS / FAA / DOD).'
     '</div>'
     '<div class="fed-footer-meta">'
-    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.0 &middot; SYSTEM TIME {_now_footer} &middot; '
+    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.1.0 (Release 1) &middot; SYSTEM TIME {_now_footer} &middot; '
     '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> &middot; '
     '<a href="https://www.ncei.noaa.gov">NCEI</a> &middot; '
     '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> &middot; '
