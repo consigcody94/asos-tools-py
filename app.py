@@ -34,6 +34,13 @@ try:
 except ImportError:
     _HAVE_FOLIUM = False
 
+# --- Release #2: 3D globe (Globe.gl / three.js) ---
+try:
+    from asos_tools.globe_view import build_globe_html
+    _HAVE_GLOBE = True
+except ImportError:
+    _HAVE_GLOBE = False
+
 try:
     from st_aggrid import (
         AgGrid, GridOptionsBuilder, GridUpdateMode,
@@ -1380,9 +1387,31 @@ with tab_summary:
             nm = int(cts.get("MISSING", 0)) + int(cts.get("NO DATA", 0))
             nc = int(cts.get("CLEAN", 0))
 
-            # ---- Interactive US map (Tier 1 #1) ----
-            if _HAVE_FOLIUM:
-                st.subheader("National ASOS Status Map")
+            # ---- 3D satellite globe (Release #2 centerpiece) ----
+            # Replaces the prior Folium 2D map.  WebGL globe via Globe.gl,
+            # NASA Blue Marble texture, atmosphere glow, auto-rotate,
+            # click-to-drill (postMessage to parent).  Falls back to the
+            # 2D Folium map only if globe_view import failed.
+            if _HAVE_GLOBE:
+                st.subheader("National ASOS Status Globe")
+                dark_mode = bool(st.session_state.get("dark_mode", True))
+                globe_html = build_globe_html(
+                    wl,
+                    station_meta=AOMC_STATIONS,
+                    height_px=620,
+                    auto_rotate=True,
+                    dark=dark_mode,
+                    show_atmosphere=True,
+                    starfield=True,
+                )
+                st.components.v1.html(globe_html, height=640, scrolling=False)
+                st.caption(
+                    "Drag to rotate · scroll to zoom · click a point to "
+                    "focus a station. Auto-rotation pauses on interaction."
+                )
+            elif _HAVE_FOLIUM:
+                # Fallback: 2D Folium map if Globe.gl module isn't available.
+                st.subheader("National ASOS Status Map (2D fallback)")
                 with st.spinner("Rendering map…"):
                     fmap = build_status_map(
                         wl, AOMC_STATIONS,
@@ -1390,8 +1419,6 @@ with tab_summary:
                         dark=bool(st.session_state.get("dark_mode")),
                         height_px=480,
                     )
-                # st_folium returns last clicked object on each rerun; we
-                # use that to drill from map to report.
                 click = st_folium(
                     fmap,
                     height=480,
@@ -1407,7 +1434,10 @@ with tab_summary:
                             f"and enter this station ID for the full 1-min dashboard."
                         )
             else:
-                st.caption("Interactive map unavailable (streamlit-folium not installed).")
+                st.caption(
+                    "No interactive map available — install streamlit-folium "
+                    "or ensure asos_tools.globe_view is importable."
+                )
 
             st.divider()
 
