@@ -350,7 +350,7 @@ _GLOBE_HTML_TEMPLATE = r"""
   .tk-inner {{ display: flex; align-items: center; height: 100%;
                white-space: nowrap; gap: 26px;
                padding-left: 100%;
-               animation: tk-scroll 120s linear infinite;
+               animation: tk-scroll 60s linear infinite;
                will-change: transform; }}
   .ticker:hover .tk-inner {{ animation-play-state: paused; }}
   @keyframes tk-scroll {{
