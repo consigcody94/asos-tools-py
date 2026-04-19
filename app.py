@@ -450,12 +450,39 @@ st.set_page_config(
 st.markdown("""<style>
 /* Professional typography: Inter for UI, Space Grotesk for headings */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Material Symbols font — Streamlit uses it internally for dropdown
+   chevrons, sort arrows, tab scroll buttons, checkboxes, etc.
+   Without this import AND an explicit carve-out in the Inter override
+   below, those icons render as literal text like "arrow_drop_down". */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&family=Material+Symbols+Rounded&family=Material+Icons&display=swap');
 
-html, body, [class*="st-"], [class*="css-"], button, input, select, textarea {
+/* Inter is the default UI font — but NOT for Material-icon spans.
+   Streamlit emits icon glyphs inside <span class="material-symbols-*">
+   and similar; we must not steamroll their font-family. */
+html, body, button, input, select, textarea,
+[class*="st-"]:not([class*="material"]):not([class*="Icon"]):not([class*="icon"]),
+[class*="css-"]:not([class*="material"]):not([class*="Icon"]):not([class*="icon"]) {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
+}
+
+/* Restore the Material fonts on the classes Streamlit actually uses.
+   These override the generic "st-*" rule above on the icon elements. */
+.material-icons,
+.material-symbols-outlined,
+.material-symbols-rounded,
+[class*="material-symbols"],
+[data-testid*="Icon"],
+[data-testid*="icon"],
+[data-baseweb="icon"] {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Rounded',
+                 'Material Icons' !important;
+    font-feature-settings: 'liga' !important;
+    /* Prevent the ligature name from showing during font load. */
+    font-display: block !important;
+    letter-spacing: normal !important;
 }
 
 h1, h2, h3, h4, h5, h6,
