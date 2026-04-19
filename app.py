@@ -2683,6 +2683,57 @@ with tab_admin:
                 "1-minute time series — surfaces sensor drift or data "
                 "glitches that $ alone wouldn't catch."
             )
+            with st.expander("What this is + who it's for", expanded=False):
+                st.markdown(
+                    """
+**What it does, in plain English.** Pulls the last 1–14 days of
+1-minute data for one station, picks one sensor (temperature,
+dewpoint, wind, pressure), and finds the **most unusual 15–120 min
+window** — the "weirdest thing this sensor did all week."
+
+**The math.** *Matrix Profile* computes, for every rolling window in
+the series, the distance to its nearest lookalike elsewhere in the
+*same* series. A window whose nearest neighbor is *far away* is
+called a **discord** — a pattern that appears nowhere else. Highest
+score = most unusual. **STUMPY** is the Python library that computes
+this fast (14-day, 1-min series in <1 sec).
+
+**Why it matters.** The `$` maintenance flag only fires *after* the
+ASOS fails an internal tolerance check. Matrix Profile catches
+statistical weirdness *before* the threshold trips — earlier warning
+than `$`, and with no false positives during normal diurnal cycles.
+
+---
+
+**Say for:**
+
+- **AOMC controllers** — catch a drifting temp probe before it hits
+  tolerance and triggers `$`, or explain why a station has been
+  `INTERMITTENT` for the last two days.
+- **Field maintenance techs** — prioritize truck rolls by picking
+  the station with the highest anomaly score this week rather than
+  visiting in alphabetical order.
+- **NWS forecasters** — sanity-check an outlier METAR before citing
+  it in a discussion ("is 98°F at 03 UTC plausible, or is KXYZ's
+  temp sensor stuck?").
+- **QA analysts** — audit a month of historical 1-min data for
+  calibration drift when comparing two nearby stations.
+- **Incident investigators** — after a `$` event or missing METAR,
+  look back 72 hours to find the subtle anomaly that preceded it,
+  then attach the plot to the incident report.
+- **Research users** — benchmark "normal" diurnal patterns per
+  season / per biome and spot climate-signal anomalies.
+
+**How to read the output:**
+
+| Score | Meaning |
+|---|---|
+| `> 6` | Genuinely weird — worth investigating |
+| `3 – 6` | Possibly interesting — context-dependent |
+| `< 3` | Statistical noise — probably nothing |
+                    """,
+                    unsafe_allow_html=False,
+                )
             if _HAVE_ANOMALY:
                 ac1, ac2, ac3 = st.columns([1, 1, 1])
                 with ac1:
