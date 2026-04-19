@@ -137,6 +137,7 @@ def build_globe_html(
     dark: bool = True,
     show_atmosphere: bool = True,
     starfield: bool = True,
+    news_items: Optional[list[dict]] = None,
 ) -> str:
     """Return a self-contained HTML document for the 3D globe.
 
@@ -201,6 +202,50 @@ def build_globe_html(
                   "RECOVERED", "CLEAN", "NO DATA"]
     )
 
+    # News ticker — pre-render each headline as a clickable span with
+    # source badge. The whole strip auto-scrolls right-to-left via CSS
+    # keyframes (no JS loop; the browser handles it).
+    news_strip = ""
+    if news_items:
+        # Duplicate the item list so the marquee scrolls seamlessly.
+        # Cap at 20 to keep HTML size reasonable.
+        tops = news_items[:20]
+
+        def _badge_color(sev: str) -> str:
+            s = (sev or "").lower()
+            if s in ("critical", "failure", "severe"):
+                return "#dc2626"
+            if s in ("warning", "alert"):
+                return "#f59e0b"
+            return "#38bdf8"
+
+        def _esc(s: str) -> str:
+            return (str(s or "")
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;"))
+
+        def _item_html(it: dict) -> str:
+            src = _esc(it.get("source", ""))
+            title = _esc(it.get("title", ""))[:160]
+            link = _esc(it.get("link", "#"))
+            color = _badge_color(it.get("severity"))
+            return (
+                f'<a class="tk-item" href="{link}" target="_blank" rel="noopener">'
+                f'<span class="tk-badge" style="color:{color};border-color:{color}">'
+                f'{src}</span>{title}</a>'
+            )
+
+        strip_html = "".join(_item_html(i) for i in tops)
+        # Duplicated for seamless loop.
+        news_strip = (
+            '<div class="ovl ticker" id="ticker">'
+            '<div class="tk-inner">'
+            f'{strip_html}{strip_html}'
+            '</div></div>'
+        )
+
     return _GLOBE_HTML_TEMPLATE.format(
         height_px=int(height_px),
         bg_color=bg_color,
@@ -208,6 +253,7 @@ def build_globe_html(
         config_json=config_json,
         legend_rows=legend_rows,
         n_points=len(points),
+        news_strip=news_strip,
     )
 
 
@@ -245,16 +291,16 @@ _GLOBE_HTML_TEMPLATE = r"""
                 font-size: 18px; color: #f1f5f9; font-weight: 500; }}
   .hud-sub   {{ font-size: 11px; color: #64748b; margin-top: 4px; }}
 
-  /* Bottom-left point counter */
-  .stat-card {{ bottom: 14px; left: 14px;
+  /* Bottom-left point counter — raised above the ticker */
+  .stat-card {{ bottom: 44px; left: 14px;
                 background: rgba(2, 6, 23, 0.72);
                 border: 1px solid rgba(56, 189, 248, 0.25);
                 border-radius: 8px; padding: 8px 14px; font-size: 12px;
                 backdrop-filter: blur(6px); }}
   .stat-card b {{ color: #f1f5f9; }}
 
-  /* Bottom-right legend */
-  .legend {{ bottom: 14px; right: 14px;
+  /* Bottom-right legend — raised above the ticker */
+  .legend {{ bottom: 44px; right: 14px;
              background: rgba(2, 6, 23, 0.78);
              border: 1px solid rgba(56, 189, 248, 0.25);
              border-radius: 8px; padding: 10px 14px;
@@ -279,6 +325,35 @@ _GLOBE_HTML_TEMPLATE = r"""
           box-shadow: 0 4px 18px rgba(0,0,0,0.6); }}
   .tip .name {{ color: #38bdf8; font-weight: 600; }}
   .tip .meta {{ color: #94a3b8; font-size: 10px; }}
+
+  /* News ticker — auto-scrolling marquee along the bottom edge */
+  .ticker {{ left: 0; right: 0; bottom: 0; height: 30px;
+             background: linear-gradient(90deg,
+               rgba(2,6,23,0.92) 0%,
+               rgba(2,6,23,0.82) 50%,
+               rgba(2,6,23,0.92) 100%);
+             border-top: 1px solid rgba(56, 189, 248, 0.25);
+             overflow: hidden;
+             backdrop-filter: blur(4px);
+             pointer-events: auto; }}
+  .tk-inner {{ display: flex; align-items: center; height: 100%;
+               white-space: nowrap; gap: 26px;
+               padding-left: 100%;
+               animation: tk-scroll 120s linear infinite;
+               will-change: transform; }}
+  .ticker:hover .tk-inner {{ animation-play-state: paused; }}
+  @keyframes tk-scroll {{
+    from {{ transform: translateX(0); }}
+    to   {{ transform: translateX(-50%); }}
+  }}
+  .tk-item {{ color: #cbd5e1; font-size: 12px; text-decoration: none;
+              flex-shrink: 0; letter-spacing: 0.01em; }}
+  .tk-item:hover {{ color: #f1f5f9; }}
+  .tk-badge {{ display: inline-block; border: 1px solid;
+               border-radius: 3px; padding: 1px 6px;
+               font-size: 10px; font-weight: 600;
+               letter-spacing: 0.08em; text-transform: uppercase;
+               margin-right: 8px; vertical-align: 1px; }}
 
   /* Controls */
   .controls {{ position: absolute; top: 14px; right: 14px;
@@ -320,6 +395,8 @@ _GLOBE_HTML_TEMPLATE = r"""
 </div>
 
 <div class="tip" id="tip"></div>
+
+{news_strip}
 
 <!-- three.js + globe.gl from CDN. Pinned versions for cache stability. -->
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>

@@ -42,6 +42,12 @@ except ImportError:
     _HAVE_GLOBE = False
 
 try:
+    from asos_tools.news import fetch_noaa_faa_headlines
+    _HAVE_NEWS = True
+except ImportError:
+    _HAVE_NEWS = False
+
+try:
     from st_aggrid import (
         AgGrid, GridOptionsBuilder, GridUpdateMode,
         ColumnsAutoSizeMode, JsCode,
@@ -184,6 +190,22 @@ def _round_5min(dt: datetime) -> datetime:
     """Round to nearest 5-min boundary for stable fetch cache keys."""
     return dt.replace(second=0, microsecond=0,
                       minute=(dt.minute // 5) * 5)
+
+
+@st.cache_data(ttl=None, show_spinner=False)
+def _cached_news(ck: str = "") -> list[dict]:
+    """Cached news headlines for the globe ticker.
+
+    Keyed on the session's data-key so a Refresh click invalidates.
+    Returns up to 20 items; swallows individual feed failures.
+    """
+    if not _HAVE_NEWS:
+        return []
+    try:
+        return fetch_noaa_faa_headlines(limit=20, sort="time") or []
+    except Exception:
+        logger.exception("news fetch failed")
+        return []
 
 
 def _wlabel(days: int) -> str:
@@ -1395,6 +1417,17 @@ with tab_summary:
             if _HAVE_GLOBE:
                 st.subheader("National ASOS Status Globe")
                 dark_mode = bool(st.session_state.get("dark_mode", True))
+
+                # Pull news headlines for the bottom ticker. Feed failures
+                # are swallowed (the aggregator returns [] on partial
+                # outages, so a missing NOAA RSS never blanks the globe).
+                news = []
+                if _HAVE_NEWS:
+                    try:
+                        news = _cached_news(ck)
+                    except Exception:
+                        logger.exception("news fetch failed")
+
                 globe_html = build_globe_html(
                     wl,
                     station_meta=AOMC_STATIONS,
@@ -1403,11 +1436,13 @@ with tab_summary:
                     dark=dark_mode,
                     show_atmosphere=True,
                     starfield=True,
+                    news_items=news,
                 )
-                st.components.v1.html(globe_html, height=640, scrolling=False)
+                st.components.v1.html(globe_html, height=660, scrolling=False)
                 st.caption(
                     "Drag to rotate · scroll to zoom · click a point to "
-                    "focus a station. Auto-rotation pauses on interaction."
+                    "focus a station · hover ticker to pause. Auto-rotation "
+                    "stops on interaction."
                 )
             elif _HAVE_FOLIUM:
                 # Fallback: 2D Folium map if Globe.gl module isn't available.
