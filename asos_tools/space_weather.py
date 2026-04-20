@@ -93,26 +93,38 @@ def current_kp() -> dict:
     data = _get_json("/products/noaa-planetary-k-index.json")
     out = {
         "kp": None, "time_tag_utc": None, "label": "unknown",
-        "storm_level": None,
+        "storm_level": None, "kp_float": None,
         "source": "NOAA SWPC planetary K-index",
     }
-    if not isinstance(data, list) or len(data) < 2:
+    if not isinstance(data, list) or not data:
         return out
-    # SWPC returns [header, row1, row2, ...].  Latest row is data[-1].
-    header, *rows = data
-    latest = rows[-1]
+    # SWPC publishes a list of dict rows like
+    #   {"time_tag": "2026-04-20T18:00:00", "Kp": 5.0, "a_running": 48, ...}
+    # (earlier versions of the feed used a list-of-lists + header row, so
+    # we handle both shapes defensively.)
+    latest: dict = {}
+    last = data[-1]
+    if isinstance(last, dict):
+        latest = last
+    elif isinstance(last, list) and isinstance(data[0], list):
+        header = data[0]
+        try:
+            latest = dict(zip(header, last))
+        except Exception:
+            return out
+    if not latest:
+        return out
     try:
-        # Columns are ["time_tag", "Kp", "a_running", "station_count"] (sometimes 3 cols).
-        time_tag = latest[header.index("time_tag")]
-        kp_raw = latest[header.index("Kp")]
-        kp = int(round(float(kp_raw)))
-    except (ValueError, IndexError):
+        kp_float = float(latest.get("Kp") or latest.get("kp") or 0)
+    except (TypeError, ValueError):
         return out
+    kp_int = int(round(kp_float))
     out.update({
-        "kp": kp,
-        "time_tag_utc": time_tag,
-        "label": KP_SCALE_NAMES.get(kp, "Unknown"),
-        "storm_level": (kp - 4) if kp >= 5 else 0,
+        "kp": kp_int,
+        "kp_float": round(kp_float, 2),
+        "time_tag_utc": latest.get("time_tag"),
+        "label": KP_SCALE_NAMES.get(kp_int, "Unknown"),
+        "storm_level": (kp_int - 4) if kp_int >= 5 else 0,
     })
     return out
 

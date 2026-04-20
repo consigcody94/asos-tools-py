@@ -345,25 +345,6 @@ _GLOBE_HTML_TEMPLATE = r"""
   .tip .name {{ color: #38bdf8; font-weight: 600; }}
   .tip .meta {{ color: #94a3b8; font-size: 10px; }}
 
-  /* Radar + satellite overlay — pinned PNG/JPG over the globe canvas.
-     CONUS-only (RADAR_BOUNDS -126 to -66 lon, 24 to 50 lat) so we render
-     as a semi-transparent image clipped to roughly the same area of the
-     globe viewport.  Position/size are tuned against the default CONUS
-     camera preset; user can toggle on/off with the buttons in .controls. */
-  .overlay-layer {{ position: absolute; top: 14%; left: 15%;
-                    width: 70%; height: 55%;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-size: contain;
-                    mix-blend-mode: screen;
-                    opacity: 0.72;
-                    pointer-events: none;
-                    transition: opacity 0.25s ease;
-                    display: none; }}
-  .overlay-layer.on {{ display: block; }}
-  #layer-radar-img {{ z-index: 20; }}
-  #layer-sat-img   {{ z-index: 15; mix-blend-mode: normal; opacity: 0.45; }}
-
   /* News ticker — auto-scrolling marquee along the bottom edge */
   .ticker {{ left: 0; right: 0; bottom: 0; height: 30px;
              background: linear-gradient(90deg,
@@ -499,10 +480,6 @@ _GLOBE_HTML_TEMPLATE = r"""
   {legend_rows}
 </div>
 
-<!-- Optional radar/satellite overlay layers (pinned over the globe canvas) -->
-<div class="overlay-layer" id="layer-radar-img"></div>
-<div class="overlay-layer" id="layer-sat-img"></div>
-
 <div class="tip" id="tip"></div>
 
 <!-- Persistent station card shown on click -->
@@ -625,38 +602,119 @@ _GLOBE_HTML_TEMPLATE = r"""
       }}, 900);
     }});
 
-  // ----- Radar + Satellite overlay toggles -----------------------------
-  const radarBtn = document.getElementById('layer-radar');
-  const satBtn   = document.getElementById('layer-sat');
-  const radarImg = document.getElementById('layer-radar-img');
-  const satImg   = document.getElementById('layer-sat-img');
-  function setLayer(btn, img, url) {{
+  // ----- Radar overlay toggle — Three.js sphere texture -----------------
+  // The IEM n0q CONUS composite is a 2D PNG covering lon [-126..-66],
+  // lat [24..50].  To wrap it onto the 3D globe we draw it into an
+  // equirectangular 2048x1024 canvas at the right UV coordinates, then
+  // apply that canvas as a CanvasTexture on a sphere mesh slightly
+  // larger than the base globe.  The base globe stays visible everywhere
+  // the canvas is transparent (which is most of it — CONUS only).
+  //
+  // Image must be served with CORS.  IEM's static PNG URLs send
+  // `Access-Control-Allow-Origin: *` so `crossOrigin='anonymous'` works.
+
+  const GLOBE_RADIUS = 100;        // globe.gl default
+  const OVERLAY_RADIUS = 100.3;    // just above surface to avoid z-fighting
+
+  // Bounds for each overlay (lon_min, lat_min, lon_max, lat_max).
+  const RADAR_BBOX = [-126, 24, -66, 50];
+  const GOES_BBOX  = [-135, 15, -55, 55];   // approx GOES CONUS coverage
+
+  function buildEquirectTexture(imgUrl, bbox) {{
+    return new Promise((resolve, reject) => {{
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onerror = (e) => reject(e);
+      img.onload = () => {{
+        const W = 2048, H = 1024;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        const [lonMin, latMin, lonMax, latMax] = bbox;
+        const x = ((lonMin + 180) / 360) * W;
+        const w = ((lonMax - lonMin) / 360) * W;
+        const y = ((90 - latMax) / 180) * H;
+        const h = ((latMax - latMin) / 180) * H;
+        ctx.drawImage(img, x, y, w, h);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        resolve(tex);
+      }};
+      img.src = imgUrl;
+    }});
+  }}
+
+  function makeOverlayMesh(texture, opacity = 0.7, blending = THREE.NormalBlending) {{
+    const geom = new THREE.SphereGeometry(OVERLAY_RADIUS, 90, 60);
+    const mat = new THREE.MeshBasicMaterial({{
+      map: texture,
+      transparent: true,
+      opacity: opacity,
+      blending: blending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }});
+    return new THREE.Mesh(geom, mat);
+  }}
+
+  // Track meshes so we can add/remove.
+  let radarMesh = null;
+  let satMesh   = null;
+
+  async function toggleOverlay(kind) {{
+    const isRadar = kind === 'radar';
+    const btn = isRadar ? document.getElementById('layer-radar')
+                        : document.getElementById('layer-sat');
     const want = !btn.classList.contains('on');
     btn.classList.toggle('on', want);
-    if (want && url) {{
-      img.style.backgroundImage = `url("${{url}}")`;
-      img.classList.add('on');
-    }} else {{
-      img.classList.remove('on');
+
+    const scene = world.scene();
+    let mesh = isRadar ? radarMesh : satMesh;
+
+    if (!want) {{
+      if (mesh) {{
+        scene.remove(mesh);
+        mesh.material.map.dispose();
+        mesh.material.dispose();
+        mesh.geometry.dispose();
+        if (isRadar) radarMesh = null; else satMesh = null;
+      }}
+      return;
+    }}
+
+    // Build the overlay mesh.
+    btn.textContent = isRadar ? 'RADAR (loading...)' : 'SATELLITE (loading...)';
+    const url = isRadar ? CFG.radar_overlay_url : CFG.satellite_overlay_url;
+    const bbox = isRadar ? RADAR_BBOX : GOES_BBOX;
+    try {{
+      const tex = await buildEquirectTexture(url, bbox);
+      const opac = isRadar ? 0.78 : 0.55;
+      const blend = isRadar ? THREE.AdditiveBlending : THREE.NormalBlending;
+      mesh = makeOverlayMesh(tex, opac, blend);
+      scene.add(mesh);
+      if (isRadar) radarMesh = mesh; else satMesh = mesh;
+      btn.textContent = isRadar ? 'RADAR' : 'SATELLITE';
+    }} catch (e) {{
+      console.warn('overlay load failed', e);
+      btn.textContent = isRadar ? 'RADAR (failed)' : 'SATELLITE (failed)';
+      btn.classList.remove('on');
     }}
   }}
-  if (radarBtn) {{
-    radarBtn.addEventListener('click', () => {{
-      if (!CFG.radar_overlay_url) {{
-        radarBtn.textContent = 'RADAR (unavailable)';
-        return;
-      }}
-      setLayer(radarBtn, radarImg, CFG.radar_overlay_url);
-    }});
+
+  const radarBtn = document.getElementById('layer-radar');
+  const satBtn   = document.getElementById('layer-sat');
+  if (radarBtn && CFG.radar_overlay_url) {{
+    radarBtn.addEventListener('click', () => toggleOverlay('radar'));
+  }} else if (radarBtn) {{
+    radarBtn.textContent = 'RADAR (unavailable)';
+    radarBtn.disabled = true;
   }}
-  if (satBtn) {{
-    satBtn.addEventListener('click', () => {{
-      if (!CFG.satellite_overlay_url) {{
-        satBtn.textContent = 'SATELLITE (unavailable)';
-        return;
-      }}
-      setLayer(satBtn, satImg, CFG.satellite_overlay_url);
-    }});
+  if (satBtn && CFG.satellite_overlay_url) {{
+    satBtn.addEventListener('click', () => toggleOverlay('sat'));
+  }} else if (satBtn) {{
+    satBtn.textContent = 'SATELLITE (unavailable)';
+    satBtn.disabled = true;
   }}
 
   // ----- Region preset buttons -----------------------------------------
