@@ -1,0 +1,6946 @@
+{
+  "source": "aviationweather.gov/api/data/stationinfo",
+  "fetched_utc": "2026-04-20T22:30:27+00:00",
+  "count": 465,
+  "stations": [
+    {
+      "icao": "ABANG",
+      "faa": null,
+      "iata": null,
+      "wmo": "99455",
+      "name": "Alexandria Bay",
+      "lat": 44.55,
+      "lon": -75.93,
+      "elev": 76,
+      "state": "NY",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "CERM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71590",
+      "name": "Edmundston",
+      "lat": 47.417,
+      "lon": -68.325,
+      "elev": 151,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CMFM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71212",
+      "name": "Fort Montmorency",
+      "lat": 47.323,
+      "lon": -71.148,
+      "elev": 663,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CMGB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Granby",
+      "lat": 45.373,
+      "lon": -72.774,
+      "elev": 87,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CTCK",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Moose Creek",
+      "lat": 45.251,
+      "lon": -74.963,
+      "elev": 84,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CTNK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71581",
+      "name": "Algonquin Park/East",
+      "lat": 45.533,
+      "lon": -78.266,
+      "elev": 405,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWAB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Trowbridge ",
+      "lat": 48.3,
+      "lon": -88.87,
+      "elev": 218,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWAC",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Nitinat Lake ",
+      "lat": 48.67,
+      "lon": -124.83,
+      "elev": 41,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWAF",
+      "faa": null,
+      "iata": null,
+      "wmo": "71426",
+      "name": "Ile Rouge",
+      "lat": 48.069,
+      "lon": -69.556,
+      "elev": 6,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWAJ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71465",
+      "name": "Erieau ",
+      "lat": 42.256,
+      "lon": -81.909,
+      "elev": 177,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWBA",
+      "faa": null,
+      "iata": null,
+      "wmo": "71732",
+      "name": "Barrage Temiscaming",
+      "lat": 46.71,
+      "lon": -79.101,
+      "elev": 181,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWBE",
+      "faa": null,
+      "iata": null,
+      "wmo": "71460",
+      "name": "Killarney Arpt",
+      "lat": 45.978,
+      "lon": -81.493,
+      "elev": 188,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWBI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71615",
+      "name": "Britt ",
+      "lat": 45.8,
+      "lon": -80.53,
+      "elev": 190,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWBS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71198",
+      "name": "Lac St Pierre?",
+      "lat": 46.189,
+      "lon": -72.916,
+      "elev": 3,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWBZ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "St Anicet",
+      "lat": 45.121,
+      "lon": -74.289,
+      "elev": 49,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWCB",
+      "faa": null,
+      "iata": null,
+      "wmo": "71712",
+      "name": "St Anicet",
+      "lat": 45.117,
+      "lon": -74.283,
+      "elev": 49,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWCH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71747",
+      "name": "Atikokan ",
+      "lat": 48.761,
+      "lon": -91.628,
+      "elev": 380,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWCI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71433",
+      "name": "Caribou Isl",
+      "lat": 47.341,
+      "lon": -85.807,
+      "elev": 167,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWCJ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71750",
+      "name": "Pukaskwa Park",
+      "lat": 48.588,
+      "lon": -86.295,
+      "elev": 207,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWCO",
+      "faa": null,
+      "iata": null,
+      "wmo": "71270",
+      "name": "Collingwood Arpt",
+      "lat": 44.5,
+      "lon": -80.217,
+      "elev": 182,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWCS",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Cote-Ste-Cath M",
+      "lat": 45.42,
+      "lon": -73.56,
+      "elev": 17,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWCU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Barrie ",
+      "lat": 44.38,
+      "lon": -79.78,
+      "elev": 295,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWDD",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Belle River",
+      "lat": 42.297,
+      "lon": -82.706,
+      "elev": 184,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWDF",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Oliphant/Ont",
+      "lat": 44.717,
+      "lon": -81.275,
+      "elev": 178,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWDN",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Wasaga Beach",
+      "lat": 44.52,
+      "lon": -80.021,
+      "elev": 181,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWDQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71378",
+      "name": "La Tuque Arpt",
+      "lat": 47.415,
+      "lon": -72.788,
+      "elev": 174,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWEC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71751",
+      "name": "Welcome Isl ",
+      "lat": 48.369,
+      "lon": -89.119,
+      "elev": 207,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWER",
+      "faa": null,
+      "iata": null,
+      "wmo": "71424",
+      "name": "Ile D'Orleans",
+      "lat": 46.997,
+      "lon": -70.808,
+      "elev": 4,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWET",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Egbert ",
+      "lat": 44.23,
+      "lon": -79.78,
+      "elev": 251,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWEW",
+      "faa": null,
+      "iata": null,
+      "wmo": "71524",
+      "name": "L Assomption",
+      "lat": 45.809,
+      "lon": -73.435,
+      "elev": 17,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWEZ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71473",
+      "name": "Saturna Isl",
+      "lat": 48.783,
+      "lon": -123.046,
+      "elev": 23,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWFQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71373",
+      "name": "Frelighsburg",
+      "lat": 45.05,
+      "lon": -72.861,
+      "elev": 190,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWGD",
+      "faa": null,
+      "iata": null,
+      "wmo": "71261",
+      "name": "Goderich Muni",
+      "lat": 43.765,
+      "lon": -81.712,
+      "elev": 214,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWGH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71281",
+      "name": "Grenadier Island",
+      "lat": 44.417,
+      "lon": -75.847,
+      "elev": 76,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWGJ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Montreal River",
+      "lat": 47.247,
+      "lon": -84.596,
+      "elev": 459,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWGL",
+      "faa": null,
+      "iata": null,
+      "wmo": "71282",
+      "name": "Lagoon City",
+      "lat": 44.55,
+      "lon": -79.218,
+      "elev": 220,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWGQ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Roquemaure",
+      "lat": 48.63,
+      "lon": -79.45,
+      "elev": 269,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWGV",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Carp Radar Site",
+      "lat": 45.317,
+      "lon": -76,
+      "elev": 120,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWHM",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Varennes",
+      "lat": 45.723,
+      "lon": -73.377,
+      "elev": 20,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWHQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71389",
+      "name": "Deschambaults",
+      "lat": 46.691,
+      "lon": -71.972,
+      "elev": 56,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWHV",
+      "faa": null,
+      "iata": null,
+      "wmo": "71323",
+      "name": "Beauceville",
+      "lat": 46.205,
+      "lon": -70.785,
+      "elev": 227,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWHY",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Mont-Orford",
+      "lat": 45.32,
+      "lon": -72.25,
+      "elev": 851,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIA",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "St-Henri",
+      "lat": 48.65,
+      "lon": -71.84,
+      "elev": 103,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIG",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Ile Aux Grues Arpt",
+      "lat": 47.074,
+      "lon": -70.533,
+      "elev": 12,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIR",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Victoria Marine",
+      "lat": 48.368,
+      "lon": -123.752,
+      "elev": 17,
+      "state": "BC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWIS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71319",
+      "name": "Charlevoix",
+      "lat": 47.284,
+      "lon": -70.637,
+      "elev": 720,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIT",
+      "faa": null,
+      "iata": null,
+      "wmo": "71614",
+      "name": "St Clothilde",
+      "lat": 45.167,
+      "lon": -73.678,
+      "elev": 53,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "St. Gedeon",
+      "lat": 48.48,
+      "lon": -71.78,
+      "elev": 103,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIX",
+      "faa": null,
+      "iata": null,
+      "wmo": "71381",
+      "name": "Mistook",
+      "lat": 48.598,
+      "lon": -71.716,
+      "elev": 109,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIY",
+      "faa": null,
+      "iata": null,
+      "wmo": "71019",
+      "name": "St Leonard Arpt",
+      "lat": 47.158,
+      "lon": -67.832,
+      "elev": 240,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIZ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71372",
+      "name": "L'Acadie",
+      "lat": 45.294,
+      "lon": -73.35,
+      "elev": 45,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJB",
+      "faa": null,
+      "iata": null,
+      "wmo": "71392",
+      "name": "Ste Foy",
+      "lat": 46.781,
+      "lon": -71.288,
+      "elev": 90,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJM",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Upper Rideau Lake",
+      "lat": 44.703,
+      "lon": -76.295,
+      "elev": 126,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJO",
+      "faa": null,
+      "iata": null,
+      "wmo": "71617",
+      "name": "Jonquiere",
+      "lat": 48.425,
+      "lon": -71.143,
+      "elev": 113,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJT",
+      "faa": null,
+      "iata": null,
+      "wmo": "71376",
+      "name": "St Jovite",
+      "lat": 46.08,
+      "lon": -74.556,
+      "elev": 236,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWKH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71774",
+      "name": "Malahat ",
+      "lat": 48.568,
+      "lon": -123.542,
+      "elev": 327,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWKR",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "King Radar Site",
+      "lat": 43.964,
+      "lon": -79.574,
+      "elev": 360,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWLM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71200",
+      "name": "Victoria",
+      "lat": 48.413,
+      "lon": -123.325,
+      "elev": 62,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWLQ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "N Bay Nipissing",
+      "lat": 46.317,
+      "lon": -79.466,
+      "elev": 202,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWLS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71631",
+      "name": "Mount Forest",
+      "lat": 43.983,
+      "lon": -80.74,
+      "elev": 413,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWLU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Lauzon",
+      "lat": 46.833,
+      "lon": -71.157,
+      "elev": 20,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWMJ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71721",
+      "name": "Maniwaki Arpt",
+      "lat": 46.275,
+      "lon": -75.992,
+      "elev": 198,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWMN",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "McGill",
+      "lat": 45.42,
+      "lon": -73.93,
+      "elev": 63,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWMW",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Maniwaki",
+      "lat": 46.38,
+      "lon": -75.97,
+      "elev": 170,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWMZ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71438",
+      "name": "Western Isl",
+      "lat": 45.033,
+      "lon": -80.367,
+      "elev": 175,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "S.E. Shoal",
+      "lat": 41.833,
+      "lon": -82.467,
+      "elev": 168,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71431",
+      "name": "Cobourg",
+      "lat": 43.951,
+      "lon": -78.165,
+      "elev": 71,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71715",
+      "name": "Riviere Du Loup",
+      "lat": 47.806,
+      "lon": -69.548,
+      "elev": 147,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNL",
+      "faa": null,
+      "iata": null,
+      "wmo": "71462",
+      "name": "Great Duck Island",
+      "lat": 45.638,
+      "lon": -82.948,
+      "elev": 183,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71723",
+      "name": "Nicolet",
+      "lat": 46.226,
+      "lon": -72.657,
+      "elev": 9,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWOD",
+      "faa": null,
+      "iata": null,
+      "wmo": "71379",
+      "name": "Normandin",
+      "lat": 48.842,
+      "lon": -72.546,
+      "elev": 150,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWOH",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Ste Agathe Des",
+      "lat": 46.05,
+      "lon": -74.28,
+      "elev": 395,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWPB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Beausoleil Isl",
+      "lat": 44.85,
+      "lon": -79.87,
+      "elev": 183,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71463",
+      "name": "Port Colborne",
+      "lat": 42.868,
+      "lon": -79.253,
+      "elev": 174,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPD",
+      "faa": null,
+      "iata": null,
+      "wmo": "71382",
+      "name": "Parc Des Laurentid",
+      "lat": 47.562,
+      "lon": -71.229,
+      "elev": 795,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPE",
+      "faa": null,
+      "iata": null,
+      "wmo": "71699",
+      "name": "Point Lepreau",
+      "lat": 45.058,
+      "lon": -66.459,
+      "elev": 9,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPF",
+      "faa": null,
+      "iata": null,
+      "wmo": "71798",
+      "name": "Esquimalt Harbor",
+      "lat": 48.432,
+      "lon": -123.439,
+      "elev": 5,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71726",
+      "name": "Parent",
+      "lat": 47.922,
+      "lon": -74.624,
+      "elev": 443,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPQ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Montreal-Est",
+      "lat": 45.597,
+      "lon": -73.602,
+      "elev": 51,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWPS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71464",
+      "name": "Long Point",
+      "lat": 42.549,
+      "lon": -80.049,
+      "elev": 173,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWQE",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Toronto Headlands",
+      "lat": 43.614,
+      "lon": -79.343,
+      "elev": 85,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWQG",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Valcartier",
+      "lat": 46.9,
+      "lon": -71.5,
+      "elev": 168,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWQH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71611",
+      "name": "Lennoxville",
+      "lat": 45.369,
+      "lon": -71.824,
+      "elev": 181,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWQK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71778",
+      "name": "Race Rocks",
+      "lat": 48.298,
+      "lon": -123.531,
+      "elev": 5,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWQM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71186",
+      "name": "Cap Rouge",
+      "lat": 48.374,
+      "lon": -70.535,
+      "elev": 7,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWQO",
+      "faa": null,
+      "iata": null,
+      "wmo": "71385",
+      "name": "Ile Bicquette",
+      "lat": 48.416,
+      "lon": -68.893,
+      "elev": 7,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWQP",
+      "faa": null,
+      "iata": null,
+      "wmo": "71430",
+      "name": "Point Petre",
+      "lat": 43.84,
+      "lon": -77.153,
+      "elev": 77,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWQV",
+      "faa": null,
+      "iata": null,
+      "wmo": "71189",
+      "name": "Puinte Claveau",
+      "lat": 48.26,
+      "lon": -70.116,
+      "elev": 4,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWRK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71294",
+      "name": "Bancroft Arpt",
+      "lat": 45.072,
+      "lon": -77.879,
+      "elev": 328,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWRQ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Trois Rivieres",
+      "lat": 46.38,
+      "lon": -72.62,
+      "elev": 11,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWSI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Simcoe ",
+      "lat": 42.851,
+      "lon": -80.268,
+      "elev": 227,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWSO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Exeter Radar Site",
+      "lat": 43.372,
+      "lon": -81.38,
+      "elev": 305,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWSP",
+      "faa": null,
+      "iata": null,
+      "wmo": "71780",
+      "name": "Sheringham",
+      "lat": 48.377,
+      "lon": -123.921,
+      "elev": 2,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWSS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71607",
+      "name": "St Stephen Arpt",
+      "lat": 45.21,
+      "lon": -67.253,
+      "elev": 27,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWST",
+      "faa": null,
+      "iata": null,
+      "wmo": "71713",
+      "name": "La Pocatiere",
+      "lat": 47.354,
+      "lon": -70.03,
+      "elev": 31,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTA",
+      "faa": null,
+      "iata": null,
+      "wmo": "71612",
+      "name": "McTavish",
+      "lat": 45.506,
+      "lon": -73.579,
+      "elev": 71,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTN",
+      "faa": null,
+      "iata": null,
+      "wmo": "71384",
+      "name": "Cap Tourmente",
+      "lat": 47.079,
+      "lon": -70.781,
+      "elev": 5,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Toronto AES HQ",
+      "lat": 43.78,
+      "lon": -79.47,
+      "elev": 187,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWTQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71183",
+      "name": "Montreal/Trudeau Intl",
+      "lat": 45.468,
+      "lon": -73.742,
+      "elev": 32,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTT",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Lac Memphremagoc",
+      "lat": 45.27,
+      "lon": -72.17,
+      "elev": 210,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTY",
+      "faa": null,
+      "iata": null,
+      "wmo": "71724",
+      "name": "Trois Rivieres",
+      "lat": 46.354,
+      "lon": -72.516,
+      "elev": 8,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTZ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Toronto Island",
+      "lat": 43.63,
+      "lon": -79.42,
+      "elev": 77,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWUI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Ste Foy",
+      "lat": 46.781,
+      "lon": -71.288,
+      "elev": 90,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWUL",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Quebec Fcst Off",
+      "lat": 45.5,
+      "lon": -73.68,
+      "elev": 0,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWUX",
+      "faa": null,
+      "iata": null,
+      "wmo": "71388",
+      "name": "La Baie",
+      "lat": 48.298,
+      "lon": -70.92,
+      "elev": 150,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWUY",
+      "faa": null,
+      "iata": null,
+      "wmo": "71734",
+      "name": "Rouyn",
+      "lat": 48.246,
+      "lon": -79.034,
+      "elev": 309,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWVE",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Valleyfield",
+      "lat": 45.23,
+      "lon": -74.09,
+      "elev": 46,
+      "state": "QC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWVQ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71377",
+      "name": "Ste Anne De Bell",
+      "lat": 45.427,
+      "lon": -73.929,
+      "elev": 38,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVU",
+      "faa": null,
+      "iata": null,
+      "wmo": "71988",
+      "name": "Brier Island",
+      "lat": 44.287,
+      "lon": -66.342,
+      "elev": 4,
+      "state": "NS",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVV",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Vic Hartland",
+      "lat": 48.533,
+      "lon": -123.459,
+      "elev": 148,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVY",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Villeroy Radar",
+      "lat": 46.449,
+      "lon": -71.932,
+      "elev": 106,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVZ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Ile Charron",
+      "lat": 45.584,
+      "lon": -73.494,
+      "elev": 12,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWWB",
+      "faa": null,
+      "iata": null,
+      "wmo": "71437",
+      "name": "Burlington Pier",
+      "lat": 43.302,
+      "lon": -79.791,
+      "elev": 77,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWWX",
+      "faa": null,
+      "iata": null,
+      "wmo": "71439",
+      "name": "Cove Island",
+      "lat": 45.327,
+      "lon": -81.736,
+      "elev": 181,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWWZ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71432",
+      "name": "Port Weller",
+      "lat": 43.244,
+      "lon": -79.218,
+      "elev": 75,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWXC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71387",
+      "name": "Onatchiway",
+      "lat": 48.894,
+      "lon": -71.032,
+      "elev": 306,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWYB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "N. Bay Weather",
+      "lat": 46.32,
+      "lon": -79.44,
+      "elev": 0,
+      "state": "ON",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWYJ",
+      "faa": null,
+      "iata": null,
+      "wmo": "71783",
+      "name": "Victoria University",
+      "lat": 48.457,
+      "lon": -123.305,
+      "elev": 59,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Kelp Reefs",
+      "lat": 48.568,
+      "lon": -123.265,
+      "elev": 5,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71386",
+      "name": "Amqui",
+      "lat": 48.472,
+      "lon": -67.435,
+      "elev": 166,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXBI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71314",
+      "name": "Barrie/Lake Simcoe Rgnl",
+      "lat": 44.484,
+      "lon": -79.546,
+      "elev": 287,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXBO",
+      "faa": null,
+      "iata": null,
+      "wmo": "71578",
+      "name": "Beauport",
+      "lat": 46.837,
+      "lon": -71.197,
+      "elev": 8,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXCY",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Cyprus Lake",
+      "lat": 45.23,
+      "lon": -81.53,
+      "elev": 190,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXDI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71573",
+      "name": "Delhi",
+      "lat": 42.864,
+      "lon": -80.545,
+      "elev": 234,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXET",
+      "faa": null,
+      "iata": null,
+      "wmo": "71296",
+      "name": "Egbert CS",
+      "lat": 44.234,
+      "lon": -79.779,
+      "elev": 250,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXHA",
+      "faa": null,
+      "iata": null,
+      "wmo": "71298",
+      "name": "Harrow",
+      "lat": 42.033,
+      "lon": -82.896,
+      "elev": 193,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXHF",
+      "faa": null,
+      "iata": null,
+      "wmo": "71391",
+      "name": "High Falls",
+      "lat": 45.84,
+      "lon": -75.648,
+      "elev": 185,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXHM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71297",
+      "name": "Hamilton/Mt Hope",
+      "lat": 43.286,
+      "lon": -79.905,
+      "elev": 105,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXKE",
+      "faa": null,
+      "iata": null,
+      "wmo": "71300",
+      "name": "Kemptville",
+      "lat": 45.005,
+      "lon": -75.637,
+      "elev": 99,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXKI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71301",
+      "name": "Kirkland Lake",
+      "lat": 48.15,
+      "lon": -80,
+      "elev": 328,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXPC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71172",
+      "name": "Parry Sound",
+      "lat": 45.344,
+      "lon": -80.044,
+      "elev": 176,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXQT",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Thunder Bay/N Ontari",
+      "lat": 48.433,
+      "lon": -89.217,
+      "elev": 184,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXSH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71370",
+      "name": "Shawinigan CS",
+      "lat": 46.564,
+      "lon": -72.733,
+      "elev": 106,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXTO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Toronto City",
+      "lat": 43.667,
+      "lon": -79.4,
+      "elev": 115,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXVN",
+      "faa": null,
+      "iata": null,
+      "wmo": "71171",
+      "name": "Vineland",
+      "lat": 43.183,
+      "lon": -79.4,
+      "elev": 86,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYAM",
+      "faa": null,
+      "iata": "YAM",
+      "wmo": "71260",
+      "name": "Sault Ste Marie Arpt",
+      "lat": 46.484,
+      "lon": -84.504,
+      "elev": 186,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYBG",
+      "faa": null,
+      "iata": "YBG",
+      "wmo": "71727",
+      "name": "Bagotville",
+      "lat": 48.331,
+      "lon": -70.989,
+      "elev": 151,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYBN",
+      "faa": null,
+      "iata": null,
+      "wmo": "71534",
+      "name": "Borden",
+      "lat": 44.27,
+      "lon": -79.922,
+      "elev": 223,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYCK",
+      "faa": null,
+      "iata": "XCM",
+      "wmo": null,
+      "name": "Chatham/Kent Arpt",
+      "lat": 42.307,
+      "lon": -82.085,
+      "elev": 196,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYCL",
+      "faa": null,
+      "iata": "YCL",
+      "wmo": null,
+      "name": "Charlo Arpt",
+      "lat": 47.98,
+      "lon": -66.33,
+      "elev": 40,
+      "state": "NB",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CYCX",
+      "faa": null,
+      "iata": null,
+      "wmo": "71701",
+      "name": "Gagetown ",
+      "lat": 45.839,
+      "lon": -66.45,
+      "elev": 46,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYEL",
+      "faa": null,
+      "iata": "YEL",
+      "wmo": null,
+      "name": "Elliot Lake Arpt",
+      "lat": 46.351,
+      "lon": -82.558,
+      "elev": 327,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYFC",
+      "faa": null,
+      "iata": "YFC",
+      "wmo": "71700",
+      "name": "Fredericton Intl",
+      "lat": 45.873,
+      "lon": -66.539,
+      "elev": 16,
+      "state": "NB",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYGK",
+      "faa": null,
+      "iata": "YGK",
+      "wmo": "71620",
+      "name": "Kingston Arpt",
+      "lat": 44.223,
+      "lon": -76.599,
+      "elev": 91,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYHM",
+      "faa": null,
+      "iata": "YHM",
+      "wmo": "71263",
+      "name": "Hamilton/Munro Intl",
+      "lat": 43.173,
+      "lon": -79.936,
+      "elev": 237,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYHU",
+      "faa": null,
+      "iata": "YHU",
+      "wmo": "71371",
+      "name": "Montreal/St Hubert",
+      "lat": 45.516,
+      "lon": -73.415,
+      "elev": 26,
+      "state": "QC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYKF",
+      "faa": null,
+      "iata": "YKF",
+      "wmo": "71368",
+      "name": "Waterloo Intl",
+      "lat": 43.462,
+      "lon": -80.386,
+      "elev": 312,
+      "state": "ON",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CWDB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Burwash ",
+      "lat": 61.37,
+      "lon": -139.032,
+      "elev": 807,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWDL",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Dease Lake Arpt",
+      "lat": 58.423,
+      "lon": -130.031,
+      "elev": 816,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWEK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71476",
+      "name": "Grey Islet",
+      "lat": 54.58,
+      "lon": -130.698,
+      "elev": 8,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWHL",
+      "faa": null,
+      "iata": null,
+      "wmo": "71219",
+      "name": "Holland Rock",
+      "lat": 54.172,
+      "lon": -130.361,
+      "elev": 5,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWHT",
+      "faa": null,
+      "iata": null,
+      "wmo": "71505",
+      "name": "Haines Junction",
+      "lat": 60.773,
+      "lon": -137.581,
+      "elev": 601,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWIO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Iskut River",
+      "lat": 56.733,
+      "lon": -131.667,
+      "elev": 15,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJN",
+      "faa": null,
+      "iata": null,
+      "wmo": "71501",
+      "name": "Herschel Isl",
+      "lat": 69.568,
+      "lon": -138.913,
+      "elev": 1,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWJU",
+      "faa": null,
+      "iata": null,
+      "wmo": "71899",
+      "name": "Langara",
+      "lat": 54.255,
+      "lon": -133.058,
+      "elev": 47,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWKM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71046",
+      "name": "Komakuk Beach Arpt",
+      "lat": 69.595,
+      "lon": -140.174,
+      "elev": 8,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWKX",
+      "faa": null,
+      "iata": null,
+      "wmo": "71222",
+      "name": "Dease Lake",
+      "lat": 58.429,
+      "lon": -130.011,
+      "elev": 807,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWLA",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Langara",
+      "lat": 54.25,
+      "lon": -133.05,
+      "elev": 41,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWLC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71220",
+      "name": "Lucy Isl ",
+      "lat": 54.296,
+      "lon": -130.609,
+      "elev": 27,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWLG",
+      "faa": null,
+      "iata": null,
+      "wmo": "71164",
+      "name": "Little Chicago",
+      "lat": 67.179,
+      "lon": -130.228,
+      "elev": 38,
+      "state": "NT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWLI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71960",
+      "name": "Liverpool Bay",
+      "lat": 69.604,
+      "lon": -130.893,
+      "elev": 92,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWMA",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Masset Arpt",
+      "lat": 54.02,
+      "lon": -132.12,
+      "elev": 5,
+      "state": "BC",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWMU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Rampart Riv ",
+      "lat": 65.95,
+      "lon": -130.47,
+      "elev": 0,
+      "state": "NT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWND",
+      "faa": null,
+      "iata": null,
+      "wmo": "71502",
+      "name": "Pelly Island",
+      "lat": 69.632,
+      "lon": -135.445,
+      "elev": 14,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Nipterk Base",
+      "lat": 69.62,
+      "lon": -135.33,
+      "elev": 10,
+      "state": "NT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWNJ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Green IL",
+      "lat": 54.569,
+      "lon": -130.707,
+      "elev": 12,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWNO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Satah River Aut",
+      "lat": 66.87,
+      "lon": -134.19,
+      "elev": 97,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWOI",
+      "faa": null,
+      "iata": null,
+      "wmo": "71978",
+      "name": "Ivvavik Park",
+      "lat": 69.164,
+      "lon": -140.15,
+      "elev": 247,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWON",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Dawson",
+      "lat": 64.044,
+      "lon": -139.127,
+      "elev": 338,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWQS",
+      "faa": null,
+      "iata": null,
+      "wmo": "71472",
+      "name": "Kindakun Rocks",
+      "lat": 53.316,
+      "lon": -132.772,
+      "elev": 10,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWRO",
+      "faa": null,
+      "iata": null,
+      "wmo": "71477",
+      "name": "Rose Spit ",
+      "lat": 54.161,
+      "lon": -131.66,
+      "elev": 7,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWRR",
+      "faa": null,
+      "iata": null,
+      "wmo": "71506",
+      "name": "Rock River ",
+      "lat": 66.981,
+      "lon": -136.218,
+      "elev": 727,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWTI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Triple IL LH",
+      "lat": 54.3,
+      "lon": -130.88,
+      "elev": 21,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWTW",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Tuktoyaktuk",
+      "lat": 69.44,
+      "lon": -133,
+      "elev": 18,
+      "state": "NT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CWUM",
+      "faa": null,
+      "iata": null,
+      "wmo": "71949",
+      "name": "Faro ",
+      "lat": 62.211,
+      "lon": -133.385,
+      "elev": 702,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Bonilla Island",
+      "lat": 53.493,
+      "lon": -130.638,
+      "elev": 8,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWVH",
+      "faa": null,
+      "iata": null,
+      "wmo": "71052",
+      "name": "Storm Hills",
+      "lat": 68.894,
+      "lon": -133.943,
+      "elev": 246,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWWL",
+      "faa": null,
+      "iata": null,
+      "wmo": "71484",
+      "name": "Bonilla Isl",
+      "lat": 53.493,
+      "lon": -130.638,
+      "elev": 8,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZD",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Scudder Pt ",
+      "lat": 52.446,
+      "lon": -131.239,
+      "elev": 6,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZL",
+      "faa": null,
+      "iata": null,
+      "wmo": "71771",
+      "name": "Cumshewa Isl",
+      "lat": 53.03,
+      "lon": -131.602,
+      "elev": 17,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZV",
+      "faa": null,
+      "iata": null,
+      "wmo": "71107",
+      "name": "Cape St James",
+      "lat": 51.936,
+      "lon": -131.016,
+      "elev": 83,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CWZW",
+      "faa": null,
+      "iata": null,
+      "wmo": "71045",
+      "name": "Teslin",
+      "lat": 60.167,
+      "lon": -132.733,
+      "elev": 683,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXCK",
+      "faa": null,
+      "iata": null,
+      "wmo": "71039",
+      "name": "Carmacks Arpt",
+      "lat": 62.115,
+      "lon": -136.192,
+      "elev": 526,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CXTV",
+      "faa": null,
+      "iata": null,
+      "wmo": "71683",
+      "name": "Trail Valley",
+      "lat": 68.746,
+      "lon": -133.502,
+      "elev": 91,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYAJ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Komakuk Beach Arpt",
+      "lat": 69.58,
+      "lon": -140.16,
+      "elev": 7,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CYDA",
+      "faa": null,
+      "iata": "YDA",
+      "wmo": "71966",
+      "name": "Dawson Arpt",
+      "lat": 64.044,
+      "lon": -139.127,
+      "elev": 338,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYDB",
+      "faa": null,
+      "iata": "YDB",
+      "wmo": "71001",
+      "name": "Burwash Arpt",
+      "lat": 61.37,
+      "lon": -139.032,
+      "elev": 807,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYDL",
+      "faa": null,
+      "iata": "YDL",
+      "wmo": "71686",
+      "name": "Dease Lake Arpt",
+      "lat": 58.426,
+      "lon": -130.025,
+      "elev": 804,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYDM",
+      "faa": null,
+      "iata": "XRR",
+      "wmo": null,
+      "name": "Ross River Arpt",
+      "lat": 61.972,
+      "lon": -132.427,
+      "elev": 670,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CYEV",
+      "faa": null,
+      "iata": "YEV",
+      "wmo": "71957",
+      "name": "Inuvik/Zubko Arpt",
+      "lat": 68.309,
+      "lon": -133.5,
+      "elev": 74,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYKD",
+      "faa": null,
+      "iata": "LAK",
+      "wmo": null,
+      "name": "Aklavik Arpt",
+      "lat": 68.227,
+      "lon": -135.013,
+      "elev": 7,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYMA",
+      "faa": null,
+      "iata": "YMA",
+      "wmo": "71965",
+      "name": "Mayo Arpt",
+      "lat": 63.616,
+      "lon": -135.88,
+      "elev": 519,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYOC",
+      "faa": null,
+      "iata": "YOC",
+      "wmo": null,
+      "name": "Old Crow Arpt",
+      "lat": 67.568,
+      "lon": -139.846,
+      "elev": 253,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYPR",
+      "faa": null,
+      "iata": "YPR",
+      "wmo": "71898",
+      "name": "Prince Rupert Arpt",
+      "lat": 54.291,
+      "lon": -130.451,
+      "elev": 30,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYUA",
+      "faa": null,
+      "iata": null,
+      "wmo": "71968",
+      "name": "Shingle Point Arpt",
+      "lat": 68.932,
+      "lon": -137.242,
+      "elev": 25,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYUB",
+      "faa": null,
+      "iata": "YUB",
+      "wmo": null,
+      "name": "Tuktoyaktuk Arpt",
+      "lat": 69.434,
+      "lon": -133.026,
+      "elev": 5,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYXQ",
+      "faa": null,
+      "iata": "YXQ",
+      "wmo": null,
+      "name": "Beaver Creek Arpt",
+      "lat": 62.408,
+      "lon": -140.866,
+      "elev": 663,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CYXY",
+      "faa": null,
+      "iata": "YXY",
+      "wmo": "71964",
+      "name": "Whitehorse Arpt",
+      "lat": 60.71,
+      "lon": -135.059,
+      "elev": 677,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYZP",
+      "faa": null,
+      "iata": "YZP",
+      "wmo": null,
+      "name": "Sandspit Arpt",
+      "lat": 53.254,
+      "lon": -131.814,
+      "elev": 7,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CYZW",
+      "faa": null,
+      "iata": "YZW",
+      "wmo": null,
+      "name": "Teslin Arpt",
+      "lat": 60.175,
+      "lon": -132.734,
+      "elev": 700,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CZEV",
+      "faa": null,
+      "iata": null,
+      "wmo": "71364",
+      "name": "Inuvik",
+      "lat": 68.313,
+      "lon": -133.496,
+      "elev": 92,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "CZFA",
+      "faa": null,
+      "iata": "ZFA",
+      "wmo": null,
+      "name": "Faro Arpt",
+      "lat": 62.211,
+      "lon": -133.385,
+      "elev": 702,
+      "state": "YT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CZFM",
+      "faa": null,
+      "iata": "ZFM",
+      "wmo": null,
+      "name": "Fort McPherson Arpt",
+      "lat": 67.41,
+      "lon": -134.871,
+      "elev": 33,
+      "state": "NT",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CZMT",
+      "faa": null,
+      "iata": "ZMT",
+      "wmo": null,
+      "name": "Masset Arpt",
+      "lat": 54.023,
+      "lon": -132.12,
+      "elev": 11,
+      "state": "BC",
+      "country": "CA",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "CZOC",
+      "faa": null,
+      "iata": null,
+      "wmo": "71044",
+      "name": "Old Crow ",
+      "lat": 67.568,
+      "lon": -139.846,
+      "elev": 253,
+      "state": "YT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "CZUB",
+      "faa": null,
+      "iata": null,
+      "wmo": "71985",
+      "name": "Tuktoyaktuk ",
+      "lat": 69.434,
+      "lon": -133.02,
+      "elev": 6,
+      "state": "NT",
+      "country": "CA",
+      "site_type": []
+    },
+    {
+      "icao": "K4KA",
+      "faa": "4KA",
+      "iata": "TNK",
+      "wmo": null,
+      "name": "Tununak",
+      "lat": 60.569638,
+      "lon": -165.246649,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "KCJX",
+      "faa": "CJX",
+      "iata": "CKD",
+      "wmo": null,
+      "name": "Crooked Cr",
+      "lat": 61.870315,
+      "lon": -158.137636,
+      "elev": 178,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "KKQA",
+      "faa": "KQA",
+      "iata": null,
+      "wmo": null,
+      "name": "Akutan",
+      "lat": 54.13377,
+      "lon": -165.778896,
+      "elev": null,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAAD",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Point Thomson Arpt",
+      "lat": 70.136,
+      "lon": -146.29,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAAK",
+      "faa": "AKA",
+      "iata": "AKB",
+      "wmo": null,
+      "name": "Atka Arpt",
+      "lat": 52.219,
+      "lon": -174.208,
+      "elev": 11,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAAM",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Gambell ",
+      "lat": 63.77,
+      "lon": -171.73,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAAP",
+      "faa": "AHP",
+      "iata": "PTD",
+      "wmo": null,
+      "name": "Port Alexander",
+      "lat": 56.247,
+      "lon": -134.648,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAAQ",
+      "faa": "PAQ",
+      "iata": "PAQ",
+      "wmo": "70274",
+      "name": "Palmer Muni",
+      "lat": 61.59505,
+      "lon": -149.09172,
+      "elev": 68,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PABA",
+      "faa": "BTI",
+      "iata": "BTI",
+      "wmo": "70086",
+      "name": "Barter Island Arpt",
+      "lat": 70.135,
+      "lon": -143.585,
+      "elev": 1,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PABE",
+      "faa": "BET",
+      "iata": "BET",
+      "wmo": "70219",
+      "name": "Bethel Arpt",
+      "lat": 60.78505,
+      "lon": -161.82928,
+      "elev": 28,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PABG",
+      "faa": "BLG",
+      "iata": "BVU",
+      "wmo": null,
+      "name": "Big Delta Arctic",
+      "lat": 64,
+      "lon": -145.72,
+      "elev": 389,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PABI",
+      "faa": "BIG",
+      "iata": "BIG",
+      "wmo": "70267",
+      "name": "Ft Greely/Allen Fld",
+      "lat": 63.99312,
+      "lon": -145.72136,
+      "elev": 388,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PABL",
+      "faa": "BVK",
+      "iata": "BKC",
+      "wmo": null,
+      "name": "Buckland Arpt",
+      "lat": 65.979,
+      "lon": -161.146,
+      "elev": 7,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PABN",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Nabesna/Devils Mtn Lodge",
+      "lat": 62.398,
+      "lon": -142.995,
+      "elev": 880,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PABR",
+      "faa": "BRW",
+      "iata": "BRW",
+      "wmo": "70026",
+      "name": "Utqiaġvik",
+      "lat": 71.28369,
+      "lon": -156.78427,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PABT",
+      "faa": "BTT",
+      "iata": "BTT",
+      "wmo": "70174",
+      "name": "Bettles Arpt",
+      "lat": 66.91757,
+      "lon": -151.51888,
+      "elev": 195,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PABV",
+      "faa": "BCV",
+      "iata": null,
+      "wmo": null,
+      "name": "Birchwood Arpt",
+      "lat": 61.416,
+      "lon": -149.511,
+      "elev": 21,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PABX",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Birchwood",
+      "lat": 61.42,
+      "lon": -149.52,
+      "elev": 29,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PACD",
+      "faa": "CDB",
+      "iata": "CDB",
+      "wmo": "70316",
+      "name": "Cold Bay Arpt",
+      "lat": 55.22069,
+      "lon": -162.73231,
+      "elev": 23,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PACL",
+      "faa": "Z84",
+      "iata": null,
+      "wmo": null,
+      "name": "Clear Arpt",
+      "lat": 64.305,
+      "lon": -149.117,
+      "elev": 165,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PACM",
+      "faa": "SCM",
+      "iata": "SCM",
+      "wmo": null,
+      "name": "Scammon Bay Arpt",
+      "lat": 61.846,
+      "lon": -165.579,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PACP",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Cape Saint Elia",
+      "lat": 59.8,
+      "lon": -144.6,
+      "elev": 18,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PACR",
+      "faa": "CRC",
+      "iata": "IRC",
+      "wmo": null,
+      "name": "Circle City Arpt",
+      "lat": 65.828,
+      "lon": -144.076,
+      "elev": 182,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PACS",
+      "faa": null,
+      "iata": "WSF",
+      "wmo": null,
+      "name": "Cape Sarichef Arpt",
+      "lat": 54.582,
+      "lon": -164.914,
+      "elev": 88,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PACV",
+      "faa": "CDV",
+      "iata": "CDV",
+      "wmo": "70296",
+      "name": "Cordova/Smith Arpt",
+      "lat": 60.48601,
+      "lon": -145.44455,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PACX",
+      "faa": "CXF",
+      "iata": "CXF",
+      "wmo": null,
+      "name": "Coldfoot Arpt",
+      "lat": 67.252,
+      "lon": -150.204,
+      "elev": 319,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PACY",
+      "faa": null,
+      "iata": "CYT",
+      "wmo": null,
+      "name": "Yakataga ",
+      "lat": 60.08,
+      "lon": -142.5,
+      "elev": 11,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PACZ",
+      "faa": "CZF",
+      "iata": "CZF",
+      "wmo": "70212",
+      "name": "Cape Romanzof Arpt",
+      "lat": 61.776,
+      "lon": -166.043,
+      "elev": 129,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PADE",
+      "faa": "DEE",
+      "iata": "DRG",
+      "wmo": null,
+      "name": "Deering Arpt",
+      "lat": 66.06955,
+      "lon": -162.76128,
+      "elev": 5,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PADG",
+      "faa": "DGG",
+      "iata": "RDB",
+      "wmo": null,
+      "name": "Red Dog Arpt",
+      "lat": 68.028,
+      "lon": -162.911,
+      "elev": 296,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PADK",
+      "faa": "ADK",
+      "iata": "ADK",
+      "wmo": "70454",
+      "name": "Adak ",
+      "lat": 51.881,
+      "lon": -176.644,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PADL",
+      "faa": "DLG",
+      "iata": "DLG",
+      "wmo": "70321",
+      "name": "Dillingham Arpt",
+      "lat": 59.04,
+      "lon": -158.507,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PADM",
+      "faa": "MDM",
+      "iata": "MLL",
+      "wmo": null,
+      "name": "Marshall/Hunter Arpt",
+      "lat": 61.865,
+      "lon": -162.033,
+      "elev": 17,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PADQ",
+      "faa": "ADQ",
+      "iata": "ADQ",
+      "wmo": "70350",
+      "name": "Kodiak Arpt",
+      "lat": 57.75072,
+      "lon": -152.48809,
+      "elev": 5,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PADT",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Slana Arpt",
+      "lat": 62.725,
+      "lon": -143.921,
+      "elev": 738,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PADU",
+      "faa": "DUT",
+      "iata": "DUT",
+      "wmo": "70489",
+      "name": "Dutch Harbor/Unalaska Arpt",
+      "lat": 53.896,
+      "lon": -166.543,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAEC",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Chulitna Astrp",
+      "lat": 62.886,
+      "lon": -149.583,
+      "elev": 389,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAED",
+      "faa": "EDF",
+      "iata": "EDF",
+      "wmo": "70272",
+      "name": "Anchorage/Elmendorf AFB",
+      "lat": 61.25,
+      "lon": -149.837,
+      "elev": 54,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAEG",
+      "faa": "EAA",
+      "iata": "EAA",
+      "wmo": null,
+      "name": "Eagle Arpt",
+      "lat": 64.77614,
+      "lon": -141.16351,
+      "elev": 273,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAEH",
+      "faa": "EHM",
+      "iata": "EHM",
+      "wmo": "70305",
+      "name": "Cape Newenham Arpt",
+      "lat": 58.652,
+      "lon": -162.062,
+      "elev": 101,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAEI",
+      "faa": "EIL",
+      "iata": "EIL",
+      "wmo": "70265",
+      "name": "Fairbanks/Eielson AFB",
+      "lat": 64.654,
+      "lon": -147.094,
+      "elev": 166,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAEL",
+      "faa": "ELV",
+      "iata": "ELV",
+      "wmo": null,
+      "name": "Elfin Cove",
+      "lat": 58.196,
+      "lon": -136.347,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAEM",
+      "faa": "ENM",
+      "iata": "EMK",
+      "wmo": null,
+      "name": "Emmonak Arpt",
+      "lat": 62.785,
+      "lon": -164.488,
+      "elev": 2,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAEN",
+      "faa": "ENA",
+      "iata": "ENA",
+      "wmo": "70259",
+      "name": "Kenai Muni",
+      "lat": 60.579,
+      "lon": -151.242,
+      "elev": 30,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAER",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Merrill Pass West",
+      "lat": 61.25,
+      "lon": -153.82,
+      "elev": 358,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFA",
+      "faa": "FAI",
+      "iata": "FAI",
+      "wmo": "70261",
+      "name": "Fairbanks Intl",
+      "lat": 64.8031,
+      "lon": -147.87606,
+      "elev": 130,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAFB",
+      "faa": "FBK",
+      "iata": "FBK",
+      "wmo": null,
+      "name": "Fairbanks/Ladd AAF",
+      "lat": 64.836,
+      "lon": -147.614,
+      "elev": 137,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAFC",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Anchorage",
+      "lat": 61.15627,
+      "lon": -149.984,
+      "elev": 9999,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAFE",
+      "faa": "AFE",
+      "iata": null,
+      "wmo": null,
+      "name": "Kake Arpt",
+      "lat": 56.961,
+      "lon": -133.91,
+      "elev": 1,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFG",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Fairbanks",
+      "lat": 64.85913,
+      "lon": -147.85125,
+      "elev": 9999,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAFK",
+      "faa": "FKK",
+      "iata": null,
+      "wmo": null,
+      "name": "Farewell Lake",
+      "lat": 62.543,
+      "lon": -153.617,
+      "elev": 335,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFL",
+      "faa": "TNW",
+      "iata": null,
+      "wmo": null,
+      "name": "Farewell Lake/Tin Creek",
+      "lat": 62.531,
+      "lon": -153.612,
+      "elev": 361,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAFM",
+      "faa": "AFM",
+      "iata": "ABL",
+      "wmo": null,
+      "name": "Ambler Arpt",
+      "lat": 67.106,
+      "lon": -157.858,
+      "elev": 79,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFN",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Funter Bay",
+      "lat": 58.25,
+      "lon": -134.88,
+      "elev": 0,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFR",
+      "faa": "FRN",
+      "iata": "FRN",
+      "wmo": "70270",
+      "name": "Ft Richardson/Bryant AAF",
+      "lat": 61.263,
+      "lon": -149.66,
+      "elev": 106,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFS",
+      "faa": "FSP",
+      "iata": "NIB",
+      "wmo": null,
+      "name": "Nikolai Arpt",
+      "lat": 63.015,
+      "lon": -154.367,
+      "elev": 131,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAFW",
+      "faa": null,
+      "iata": "FWL",
+      "wmo": null,
+      "name": "Farewell Arpt",
+      "lat": 62.509,
+      "lon": -153.892,
+      "elev": 323,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAFY",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Fort Yukon ",
+      "lat": 66.57,
+      "lon": -145.27,
+      "elev": 131,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAGA",
+      "faa": "GAL",
+      "iata": "GAL",
+      "wmo": "70222",
+      "name": "Galena Arpt",
+      "lat": 64.738,
+      "lon": -156.92,
+      "elev": 39,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAGB",
+      "faa": "GBH",
+      "iata": "GBH",
+      "wmo": null,
+      "name": "Galbraith Lake Arpt",
+      "lat": 68.48,
+      "lon": -149.494,
+      "elev": 822,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAGH",
+      "faa": "SHG",
+      "iata": null,
+      "wmo": null,
+      "name": "Shungnak Arpt",
+      "lat": 66.886,
+      "lon": -157.159,
+      "elev": 56,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAGK",
+      "faa": "GKN",
+      "iata": "GKN",
+      "wmo": "70271",
+      "name": "Gulkana Arpt",
+      "lat": 62.15916,
+      "lon": -145.4588,
+      "elev": 481,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAGL",
+      "faa": "GLV",
+      "iata": "GLV",
+      "wmo": null,
+      "name": "Golovin Arpt",
+      "lat": 64.548,
+      "lon": -163.013,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAGM",
+      "faa": "GAM",
+      "iata": "GAM",
+      "wmo": "70204",
+      "name": "Gambell Arpt",
+      "lat": 63.777,
+      "lon": -171.735,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAGN",
+      "faa": "AGN",
+      "iata": "AGN",
+      "wmo": "70383",
+      "name": "Angoon",
+      "lat": 57.502,
+      "lon": -134.589,
+      "elev": 2,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAGS",
+      "faa": "GST",
+      "iata": "GST",
+      "wmo": "70367",
+      "name": "Gustavus Arpt",
+      "lat": 58.425,
+      "lon": -135.707,
+      "elev": 9,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAGT",
+      "faa": "IGT",
+      "iata": "NME",
+      "wmo": null,
+      "name": "Nightmute Arpt",
+      "lat": 60.469,
+      "lon": -164.704,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAGY",
+      "faa": "SGY",
+      "iata": "SGY",
+      "wmo": "70362",
+      "name": "Skagway Arpt",
+      "lat": 59.457,
+      "lon": -135.322,
+      "elev": 7,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAHC",
+      "faa": "HCA",
+      "iata": "HCR",
+      "wmo": null,
+      "name": "Holy Cross Arpt",
+      "lat": 62.191,
+      "lon": -159.773,
+      "elev": 21,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHL",
+      "faa": "HLA",
+      "iata": "HSL",
+      "wmo": null,
+      "name": "Huslia Arpt",
+      "lat": 65.699,
+      "lon": -156.353,
+      "elev": 49,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHN",
+      "faa": "HNS",
+      "iata": "HNS",
+      "wmo": null,
+      "name": "Haines Arpt",
+      "lat": 59.243,
+      "lon": -135.511,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAHO",
+      "faa": "HOM",
+      "iata": "HOM",
+      "wmo": "70341",
+      "name": "Homer Arpt",
+      "lat": 59.642,
+      "lon": -151.491,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAHP",
+      "faa": "HPB",
+      "iata": "HPB",
+      "wmo": null,
+      "name": "Hooper Bay Arpt",
+      "lat": 61.519,
+      "lon": -166.138,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHV",
+      "faa": "HRR",
+      "iata": null,
+      "wmo": null,
+      "name": "Healy River Arpt",
+      "lat": 63.866,
+      "lon": -148.97,
+      "elev": 387,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHX",
+      "faa": "SHX",
+      "iata": "SHX",
+      "wmo": null,
+      "name": "Shageluk Arpt",
+      "lat": 62.688,
+      "lon": -159.566,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHY",
+      "faa": "HYG",
+      "iata": "HYG",
+      "wmo": null,
+      "name": "Hydaburg",
+      "lat": 55.202,
+      "lon": -132.825,
+      "elev": 0,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAHZ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Hayes River",
+      "lat": 61.98,
+      "lon": -152.08,
+      "elev": 305,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAIG",
+      "faa": "IGG",
+      "iata": "IGG",
+      "wmo": null,
+      "name": "Igiugig Arpt",
+      "lat": 59.325,
+      "lon": -155.897,
+      "elev": 24,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAII",
+      "faa": "EII",
+      "iata": "EGX",
+      "wmo": null,
+      "name": "Egegik Arpt",
+      "lat": 58.186,
+      "lon": -157.375,
+      "elev": 31,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAIK",
+      "faa": "IAN",
+      "iata": "IAN",
+      "wmo": null,
+      "name": "Kiana/Baker Mem Arpt",
+      "lat": 66.975,
+      "lon": -160.439,
+      "elev": 49,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAIL",
+      "faa": "ILI",
+      "iata": "ILI",
+      "wmo": "70340",
+      "name": "Iliamna Arpt",
+      "lat": 59.74922,
+      "lon": -154.90905,
+      "elev": 44,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAIM",
+      "faa": "UTO",
+      "iata": "UTO",
+      "wmo": "70173",
+      "name": "Indian Mtn Arpt",
+      "lat": 65.994,
+      "lon": -153.695,
+      "elev": 309,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAIN",
+      "faa": "INR",
+      "iata": "MCL",
+      "wmo": null,
+      "name": "McKinley Park Arpt",
+      "lat": 63.733,
+      "lon": -148.912,
+      "elev": 525,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAIW",
+      "faa": "IWK",
+      "iata": "WAA",
+      "wmo": null,
+      "name": "Wales Arpt",
+      "lat": 65.621,
+      "lon": -168.093,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAIZ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Lazy Mtn/Wolver",
+      "lat": 61.63,
+      "lon": -149.03,
+      "elev": 236,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAJB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Biorka Island",
+      "lat": 56.85,
+      "lon": -135.53,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAJC",
+      "faa": "AJC",
+      "iata": null,
+      "wmo": null,
+      "name": "Chignik Arpt",
+      "lat": 56.312,
+      "lon": -158.374,
+      "elev": 10,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAJK",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Juneau",
+      "lat": 58.4001,
+      "lon": -134.56975,
+      "elev": 9999,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAJN",
+      "faa": "JNU",
+      "iata": "JNU",
+      "wmo": "70381",
+      "name": "Juneau Intl",
+      "lat": 58.354,
+      "lon": -134.55607,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAJO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Hinchinbrook/Johnsto",
+      "lat": 60.482,
+      "lon": -146.584,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAJV",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Sutton",
+      "lat": 61.72,
+      "lon": -148.88,
+      "elev": 265,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAJZ",
+      "faa": "JZZ",
+      "iata": "KGK",
+      "wmo": null,
+      "name": "Koliganek Arpt",
+      "lat": 59.727,
+      "lon": -157.267,
+      "elev": 80,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKF",
+      "faa": "KFP",
+      "iata": "KFP",
+      "wmo": null,
+      "name": "False Pass Arpt",
+      "lat": 54.85,
+      "lon": -163.409,
+      "elev": 2,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKH",
+      "faa": "AKK",
+      "iata": "AKK",
+      "wmo": null,
+      "name": "Akhiok Arpt",
+      "lat": 56.94,
+      "lon": -154.181,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKI",
+      "faa": "IIK",
+      "iata": "KPN",
+      "wmo": null,
+      "name": "Kipnuk Arpt",
+      "lat": 59.935,
+      "lon": -164.033,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKK",
+      "faa": "KKA",
+      "iata": "KKA",
+      "wmo": null,
+      "name": "Koyuk Arpt",
+      "lat": 64.939,
+      "lon": -161.156,
+      "elev": 56,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKN",
+      "faa": "AKN",
+      "iata": "AKN",
+      "wmo": "70326",
+      "name": "King Salmon Arpt",
+      "lat": 58.683,
+      "lon": -156.656,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAKO",
+      "faa": "IKO",
+      "iata": "IKO",
+      "wmo": null,
+      "name": "Nikolski ",
+      "lat": 52.95,
+      "lon": -168.85,
+      "elev": 21,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAKP",
+      "faa": "AKP",
+      "iata": "AKP",
+      "wmo": null,
+      "name": "Anaktuvuk Pass Arpt",
+      "lat": 68.136,
+      "lon": -151.74,
+      "elev": 649,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKT",
+      "faa": "KTN",
+      "iata": "KTN",
+      "wmo": "70395",
+      "name": "Ketchikan Intl",
+      "lat": 55.35917,
+      "lon": -131.7219,
+      "elev": 27,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAKU",
+      "faa": "UBW",
+      "iata": "UUK",
+      "wmo": null,
+      "name": "Kuparuk Arpt",
+      "lat": 70.331,
+      "lon": -149.613,
+      "elev": 23,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKV",
+      "faa": "KAL",
+      "iata": "KAL",
+      "wmo": null,
+      "name": "Kaltag Arpt",
+      "lat": 64.321,
+      "lon": -158.732,
+      "elev": 53,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAKW",
+      "faa": "AKW",
+      "iata": "KLW",
+      "wmo": null,
+      "name": "Klawock Arpt",
+      "lat": 55.582,
+      "lon": -133.075,
+      "elev": 7,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAKX",
+      "faa": "05K",
+      "iata": null,
+      "wmo": null,
+      "name": "Wilder/Natwick Arpt",
+      "lat": 60.198,
+      "lon": -154.323,
+      "elev": 88,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALG",
+      "faa": "KLG",
+      "iata": "KLG",
+      "wmo": null,
+      "name": "Kalskag Arpt",
+      "lat": 61.538,
+      "lon": -160.34,
+      "elev": 13,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALH",
+      "faa": "LHD",
+      "iata": null,
+      "wmo": null,
+      "name": "Lake Hood",
+      "lat": 61.179,
+      "lon": -149.962,
+      "elev": 26,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALJ",
+      "faa": "05K",
+      "iata": "PTA",
+      "wmo": null,
+      "name": "Port Alsworth Arpt",
+      "lat": 60.204,
+      "lon": -154.316,
+      "elev": 88,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALK",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Snowshoe Lake Arpt",
+      "lat": 62.033,
+      "lon": -146.675,
+      "elev": 736,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALP",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Deadhorse/Alpine Arstrp",
+      "lat": 70.348,
+      "lon": -150.928,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALR",
+      "faa": "WCR",
+      "iata": "WCR",
+      "wmo": null,
+      "name": "Chandalar Lake Arpt",
+      "lat": 67.504,
+      "lon": -148.483,
+      "elev": 579,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PALU",
+      "faa": "LUR",
+      "iata": "LUR",
+      "wmo": "70104",
+      "name": "Cape Lisburne Arpt",
+      "lat": 68.873,
+      "lon": -166.101,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PALV",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Big River Lake",
+      "lat": 60.82,
+      "lon": -152.301,
+      "elev": 12,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMB",
+      "faa": "MBA",
+      "iata": "KMO",
+      "wmo": null,
+      "name": "Manokotak Arpt",
+      "lat": 58.986,
+      "lon": -159.05,
+      "elev": 28,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMC",
+      "faa": "MCG",
+      "iata": "MCG",
+      "wmo": "70231",
+      "name": "McGrath Arpt",
+      "lat": 62.957,
+      "lon": -155.61,
+      "elev": 101,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAMD",
+      "faa": "MDO",
+      "iata": "MDO",
+      "wmo": "70343",
+      "name": "Middleton Isl Arpt",
+      "lat": 59.442,
+      "lon": -146.317,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMH",
+      "faa": "MHM",
+      "iata": "LMA",
+      "wmo": "70246",
+      "name": "Minchumina Arpt",
+      "lat": 63.889,
+      "lon": -152.292,
+      "elev": 200,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMK",
+      "faa": "SMK",
+      "iata": "SMK",
+      "wmo": null,
+      "name": "St Michael Arpt",
+      "lat": 63.484,
+      "lon": -162.115,
+      "elev": 31,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAML",
+      "faa": "MLY",
+      "iata": "MLY",
+      "wmo": null,
+      "name": "Manley Hot Springs Arpt",
+      "lat": 64.992,
+      "lon": -150.637,
+      "elev": 78,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMM",
+      "faa": "MTM",
+      "iata": "MTM",
+      "wmo": null,
+      "name": "Metlakatla",
+      "lat": 55.131,
+      "lon": -131.578,
+      "elev": 0,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMO",
+      "faa": "MOU",
+      "iata": "MOU",
+      "wmo": null,
+      "name": "Mountain Village Arpt",
+      "lat": 62.095,
+      "lon": -163.686,
+      "elev": 93,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMR",
+      "faa": "MRI",
+      "iata": "MRI",
+      "wmo": null,
+      "name": "Anchorage/Merrill Fld",
+      "lat": 61.215,
+      "lon": -149.85,
+      "elev": 43,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMX",
+      "faa": "15Z",
+      "iata": "MXY",
+      "wmo": null,
+      "name": "McCarthy Arpt",
+      "lat": 61.441,
+      "lon": -142.895,
+      "elev": 452,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAMY",
+      "faa": "MYU",
+      "iata": "MYU",
+      "wmo": null,
+      "name": "Mekoryuk Arpt",
+      "lat": 60.376,
+      "lon": -166.262,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANA",
+      "faa": "WNA",
+      "iata": "WNA",
+      "wmo": null,
+      "name": "Napakiak Arpt",
+      "lat": 60.694,
+      "lon": -161.978,
+      "elev": 7,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANC",
+      "faa": "ANC",
+      "iata": "ANC",
+      "wmo": "70273",
+      "name": "Anchorage Intl",
+      "lat": 61.16914,
+      "lon": -150.02774,
+      "elev": 39,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PANI",
+      "faa": "ANI",
+      "iata": "ANI",
+      "wmo": "70232",
+      "name": "Aniak Arpt",
+      "lat": 61.578,
+      "lon": -159.539,
+      "elev": 21,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANN",
+      "faa": "ENN",
+      "iata": "ENN",
+      "wmo": "70260",
+      "name": "Nenana Muni",
+      "lat": 64.547,
+      "lon": -149.087,
+      "elev": 110,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANR",
+      "faa": "FNR",
+      "iata": "FNR",
+      "wmo": null,
+      "name": "Funter Bay",
+      "lat": 58.254,
+      "lon": -134.897,
+      "elev": 0,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PANT",
+      "faa": "ANN",
+      "iata": "ANN",
+      "wmo": null,
+      "name": "Annette Island Arpt",
+      "lat": 55.038,
+      "lon": -131.577,
+      "elev": 29,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANU",
+      "faa": "NUL",
+      "iata": null,
+      "wmo": null,
+      "name": "Nulato Arpt",
+      "lat": 64.7304,
+      "lon": -158.0752,
+      "elev": 117,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANV",
+      "faa": "ANV",
+      "iata": "ANV",
+      "wmo": null,
+      "name": "Anvik Arpt",
+      "lat": 62.647,
+      "lon": -160.191,
+      "elev": 91,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PANW",
+      "faa": "KNW",
+      "iata": "KNW",
+      "wmo": null,
+      "name": "New Stuyahok Arpt",
+      "lat": 59.451,
+      "lon": -157.325,
+      "elev": 100,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAOH",
+      "faa": "HNH",
+      "iata": "HNH",
+      "wmo": null,
+      "name": "Hoonah",
+      "lat": 58.108,
+      "lon": -135.448,
+      "elev": 0,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAOM",
+      "faa": "OME",
+      "iata": "OME",
+      "wmo": "70200",
+      "name": "Nome Arpt",
+      "lat": 64.51113,
+      "lon": -165.44006,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAOO",
+      "faa": "OOK",
+      "iata": "OOK",
+      "wmo": null,
+      "name": "Tooksok Bay Arpt",
+      "lat": 60.537,
+      "lon": -165.089,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAOR",
+      "faa": "ORT",
+      "iata": "ORT",
+      "wmo": "70291",
+      "name": "Northway Arpt",
+      "lat": 62.962,
+      "lon": -141.938,
+      "elev": 524,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAOT",
+      "faa": "OTZ",
+      "iata": "OTZ",
+      "wmo": "70133",
+      "name": "Kotzebue/Wien Mem",
+      "lat": 66.886,
+      "lon": -162.607,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAOU",
+      "faa": "OUL",
+      "iata": "NLG",
+      "wmo": null,
+      "name": "Nelson Lagoon Arpt",
+      "lat": 56.006,
+      "lon": -161.162,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPB",
+      "faa": "PBV",
+      "iata": "STG",
+      "wmo": null,
+      "name": "St George Arpt",
+      "lat": 56.576,
+      "lon": -169.663,
+      "elev": 33,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPC",
+      "faa": "KPC",
+      "iata": "KPC",
+      "wmo": "70119",
+      "name": "Port Clarence",
+      "lat": 65.262,
+      "lon": -166.851,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPE",
+      "faa": "PEV",
+      "iata": null,
+      "wmo": null,
+      "name": "Perryville Arpt",
+      "lat": 55.9096,
+      "lon": -159.1595,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPG",
+      "faa": "PSG",
+      "iata": "PSG",
+      "wmo": "70386",
+      "name": "Petersburg Arpt",
+      "lat": 56.805,
+      "lon": -132.935,
+      "elev": 24,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAPH",
+      "faa": "PTH",
+      "iata": "PTH",
+      "wmo": "70333",
+      "name": "Port Heiden Arpt",
+      "lat": 56.959,
+      "lon": -158.631,
+      "elev": 29,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPM",
+      "faa": "PTU",
+      "iata": "PTU",
+      "wmo": null,
+      "name": "Platinum Arpt",
+      "lat": 59.011,
+      "lon": -161.82,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPN",
+      "faa": "PNP",
+      "iata": "PIP",
+      "wmo": null,
+      "name": "Pilot Point Arpt",
+      "lat": 57.578,
+      "lon": -157.569,
+      "elev": 19,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPO",
+      "faa": "PHO",
+      "iata": "PHO",
+      "wmo": null,
+      "name": "Point Hope Arpt",
+      "lat": 68.345,
+      "lon": -166.807,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPR",
+      "faa": "PPC",
+      "iata": "PPC",
+      "wmo": null,
+      "name": "Prospect Creek Arpt",
+      "lat": 66.814,
+      "lon": -150.647,
+      "elev": 324,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAPT",
+      "faa": null,
+      "iata": null,
+      "wmo": "70249",
+      "name": "Puntilla Lake Arpt",
+      "lat": 62.087,
+      "lon": -152.722,
+      "elev": 577,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAQH",
+      "faa": "AQH",
+      "iata": "KWN",
+      "wmo": null,
+      "name": "Quinhagak Arpt",
+      "lat": 59.751,
+      "lon": -161.842,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAQT",
+      "faa": "AQT",
+      "iata": "NUI",
+      "wmo": null,
+      "name": "Nuiqsut Arpt",
+      "lat": 70.213,
+      "lon": -150.994,
+      "elev": 11,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PARC",
+      "faa": "ARC",
+      "iata": "ARC",
+      "wmo": null,
+      "name": "Arctic Village Arpt",
+      "lat": 68.113,
+      "lon": -145.576,
+      "elev": 626,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PARL",
+      "faa": null,
+      "iata": "CEM",
+      "wmo": null,
+      "name": "Central Arpt",
+      "lat": 65.57,
+      "lon": -144.77,
+      "elev": 284,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PARS",
+      "faa": "RSH",
+      "iata": "RSH",
+      "wmo": null,
+      "name": "Russian Mission Arpt",
+      "lat": 61.78,
+      "lon": -161.321,
+      "elev": 15,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PARY",
+      "faa": "RBY",
+      "iata": "RBY",
+      "wmo": null,
+      "name": "Ruby Arpt",
+      "lat": 64.731,
+      "lon": -155.463,
+      "elev": 185,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASA",
+      "faa": "SVA",
+      "iata": "SVA",
+      "wmo": null,
+      "name": "Savoonga Arpt",
+      "lat": 63.689,
+      "lon": -170.49,
+      "elev": 9,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASC",
+      "faa": "SCC",
+      "iata": "SCC",
+      "wmo": null,
+      "name": "Deadhorse Arpt",
+      "lat": 70.191,
+      "lon": -148.48,
+      "elev": 17,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PASD",
+      "faa": "SDP",
+      "iata": "SDP",
+      "wmo": null,
+      "name": "Sand Point Arpt",
+      "lat": 55.318,
+      "lon": -160.525,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PASH",
+      "faa": "SHH",
+      "iata": "SHH",
+      "wmo": null,
+      "name": "Shishmaref Arpt",
+      "lat": 66.252,
+      "lon": -166.084,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASI",
+      "faa": "SIT",
+      "iata": "SIT",
+      "wmo": "70371",
+      "name": "Sitka/Gutierrez Arpt",
+      "lat": 57.047,
+      "lon": -135.364,
+      "elev": 2,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PASK",
+      "faa": "WLK",
+      "iata": "WLK",
+      "wmo": null,
+      "name": "Selawik Arpt",
+      "lat": 66.599,
+      "lon": -159.991,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASL",
+      "faa": "SLQ",
+      "iata": "SLQ",
+      "wmo": null,
+      "name": "Sleetmute Arpt",
+      "lat": 61.697,
+      "lon": -157.167,
+      "elev": 64,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASM",
+      "faa": "KSM",
+      "iata": "KSM",
+      "wmo": null,
+      "name": "St Marys Arpt",
+      "lat": 62.057,
+      "lon": -163.298,
+      "elev": 108,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASN",
+      "faa": "SNP",
+      "iata": "SNP",
+      "wmo": "70308",
+      "name": "St Paul Island Arpt",
+      "lat": 57.155,
+      "lon": -170.223,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PASO",
+      "faa": "SOV",
+      "iata": "SOV",
+      "wmo": null,
+      "name": "Seldovia Arpt",
+      "lat": 59.443,
+      "lon": -151.702,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASP",
+      "faa": "SMU",
+      "iata": "SMU",
+      "wmo": null,
+      "name": "Sheep Mtn Arpt",
+      "lat": 61.812,
+      "lon": -147.506,
+      "elev": 838,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASV",
+      "faa": "SVW",
+      "iata": "SVW",
+      "wmo": "70235",
+      "name": "Sparrevohn Arpt",
+      "lat": 61.101,
+      "lon": -155.577,
+      "elev": 462,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PASW",
+      "faa": "SKW",
+      "iata": "SKW",
+      "wmo": null,
+      "name": "Skwentna Arpt",
+      "lat": 61.965,
+      "lon": -151.187,
+      "elev": 45,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PASX",
+      "faa": "SXQ",
+      "iata": "SXQ",
+      "wmo": null,
+      "name": "Soldotna Arpt",
+      "lat": 60.476,
+      "lon": -151.053,
+      "elev": 28,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PATA",
+      "faa": "TAL",
+      "iata": "TAL",
+      "wmo": "70178",
+      "name": "Tanana/Calhoun Mem",
+      "lat": 65.173,
+      "lon": -152.107,
+      "elev": 62,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PATC",
+      "faa": "TNC",
+      "iata": "TNC",
+      "wmo": "70117",
+      "name": "Tin City Arpt",
+      "lat": 65.562,
+      "lon": -167.924,
+      "elev": 77,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PATE",
+      "faa": "TER",
+      "iata": "TLA",
+      "wmo": "74923",
+      "name": "Teller Arpt",
+      "lat": 65.242,
+      "lon": -166.328,
+      "elev": 93,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PATG",
+      "faa": "TOG",
+      "iata": "TOG",
+      "wmo": null,
+      "name": "Togiak Arpt",
+      "lat": 59.051,
+      "lon": -160.398,
+      "elev": 1,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PATJ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Tok",
+      "lat": 63.32,
+      "lon": -142.72,
+      "elev": 509,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PATK",
+      "faa": "TKA",
+      "iata": "TKA",
+      "wmo": "70251",
+      "name": "Talkeetna Arpt",
+      "lat": 62.319,
+      "lon": -150.097,
+      "elev": 107,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PATL",
+      "faa": "TLJ",
+      "iata": "TLJ",
+      "wmo": null,
+      "name": "Tatalina Arpt",
+      "lat": 62.893,
+      "lon": -155.977,
+      "elev": 261,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PATO",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Portage Glacier",
+      "lat": 60.783,
+      "lon": -148.843,
+      "elev": 47,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PATQ",
+      "faa": "ATK",
+      "iata": "ATK",
+      "wmo": null,
+      "name": "Atqasuk/Burnell Mem",
+      "lat": 70.469,
+      "lon": -157.428,
+      "elev": 28,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PATW",
+      "faa": "TTW",
+      "iata": null,
+      "wmo": null,
+      "name": "Cantwell Arpt",
+      "lat": 63.392,
+      "lon": -148.956,
+      "elev": 675,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAUB",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Kuparuk Arpt",
+      "lat": 70.32,
+      "lon": -149.58,
+      "elev": 20,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAUD",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Prudhoe Bay",
+      "lat": 70.25,
+      "lon": -148.33,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAUM",
+      "faa": "UMT",
+      "iata": "UMT",
+      "wmo": null,
+      "name": "Umiat Arpt",
+      "lat": 69.371,
+      "lon": -152.139,
+      "elev": 79,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAUN",
+      "faa": "UNK",
+      "iata": "UNK",
+      "wmo": "70207",
+      "name": "Unalakleet Arpt",
+      "lat": 63.885,
+      "lon": -160.794,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAUO",
+      "faa": "UUO",
+      "iata": "WOW",
+      "wmo": null,
+      "name": "Willow Arpt",
+      "lat": 61.754,
+      "lon": -150.052,
+      "elev": 61,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAUT",
+      "faa": "7AK",
+      "iata": "KQA",
+      "wmo": null,
+      "name": "Akutan Arpt",
+      "lat": 54.145,
+      "lon": -165.604,
+      "elev": 25,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAVA",
+      "faa": "VAK",
+      "iata": "VAK",
+      "wmo": null,
+      "name": "Chevak Arpt",
+      "lat": 61.537,
+      "lon": -165.604,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAVC",
+      "faa": "KVC",
+      "iata": "KVC",
+      "wmo": null,
+      "name": "King Cove Arpt",
+      "lat": 55.115,
+      "lon": -162.271,
+      "elev": 48,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAVD",
+      "faa": "VDZ",
+      "iata": "VDZ",
+      "wmo": null,
+      "name": "Valdez Arpt",
+      "lat": 61.133,
+      "lon": -146.251,
+      "elev": 21,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAVL",
+      "faa": "KVL",
+      "iata": "KVL",
+      "wmo": null,
+      "name": "Kivalina Arpt",
+      "lat": 67.731,
+      "lon": -164.548,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAVW",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Valdez",
+      "lat": 61.13,
+      "lon": -146.35,
+      "elev": 10,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWD",
+      "faa": "SWD",
+      "iata": "SWD",
+      "wmo": "70277",
+      "name": "Seward Arpt",
+      "lat": 60.129,
+      "lon": -149.418,
+      "elev": 3,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWG",
+      "faa": "WRG",
+      "iata": "WRG",
+      "wmo": "70387",
+      "name": "Wrangell Arpt",
+      "lat": 56.486,
+      "lon": -132.377,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAWI",
+      "faa": "AWI",
+      "iata": "AIN",
+      "wmo": "70030",
+      "name": "Wainwright Arpt",
+      "lat": 70.637,
+      "lon": -160.013,
+      "elev": 12,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWM",
+      "faa": "WMO",
+      "iata": "WMO",
+      "wmo": null,
+      "name": "White Mouintain Arpt",
+      "lat": 64.688,
+      "lon": -163.41,
+      "elev": 80,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWN",
+      "faa": "WTK",
+      "iata": "WTK",
+      "wmo": null,
+      "name": "Noatak Arpt",
+      "lat": 67.567,
+      "lon": -162.977,
+      "elev": 26,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWR",
+      "faa": "IEM",
+      "iata": null,
+      "wmo": null,
+      "name": "Whittier",
+      "lat": 60.773,
+      "lon": -148.685,
+      "elev": 12,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWS",
+      "faa": "IYS",
+      "iata": "WWA",
+      "wmo": null,
+      "name": "Wasilla Arpt",
+      "lat": 61.571,
+      "lon": -149.538,
+      "elev": 102,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAWT",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Noatak",
+      "lat": 67.57,
+      "lon": -162.98,
+      "elev": 30,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PAXK",
+      "faa": "PXK",
+      "iata": null,
+      "wmo": null,
+      "name": "Paxson",
+      "lat": 63.026,
+      "lon": -145.498,
+      "elev": 805,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PAYA",
+      "faa": "YAK",
+      "iata": "YAK",
+      "wmo": "70361",
+      "name": "Yakutat Arpt",
+      "lat": 59.512,
+      "lon": -139.671,
+      "elev": 9,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PAZK",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Eureka",
+      "lat": 61.938,
+      "lon": -147.169,
+      "elev": 1002,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PBTI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Barter Island DEW",
+      "lat": 70.13,
+      "lon": -143.58,
+      "elev": 2,
+      "state": "AK",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PFCB",
+      "faa": "C05",
+      "iata": null,
+      "wmo": null,
+      "name": "Chenega Bay Arpt",
+      "lat": 60.07855,
+      "lon": -147.99474,
+      "elev": 22,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFCL",
+      "faa": "CLP",
+      "iata": "CLP",
+      "wmo": null,
+      "name": "Clarks Point Arpt",
+      "lat": 58.837,
+      "lon": -158.526,
+      "elev": 23,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFEL",
+      "faa": "ELI",
+      "iata": "ELI",
+      "wmo": null,
+      "name": "Elim Arpt",
+      "lat": 64.616,
+      "lon": -162.272,
+      "elev": 50,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFKO",
+      "faa": "2A9",
+      "iata": null,
+      "wmo": null,
+      "name": "Kotlik Arpt",
+      "lat": 63.0334,
+      "lon": -163.5323,
+      "elev": 13,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFKT",
+      "faa": "KTS",
+      "iata": "KTS",
+      "wmo": null,
+      "name": "Brevig Mission Arpt",
+      "lat": 65.33,
+      "lon": -166.479,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFKW",
+      "faa": "KWT",
+      "iata": "KWT",
+      "wmo": null,
+      "name": "Kwethluk Arpt",
+      "lat": 60.793,
+      "lon": -161.44,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFNO",
+      "faa": "D76",
+      "iata": "ORV",
+      "wmo": null,
+      "name": "Noorvik/Curtis Mem",
+      "lat": 66.819,
+      "lon": -161.024,
+      "elev": 14,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFNU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Oooguruk Isl",
+      "lat": 70.495,
+      "lon": -150.254,
+      "elev": 8,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFSH",
+      "faa": "2C7",
+      "iata": "SKK",
+      "wmo": null,
+      "name": "Shaktoolik Arpt",
+      "lat": 64.367,
+      "lon": -161.217,
+      "elev": 6,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFTO",
+      "faa": "6K8",
+      "iata": null,
+      "wmo": null,
+      "name": "Tok Junction Arpt",
+      "lat": 63.329,
+      "lon": -142.954,
+      "elev": 500,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFWS",
+      "faa": "WSN",
+      "iata": "WSN",
+      "wmo": null,
+      "name": "South Naknek Arpt",
+      "lat": 58.704,
+      "lon": -157.005,
+      "elev": 40,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFYU",
+      "faa": "FYU",
+      "iata": "FYU",
+      "wmo": "70194",
+      "name": "Fort Yukon Arpt",
+      "lat": 66.572,
+      "lon": -145.243,
+      "elev": 130,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PFZK",
+      "faa": "Z13",
+      "iata": null,
+      "wmo": null,
+      "name": "Akiachak Arpt",
+      "lat": 60.9156,
+      "lon": -161.4884,
+      "elev": 16,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "POKA",
+      "faa": "4KA",
+      "iata": null,
+      "wmo": null,
+      "name": "Tununak",
+      "lat": 60.5695,
+      "lon": -165.2463,
+      "elev": 19,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "POLI",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Oliktok Distant",
+      "lat": 70.5,
+      "lon": -149.88,
+      "elev": 5,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PPIT",
+      "faa": "16A",
+      "iata": null,
+      "wmo": null,
+      "name": "Nunapitchuk Arpt",
+      "lat": 60.905,
+      "lon": -162.443,
+      "elev": 4,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PPIZ",
+      "faa": "PIZ",
+      "iata": "PIZ",
+      "wmo": "70121",
+      "name": "Point Lay Arpt",
+      "lat": 69.735,
+      "lon": -163.003,
+      "elev": 5,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PPNU",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Nuiqsut Arpt",
+      "lat": 70.213,
+      "lon": -150.994,
+      "elev": 11,
+      "state": "AK",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "UHMD",
+      "faa": null,
+      "iata": "PVS",
+      "wmo": "25594",
+      "name": "Providenja Bay Arpt",
+      "lat": 64.378,
+      "lon": -173.243,
+      "elev": 40,
+      "state": "CH",
+      "country": "RU",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHBK",
+      "faa": "BKH",
+      "iata": "BKH",
+      "wmo": "91162",
+      "name": "Kekaha/Barking Sands Arpt",
+      "lat": 22.034,
+      "lon": -159.783,
+      "elev": 5,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PHHI",
+      "faa": "HHI",
+      "iata": "HHI",
+      "wmo": "91170",
+      "name": "Wheeler",
+      "lat": 21.478,
+      "lon": -158.044,
+      "elev": 246,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHHN",
+      "faa": "HNM",
+      "iata": "HNM",
+      "wmo": null,
+      "name": "Hana Arpt",
+      "lat": 20.794,
+      "lon": -156.015,
+      "elev": 20,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PHIK",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Hickam AFB",
+      "lat": 21.32,
+      "lon": -157.92,
+      "elev": 7,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHJH",
+      "faa": "JHM",
+      "iata": "JHM",
+      "wmo": null,
+      "name": "Lahaina/West Maui Arpt",
+      "lat": 20.963,
+      "lon": -156.675,
+      "elev": 67,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHJR",
+      "faa": "JRF",
+      "iata": "JRF",
+      "wmo": "91178",
+      "name": "Kalaeloa Arpt",
+      "lat": 21.312,
+      "lon": -158.07,
+      "elev": 9,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHKO",
+      "faa": "KOA",
+      "iata": "KOA",
+      "wmo": null,
+      "name": "Keahole Point/Kona Intl",
+      "lat": 19.73782,
+      "lon": -156.04796,
+      "elev": 11,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHLI",
+      "faa": "LIH",
+      "iata": "LIH",
+      "wmo": "91165",
+      "name": "Lihue Arpt",
+      "lat": 21.98047,
+      "lon": -159.33864,
+      "elev": 32,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHMK",
+      "faa": "MKK",
+      "iata": "MKK",
+      "wmo": "91186",
+      "name": "Molokai Arpt",
+      "lat": 21.15447,
+      "lon": -157.09613,
+      "elev": 135,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHMU",
+      "faa": "MUE",
+      "iata": "MUE",
+      "wmo": null,
+      "name": "Waimea/Kohala Arpt",
+      "lat": 19.998,
+      "lon": -155.674,
+      "elev": 809,
+      "state": "HI",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PHNA",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Oahu/Barbers Pt",
+      "lat": 21.32,
+      "lon": -158.07,
+      "elev": 9,
+      "state": "HI",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "PHNG",
+      "faa": "NGF",
+      "iata": "NGF",
+      "wmo": "91176",
+      "name": "Kaneohe Bay ",
+      "lat": 21.45,
+      "lon": -157.763,
+      "elev": 1,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHNL",
+      "faa": "HNL",
+      "iata": "HNL",
+      "wmo": "91182",
+      "name": "Honolulu Intl",
+      "lat": 21.31505,
+      "lon": -157.924,
+      "elev": 2,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHNY",
+      "faa": "LNY",
+      "iata": "LNY",
+      "wmo": null,
+      "name": "Lanai Arpt",
+      "lat": 20.783,
+      "lon": -156.955,
+      "elev": 395,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHOG",
+      "faa": "OGG",
+      "iata": "OGG",
+      "wmo": "91190",
+      "name": "Kahului Arpt",
+      "lat": 20.8887,
+      "lon": -156.43453,
+      "elev": 14,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHSF",
+      "faa": "BSF",
+      "iata": "BSF",
+      "wmo": null,
+      "name": "Bradshaw",
+      "lat": 19.758,
+      "lon": -155.557,
+      "elev": 1863,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHTO",
+      "faa": "ITO",
+      "iata": "ITO",
+      "wmo": "91285",
+      "name": "Hilo Intl",
+      "lat": 19.71909,
+      "lon": -155.04897,
+      "elev": 9,
+      "state": "HI",
+      "country": "US",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PHWH",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "South Kona/Hawa",
+      "lat": 19.1,
+      "lon": -155.75,
+      "elev": 808,
+      "state": "HI",
+      "country": "US",
+      "site_type": []
+    },
+    {
+      "icao": "TIST",
+      "faa": "STT",
+      "iata": "STT",
+      "wmo": "78543",
+      "name": "St Thomas/King Arpt",
+      "lat": 18.33623,
+      "lon": -64.97994,
+      "elev": 5,
+      "state": "",
+      "country": "VI",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TISX",
+      "faa": "STX",
+      "iata": "STX",
+      "wmo": "78551",
+      "name": "St Croix/Rohlsen Arpt",
+      "lat": 17.69967,
+      "lon": -64.81256,
+      "elev": 16,
+      "state": "",
+      "country": "VI",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJBQ",
+      "faa": "BQN",
+      "iata": "BQN",
+      "wmo": "78514",
+      "name": "Aquadilla/Hernández Arpt",
+      "lat": 18.494,
+      "lon": -67.128,
+      "elev": 69,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJIG",
+      "faa": "SIG",
+      "iata": "SIG",
+      "wmo": null,
+      "name": "San Juan/Dominicci Arpt",
+      "lat": 18.457,
+      "lon": -66.094,
+      "elev": 3,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "TJMZ",
+      "faa": "MAZ",
+      "iata": "MAZ",
+      "wmo": null,
+      "name": "Mayaguez/De Hostos Arpt",
+      "lat": 18.256,
+      "lon": -67.151,
+      "elev": 6,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJNR",
+      "faa": null,
+      "iata": null,
+      "wmo": "78535",
+      "name": "Roosevelt Roads Arpt",
+      "lat": 18.253,
+      "lon": -65.638,
+      "elev": 7,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJPS",
+      "faa": "PSE",
+      "iata": "PSE",
+      "wmo": null,
+      "name": "Ponce/Mercedita Arpt",
+      "lat": 18.011,
+      "lon": -66.567,
+      "elev": 12,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJRV",
+      "faa": "RVR",
+      "iata": "NRR",
+      "wmo": null,
+      "name": "Jose Alponte Arpt",
+      "lat": 18.25,
+      "lon": -65.643,
+      "elev": 11,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TJSJ",
+      "faa": "SJU",
+      "iata": "SJU",
+      "wmo": "78526",
+      "name": "San Juan/Marin Intl",
+      "lat": 18.4326,
+      "lon": -66.01065,
+      "elev": 3,
+      "state": "",
+      "country": "PR",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "TUPJ",
+      "faa": null,
+      "iata": "EIS",
+      "wmo": "78550",
+      "name": "Beef Isl/Lettsome Arpt",
+      "lat": 18.445,
+      "lon": -64.543,
+      "elev": 6,
+      "state": "",
+      "country": "VG",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PGAC",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Guam",
+      "lat": 13.55,
+      "lon": 144.833,
+      "elev": 105,
+      "state": "",
+      "country": "GU",
+      "site_type": []
+    },
+    {
+      "icao": "PGNT",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Sabanettan / Ti",
+      "lat": 15,
+      "lon": 145.6,
+      "elev": 80,
+      "state": "",
+      "country": "GU",
+      "site_type": [
+        "METAR"
+      ]
+    },
+    {
+      "icao": "PGRO",
+      "faa": "GRO",
+      "iata": "ROP",
+      "wmo": "91221",
+      "name": "Rota Intl",
+      "lat": 14.172,
+      "lon": 145.24,
+      "elev": 181,
+      "state": "",
+      "country": "MP",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PGSN",
+      "faa": "GSN",
+      "iata": "SPN",
+      "wmo": "91232",
+      "name": "Saipan/Ada Intl",
+      "lat": 15.116,
+      "lon": 145.72,
+      "elev": 65,
+      "state": "",
+      "country": "MP",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PGUA",
+      "faa": "UAM",
+      "iata": "UAM",
+      "wmo": "91218",
+      "name": "Guam/Andersen AFB",
+      "lat": 13.583,
+      "lon": 144.918,
+      "elev": 159,
+      "state": "",
+      "country": "GU",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PGUM",
+      "faa": "GUM",
+      "iata": "GUM",
+      "wmo": "91212",
+      "name": "Guam/Pat Intl",
+      "lat": 13.47964,
+      "lon": 144.7958,
+      "elev": 74,
+      "state": "",
+      "country": "GU",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "PGWT",
+      "faa": "TNI",
+      "iata": "TIQ",
+      "wmo": null,
+      "name": "Tinian/San Jose Arpt",
+      "lat": 14.997,
+      "lon": 145.624,
+      "elev": 84,
+      "state": "",
+      "country": "MP",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "KFAQ",
+      "faa": null,
+      "iata": null,
+      "wmo": null,
+      "name": "Fitiuta Village",
+      "lat": -14.22,
+      "lon": -169.42,
+      "elev": 34,
+      "state": "",
+      "country": "AS",
+      "site_type": []
+    },
+    {
+      "icao": "NSAP",
+      "faa": null,
+      "iata": null,
+      "wmo": "91762",
+      "name": "Apia/Upolu Isl",
+      "lat": -13.815,
+      "lon": -171.781,
+      "elev": 4,
+      "state": "TU",
+      "country": "WS",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "NSFA",
+      "faa": null,
+      "iata": "APW",
+      "wmo": "91759",
+      "name": "Apia/Faleolo Intl",
+      "lat": -13.829,
+      "lon": -171.993,
+      "elev": 6,
+      "state": "AA",
+      "country": "WS",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    },
+    {
+      "icao": "NSTU",
+      "faa": "PPG",
+      "iata": "PPG",
+      "wmo": "91765",
+      "name": "Pago Pago/Tafuna Intl",
+      "lat": -14.337,
+      "lon": -170.721,
+      "elev": 8,
+      "state": "",
+      "country": "AS",
+      "site_type": [
+        "METAR",
+        "TAF"
+      ]
+    }
+  ]
+}

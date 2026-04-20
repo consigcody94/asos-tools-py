@@ -253,18 +253,45 @@ def search_stations(
         return rows[:limit] if limit else list(rows)
 
     def _score(r: dict) -> int:
-        rid = (r.get("id") or "").upper()
-        name = (r.get("name") or "").upper()
+        """Rank results: exact ID = 0, prefix match on ID = 1, substring ID = 2,
+        exact FAA LID = 3, exact IATA = 4, name prefix = 5, name substring = 6,
+        WMO = 7, state match = 8.  A user typing 'ANC' finds PANC, 'HNL' finds
+        PHNL, 'JFK' finds KJFK, 'PANC' finds PANC — no guessing which prefix."""
+        rid   = (r.get("id")        or "").upper()
+        call  = (r.get("call")      or "").upper()
+        iata  = (r.get("iata")      or "").upper()
+        wmo   = str(r.get("wmo")    or "").upper()
+        name  = (r.get("name")      or "").upper()
+        alt   = (r.get("alt_name")  or "").upper()
+        state = (r.get("state")     or "").upper()
+
+        # Exact-ID family first (most common).
         if rid == q:
             return 0
-        if rid.startswith(q):
+        # Exact FAA LID or IATA — user typed the 3-letter airport code.
+        if q == call or q == iata:
             return 1
-        if q in rid:
+        # Prefix match on ID ("PA" -> all Alaska, "K" -> all CONUS).
+        if rid.startswith(q):
             return 2
-        if name.startswith(q):
+        # Substring ID ("NC" -> KCLT, PANC, etc.).
+        if q in rid:
             return 3
-        if q in name:
+        # FAA / IATA partial.
+        if call.startswith(q) or iata.startswith(q):
             return 4
+        if q == wmo:
+            return 5
+        # Name prefix / substring / alt name.
+        if name.startswith(q):
+            return 6
+        if q in name:
+            return 7
+        if alt and (alt.startswith(q) or q in alt):
+            return 8
+        # State-code hit as last resort ("CA" -> all California stations).
+        if state == q and len(q) == 2:
+            return 9
         return 99
 
     matched = [(r, _score(r)) for r in rows]
