@@ -1,0 +1,1066 @@
+[
+  {
+    "idx": 1,
+    "repo": "b3rt1ng/Koi",
+    "lang": "Python",
+    "stars": 14,
+    "issues": [
+      "no LICENSE",
+      "danger (exec() in `src/koi/modules/blueprint.py`",
+      "danger (exec() in `src/koi/utils/payloads.py`"
+    ],
+    "n_files": 24
+  },
+  {
+    "idx": 2,
+    "repo": "chetanbnagmoti/Cloude_GST_INVOICE",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 3,
+    "repo": "yjp8842/CivilComplaint",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 4,
+    "repo": "shreyash1231/Jwellery-Frontend-NEXT",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 102
+  },
+  {
+    "idx": 5,
+    "repo": "b-chann/NQmain",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 8
+  },
+  {
+    "idx": 6,
+    "repo": "RO-Shipman/wellnessRasinova_navstevnost",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 8
+  },
+  {
+    "idx": 7,
+    "repo": "divi9696/creinx_attendance",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "committed `backend/.env`"
+    ],
+    "n_files": 76
+  },
+  {
+    "idx": 8,
+    "repo": "roblox-knockout-ro56/roblox-knockout-ro56",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 9,
+    "repo": "eeshag/personalSite",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 129
+  },
+  {
+    "idx": 10,
+    "repo": "shubhamsinghmzp1122-hub/LearningSmart",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 6
+  },
+  {
+    "idx": 11,
+    "repo": "hien10122005/hoc-trac-nghiem",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 12,
+    "repo": "Enyo2004/Personal_Project_RAG",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 23
+  },
+  {
+    "idx": 13,
+    "repo": "cinep10/cinep10.github.io",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 51
+  },
+  {
+    "idx": 14,
+    "repo": "Ngocon2004/E-Commerce-Petshop",
+    "lang": "JavaScript",
+    "stars": 1,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 15,
+    "repo": "sbvarietystore/sbvarietystore.github.io",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 16,
+    "repo": "AnmolSinghNarwariya/anmolnarwariya.github.io",
+    "lang": "SCSS",
+    "stars": 0,
+    "issues": [],
+    "n_files": 312
+  },
+  {
+    "idx": 17,
+    "repo": "tomevault-io/skills-registry",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 18,
+    "repo": "abhayraj0304-dotcom/java.practical",
+    "lang": "Java",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 10
+  },
+  {
+    "idx": 19,
+    "repo": "alexmsantos/data",
+    "lang": "JavaScript",
+    "stars": 1,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "committed `node_modules/psl/.env`",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 6618
+  },
+  {
+    "idx": 20,
+    "repo": "mohammedsaalim0/MYPORTFOLIO.IO",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 21,
+    "repo": "Rakesh-Jalli/CM_06",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "no .gitignore (Python repo)",
+      "danger (md5/sha1 for auth) in `stad_real_dataset/utils/scene_manager.py`",
+      "danger (md5/sha1 for auth) in `stad_real_dataset/utils/real_data.py`"
+    ],
+    "n_files": 58
+  },
+  {
+    "idx": 22,
+    "repo": "Lily-pp/campus-trade",
+    "lang": "Vue",
+    "stars": 1,
+    "issues": [
+      "no LICENSE",
+      "committed `server/.env`"
+    ],
+    "n_files": 1232
+  },
+  {
+    "idx": 23,
+    "repo": "skstmdals1-ctrl/bybit-dashboard-client2",
+    "lang": "HTML",
+    "stars": 1,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 24,
+    "repo": "yuanxiawan/cfipv4db",
+    "lang": "Python",
+    "stars": 18,
+    "issues": [
+      "no .gitignore (Python repo)"
+    ],
+    "n_files": 13
+  },
+  {
+    "idx": 25,
+    "repo": "LukeBlakcPersonal/my-sweet-love",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 42
+  },
+  {
+    "idx": 26,
+    "repo": "PaxBar-APKBUG/autojoin",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 27,
+    "repo": "yuvaraj-97/parameter-golf-stf",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "danger (eval() in `records/track_10min_16mb/2026-03-25_ValCalib_GPTQ_XSA_BigramHash3072/train_gpt.py`",
+      "danger (eval() in `records/track_10min_16mb/2026-03-31_ParallelResiduals_MiniDepthRecurrence/train_gpt.py`",
+      "danger (eval() in `records/track_10min_16mb/2026-03-23_LeakyReLU_LegalTTT_ParallelMuon/train_gpt.py`",
+      "danger (eval() in `records/track_10min_16mb/2026-04-06_SP8192_HessianSDClip_ProgressiveRecurrence/train_gpt_decode.py`",
+      "danger (eval() in `records/track_10min_16mb/2026-03-24_74M_Ternary_UNet_FP8_10L_8192BPE_YaRN_NeoMuon/train_gpt_cuda_ternary.py`",
+      "danger (eval() in `records/track_non_record_16mb/2026-03-24_106M_Binary_Asymmetric_UNet_FP8_15L_8192BPE_YaRN_NeoMuon_Smear/train_gpt_cuda_binary.py`",
+      "danger (eval() in `vast/experiments/2026-04-20-nvidia-geforce-rtx-4090-4gpu/codex/stf-mlp-skip-runner/2026-04-20_codex-stf-mlp-skip-runner_relative_l2_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train_gpt.py`",
+      "danger (eval() in `records/track_10min_16mb/2026-04-01_Vocab4096_MLPMult4_WD085/train_gpt.py`"
+    ],
+    "n_files": 306
+  },
+  {
+    "idx": 28,
+    "repo": "project12310/Project-database",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 29,
+    "repo": "hamizahwahab/ags-monitoring-dashboard",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "danger (exec() in `electron/main.js`"
+    ],
+    "n_files": 29
+  },
+  {
+    "idx": 30,
+    "repo": "arkhanrimu/cmssportsurge",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "no .gitignore (Python repo)",
+      "no .gitignore (JS repo)",
+      "danger (innerHTML=) in `admin/app.js`",
+      "danger (md5/sha1 for auth) in `scripts/master_engine.py`"
+    ],
+    "n_files": 14797
+  },
+  {
+    "idx": 31,
+    "repo": "matt-ssilva/razor-website",
+    "lang": "CSS",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 8
+  },
+  {
+    "idx": 32,
+    "repo": "siyukatu/ttsbot-status-history-graph",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (Python repo)"
+    ],
+    "n_files": 70
+  },
+  {
+    "idx": 33,
+    "repo": "Rithishgit69/Cinestage",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 34,
+    "repo": "YMIA-DigitalStrategyGroup/Keiri_Chohyo",
+    "lang": "R",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 146
+  },
+  {
+    "idx": 35,
+    "repo": "benSauce/CS4470_Net_Protocols",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 36,
+    "repo": "YashwanthKamireddi/CodebaseCity",
+    "lang": "JavaScript",
+    "stars": 4,
+    "issues": [],
+    "n_files": 177
+  },
+  {
+    "idx": 37,
+    "repo": "alexander-turner/TurnTrout.com",
+    "lang": "TypeScript",
+    "stars": 38,
+    "issues": [
+      "committed `.npmrc`",
+      "committed `config/pnpm/.npmrc`"
+    ],
+    "n_files": 809
+  },
+  {
+    "idx": 38,
+    "repo": "wpsl5168/OpenHippo",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [],
+    "n_files": 39
+  },
+  {
+    "idx": 39,
+    "repo": "Raph33AI/alphavault-quant",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no .gitignore (Python repo)",
+      "no .gitignore (JS repo)",
+      "danger (innerHTML=) in `docs/assets/js/terminal.js`"
+    ],
+    "n_files": 110
+  },
+  {
+    "idx": 40,
+    "repo": "wanwan89/hope-hype",
+    "lang": "Astro",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 41,
+    "repo": "Keenple/keenple-shared",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 14
+  },
+  {
+    "idx": 42,
+    "repo": "hiii2312/Spider-Man-2",
+    "lang": "C#",
+    "stars": 0,
+    "issues": [],
+    "n_files": 4
+  },
+  {
+    "idx": 43,
+    "repo": "skhella/PocketSmith-Budget-Dashboard",
+    "lang": "Swift",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 25
+  },
+  {
+    "idx": 44,
+    "repo": "zureicof/oliver_zureick_creative_",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 49
+  },
+  {
+    "idx": 45,
+    "repo": "desarrolloprospectiva728-crypto/DATOSTH",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 18
+  },
+  {
+    "idx": 46,
+    "repo": "jae-park-au/neetcode-submissions-r2prz0cl",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (Python repo)"
+    ],
+    "n_files": 11
+  },
+  {
+    "idx": 47,
+    "repo": "itsgoo13/mikrotik-auto",
+    "lang": "RouterOS Script",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 48,
+    "repo": "minagocorporation-ux/Dsgghjfghdf",
+    "lang": "",
+    "stars": 2,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 49,
+    "repo": "CodeHub-Clients/CodeHub_Licenses",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 27
+  },
+  {
+    "idx": 50,
+    "repo": "mukhsinus/karolinabeauty",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "committed `.env`",
+      "committed `backend/.env`"
+    ],
+    "n_files": 203
+  },
+  {
+    "idx": 51,
+    "repo": "ccjaren/elecciones-peru",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 52,
+    "repo": "PrajwalaNagekar/royal-hayat-website",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 293
+  },
+  {
+    "idx": 53,
+    "repo": "SoraSuzuki07/git_tutorial_suzuki",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 54,
+    "repo": "Laitdesoja/Msi-compiler",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 55,
+    "repo": "Vini399/Ouro-Paes",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 56,
+    "repo": "MasaichiMatsuzakaKita/AutoGreen",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 57,
+    "repo": "ognevny/ognevny.github.io",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 13
+  },
+  {
+    "idx": 58,
+    "repo": "2026bmtproject/match_segmentation",
+    "lang": "Python",
+    "stars": 1,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "danger (innerHTML=) in `old_version/bre4_timeline.py`"
+    ],
+    "n_files": 130
+  },
+  {
+    "idx": 59,
+    "repo": "kreml9/seoul-map",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 60,
+    "repo": "raaj648/newprojectipl",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "no .gitignore (Python repo)",
+      "no .gitignore (JS repo)",
+      "danger (innerHTML=) in `admin/app.js`",
+      "danger (md5/sha1 for auth) in `scripts/master_engine.py`"
+    ],
+    "n_files": 9338
+  },
+  {
+    "idx": 61,
+    "repo": "portaventuratips-gif/horarios",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 15
+  },
+  {
+    "idx": 62,
+    "repo": "krypdoh/MLB-TCKR",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 256
+  },
+  {
+    "idx": 63,
+    "repo": "alanbritodelgado123/zoo-pixel",
+    "lang": "Rust",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 111
+  },
+  {
+    "idx": 64,
+    "repo": "devhub-blue-sea-eu-west-3/org-public-empty-csc-repo-eu-west-3",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 65,
+    "repo": "hyunwookkim418/network-cli-practice",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 42
+  },
+  {
+    "idx": 66,
+    "repo": "mibdda/mibdda.github.io",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)",
+      "danger (innerHTML=) in `script.js`"
+    ],
+    "n_files": 104
+  },
+  {
+    "idx": 67,
+    "repo": "smartymetrics/POS-eximp",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 1755
+  },
+  {
+    "idx": 68,
+    "repo": "dzakyhaady/Programming-Assignment-3_Dzaky-Haady_5024241076",
+    "lang": "C++",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 4
+  },
+  {
+    "idx": 69,
+    "repo": "Achintha444/me",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 282
+  },
+  {
+    "idx": 70,
+    "repo": "induwareemin/python-quiz-project",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 71,
+    "repo": "mannercode/nest-seed",
+    "lang": "TypeScript",
+    "stars": 21,
+    "issues": [
+      "no LICENSE",
+      "committed `.devcontainer/infra/.env`",
+      "committed `.devcontainer/infra/msa/.env`",
+      "committed `apis/mono/.env`",
+      "committed `apis/mono/specs/.env`",
+      "committed `apis/msa/.env`",
+      "committed `apis/msa/specs/.env`"
+    ],
+    "n_files": 857
+  },
+  {
+    "idx": 72,
+    "repo": "simokitafresh/multi-agent-shogun",
+    "lang": "Shell",
+    "stars": 0,
+    "issues": [],
+    "n_files": 892
+  },
+  {
+    "idx": 73,
+    "repo": "claudecodejg-bot/cost-dashboard",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "danger (innerHTML=) in `generate-dashboard.py`"
+    ],
+    "n_files": 6
+  },
+  {
+    "idx": 74,
+    "repo": "Adam-Camp-King/solid-cli",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 75,
+    "repo": "static-web-apps-testing-org/swa8a8780f59028476294de7a22e9ccbd21",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 15
+  },
+  {
+    "idx": 76,
+    "repo": "Yashwanthk-personal/Logic-Building-Programs",
+    "lang": "Java",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 152
+  },
+  {
+    "idx": 77,
+    "repo": "sundramraut/Safeapp",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 16
+  },
+  {
+    "idx": 78,
+    "repo": "kanggonbong/estimate-app",
+    "lang": "HTML",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 1
+  },
+  {
+    "idx": 79,
+    "repo": "Pushkalgithub/justice-under-pressure",
+    "lang": "R",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 28
+  },
+  {
+    "idx": 80,
+    "repo": "AleeAbdullah/AleeAbdullah",
+    "lang": "Markdown",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 8
+  },
+  {
+    "idx": 81,
+    "repo": "Fredb031/shopify-merch-studio",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "committed `.env`",
+      "SECRET (JWT) in `.env`"
+    ],
+    "n_files": 940
+  },
+  {
+    "idx": 82,
+    "repo": "Ivanmda98/weather-app",
+    "lang": "CSS",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 548
+  },
+  {
+    "idx": 83,
+    "repo": "akshayksa53-dev/Chess-game-",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 6
+  },
+  {
+    "idx": 84,
+    "repo": "Jeyn-o/OC_Stalker",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 20
+  },
+  {
+    "idx": 85,
+    "repo": "toka-kun/wkt-Plus",
+    "lang": "EJS",
+    "stars": 3,
+    "issues": [],
+    "n_files": 103
+  },
+  {
+    "idx": 86,
+    "repo": "ssafy15-data/python_codingtest",
+    "lang": "Python",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 59
+  },
+  {
+    "idx": 87,
+    "repo": "aisaf8873/Abc",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 3
+  },
+  {
+    "idx": 88,
+    "repo": "jonajinga/the-freethinking-times",
+    "lang": "Nunjucks",
+    "stars": 0,
+    "issues": [],
+    "n_files": 706
+  },
+  {
+    "idx": 89,
+    "repo": "SavinduRashmika2000/inventory-management",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE",
+      "committed `branch-sales-backend/.env`"
+    ],
+    "n_files": 552
+  },
+  {
+    "idx": 90,
+    "repo": "Vsonneveld/foroxity-genres",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 16
+  },
+  {
+    "idx": 91,
+    "repo": "iyaso/IranGo-admin",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "empty/no-tree"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 92,
+    "repo": "supravatsarkar/ai-resume-analyze-and-job-matches-fullstack",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "no .gitignore (JS repo)"
+    ],
+    "n_files": 89
+  },
+  {
+    "idx": 93,
+    "repo": "Reluvasile06/vanpes-data",
+    "lang": "",
+    "stars": 0,
+    "issues": [
+      "no LICENSE"
+    ],
+    "n_files": 2
+  },
+  {
+    "idx": 94,
+    "repo": "philips-software/helm-charts",
+    "lang": "Go Template",
+    "stars": 1,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  },
+  {
+    "idx": 95,
+    "repo": "mxs10/Marvel-Rivals-Menu",
+    "lang": "C#",
+    "stars": 0,
+    "issues": [],
+    "n_files": 5
+  },
+  {
+    "idx": 96,
+    "repo": "the-gdmo/FlairForge",
+    "lang": "TypeScript",
+    "stars": 0,
+    "issues": [
+      "committed `.env`"
+    ],
+    "n_files": 50
+  },
+  {
+    "idx": 97,
+    "repo": "stefanpejcic/heimdall",
+    "lang": "HTML",
+    "stars": 5,
+    "issues": [],
+    "n_files": 13
+  },
+  {
+    "idx": 98,
+    "repo": "ThaiThanhQuan/fashion_be",
+    "lang": "Java",
+    "stars": 0,
+    "issues": [
+      "no README",
+      "no LICENSE"
+    ],
+    "n_files": 25
+  },
+  {
+    "idx": 99,
+    "repo": "GiovaniBrunoDev/CatalogoCalcis",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "no LICENSE",
+      "committed `.env`"
+    ],
+    "n_files": 26
+  },
+  {
+    "idx": 100,
+    "repo": "abbadasarishravani/NourishLink",
+    "lang": "JavaScript",
+    "stars": 0,
+    "issues": [
+      "scan-error: AttributeError: 'int' object has no attribute 'isalpha'"
+    ],
+    "n_files": 0
+  }
+]

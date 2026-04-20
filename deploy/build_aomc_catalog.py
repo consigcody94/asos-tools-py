@@ -93,29 +93,90 @@ def _parse(text: str) -> list[dict]:
     return rows
 
 
-def _canonical_id(call: str, country: str) -> str | None:
-    """Convert a 3-letter CALL to canonical ICAO (K prefix for US, P* for AK/HI/Pacific)."""
-    if not call or len(call) != 3:
-        return call or None
-    # Pacific / Alaska / Hawaii uses 4-char P-prefix codes already (PANC, PHNL).
-    # But HOMR stores only the 3-letter CALL, so we need to map by country/state.
-    country_u = (country or "").upper()
-    if "UNITED STATES" in country_u or country_u == "":
-        # CONUS → prefix K
-        return "K" + call
-    # Guam, Northern Mariana, etc.
-    if "GUAM" in country_u:
-        return "PG" + call[-2:] if len(call) == 3 else call  # imperfect
-    if "MARIANA" in country_u:
-        return "PG" + call[-2:] if len(call) == 3 else call
-    if "AMERICAN SAMOA" in country_u:
-        return "NSTU" if call == "TUT" else "P" + call
-    if "PUERTO RICO" in country_u or "VIRGIN ISLANDS" in country_u:
-        return "T" + call  # TJSJ, TIST etc.
-    if "JAPAN" in country_u or "KOREA" in country_u:
-        # Overseas military; leave call as-is but flag differently
+#: Lazy-loaded FAA-LID -> canonical-ICAO map, populated from AWC
+#: (``aviationweather.gov/api/data/stationinfo``) on first call to
+#: :func:`_canonical_id`.  Covers Alaska (PA*), Hawaii (PH*), Puerto Rico
+#: (TJ*), US Virgin Islands (TI*), Guam (PG*), American Samoa (NS*),
+#: and the Northern Mariana Islands.  The previous version of this
+#: function did ``"K" + call`` for everything, which is wrong for any
+#: non-CONUS station and produced bogus IDs like KANC (actual: PANC).
+_FAA_TO_ICAO_CACHE: dict[str, str] | None = None
+
+
+def _load_awc_faa_map() -> dict[str, str]:
+    """Fetch and cache the AWC FAA->ICAO mapping for non-CONUS stations."""
+    global _FAA_TO_ICAO_CACHE
+    if _FAA_TO_ICAO_CACHE is not None:
+        return _FAA_TO_ICAO_CACHE
+    import json as _json
+    mapping: dict[str, str] = {}
+    # Three bbox queries cover every US non-CONUS region that has ASOS.
+    for bbox in (
+        "51,-180,72,-130",    # Alaska + Aleutians
+        "14,-180,24,-154",    # Hawaii + Pacific islands
+        "17,-68,19,-64",      # Puerto Rico + US Virgin Islands
+        "13,144,16,146",      # Guam / Northern Marianas
+    ):
+        try:
+            r = requests.get(
+                "https://aviationweather.gov/api/data/stationinfo",
+                params={"bbox": bbox, "format": "json"},
+                headers={"User-Agent": "owl.observation-watch-log/1.0"},
+                timeout=30,
+            )
+            if r.status_code != 200:
+                continue
+            for s in r.json() or []:
+                faa = (s.get("faaId") or "").strip().upper()
+                icao = (s.get("icaoId") or "").strip().upper()
+                # Only keep non-CONUS ICAOs (starts with P, T, N).
+                if faa and icao and icao[:1] in "PTN":
+                    mapping[faa] = icao
+        except Exception:
+            continue
+    _FAA_TO_ICAO_CACHE = mapping
+    return mapping
+
+
+def _canonical_id(call: str, country: str, state: str = "") -> str | None:
+    """Convert a 3-letter FAA LID to canonical ICAO.
+
+    CONUS uses a simple ``"K" + call`` rule (KJFK, KLGA).  Non-CONUS
+    (Alaska, Hawaii, Guam, Puerto Rico, USVI, American Samoa, Marianas)
+    uses irregular mappings — e.g. FAA ``FAI`` -> ICAO ``PAFA``,
+    ``KOA`` -> ``PHKO``, ``SJU`` -> ``TJSJ``.  We resolve those via the
+    Aviation Weather Center's authoritative stationinfo endpoint.
+    """
+    if not call:
+        return None
+    call = call.strip().upper()
+    state = (state or "").strip().upper()
+
+    NON_CONUS_STATES = {"AK", "HI", "GU", "MP", "AS", "PR", "VI"}
+
+    # For non-CONUS US stations, always prefer AWC's authoritative mapping.
+    if state in NON_CONUS_STATES:
+        m = _load_awc_faa_map()
+        icao = m.get(call)
+        if icao:
+            return icao
+        # Fallback: best-effort prefix if AWC couldn't resolve (rare —
+        # usually means the station is decommissioned).
+        _FALLBACK_PREFIX = {
+            "AK": "PA", "HI": "PH", "GU": "PG", "MP": "PG",
+            "AS": "NS", "PR": "TJ", "VI": "TI",
+        }
+        pref = _FALLBACK_PREFIX.get(state, "")
+        if pref and len(call) == 3:
+            return pref + call        # approximate; may not match AWC
         return call
-    # Default: prefix K (most US territories)
+
+    # 3-character military-apron codes that aren't really airports
+    # (e.g. "CO90") should be left as-is.
+    if len(call) != 3:
+        return call
+
+    # CONUS + territories not covered above: K-prefix.
     return "K" + call
 
 
@@ -139,7 +200,7 @@ def main() -> int:
         if not call:
             continue
 
-        icao = _canonical_id(call, country)
+        icao = _canonical_id(call, country, state=rec.get("STATE", ""))
         stations.append({
             "id": icao,
             "call": call,

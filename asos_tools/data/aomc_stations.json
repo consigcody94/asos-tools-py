@@ -445,7 +445,7 @@
       "elev_a": 33
     },
     {
-      "id": "KADQ",
+      "id": "PADQ",
       "call": "ADQ",
       "wban": "25501",
       "coop_id": "504988",
@@ -655,7 +655,7 @@
       "elev_a": 33
     },
     {
-      "id": "KAKN",
+      "id": "PAKN",
       "call": "AKN",
       "wban": "25503",
       "coop_id": "504766",
@@ -739,7 +739,7 @@
       "elev_a": 33
     },
     {
-      "id": "KAKW",
+      "id": "PAKW",
       "call": "AKW",
       "wban": "25367",
       "coop_id": "504901",
@@ -970,7 +970,7 @@
       "elev_a": 26
     },
     {
-      "id": "KANC",
+      "id": "PANC",
       "call": "ANC",
       "wban": "26451",
       "coop_id": "500280",
@@ -1159,7 +1159,7 @@
       "elev_a": 33
     },
     {
-      "id": "KAQT",
+      "id": "PAQT",
       "call": "AQT",
       "wban": "27515",
       "coop_id": null,
@@ -1579,7 +1579,7 @@
       "elev_a": 33
     },
     {
-      "id": "KAWI",
+      "id": "PAWI",
       "call": "AWI",
       "wban": "27503",
       "coop_id": null,
@@ -1831,7 +1831,7 @@
       "elev_a": 33
     },
     {
-      "id": "KBET",
+      "id": "PABE",
       "call": "BET",
       "wban": "26615",
       "coop_id": "500754",
@@ -2062,7 +2062,7 @@
       "elev_a": 33
     },
     {
-      "id": "KBIG",
+      "id": "PABI",
       "call": "BIG",
       "wban": "26415",
       "coop_id": "500770",
@@ -2230,7 +2230,7 @@
       "elev_a": 33
     },
     {
-      "id": "KBKH",
+      "id": "PHBK",
       "call": "BKH",
       "wban": "22501",
       "coop_id": null,
@@ -2692,7 +2692,7 @@
       "elev_a": 33
     },
     {
-      "id": "KBRW",
+      "id": "PABR",
       "call": "BRW",
       "wban": "27502",
       "coop_id": "500546",
@@ -2776,7 +2776,7 @@
       "elev_a": 33
     },
     {
-      "id": "KBTT",
+      "id": "PABT",
       "call": "BTT",
       "wban": "26533",
       "coop_id": "500761",
@@ -3154,7 +3154,7 @@
       "elev_a": 33
     },
     {
-      "id": "KCDB",
+      "id": "PACD",
       "call": "CDB",
       "wban": "25624",
       "coop_id": "502102",
@@ -3259,7 +3259,7 @@
       "elev_a": 33
     },
     {
-      "id": "KCDV",
+      "id": "PACV",
       "call": "CDV",
       "wban": "26410",
       "coop_id": "502177",
@@ -4603,7 +4603,7 @@
       "elev_a": 33
     },
     {
-      "id": "KDEE",
+      "id": "PADE",
       "call": "DEE",
       "wban": "26643",
       "coop_id": null,
@@ -5359,7 +5359,7 @@
       "elev_a": 33
     },
     {
-      "id": "KEAA",
+      "id": "PAEG",
       "call": "EAA",
       "wban": "26422",
       "coop_id": null,
@@ -5716,7 +5716,7 @@
       "elev_a": 33
     },
     {
-      "id": "KENA",
+      "id": "PAEN",
       "call": "ENA",
       "wban": "26523",
       "coop_id": "504546",
@@ -5737,7 +5737,7 @@
       "elev_a": 26
     },
     {
-      "id": "KENN",
+      "id": "PANN",
       "call": "ENN",
       "wban": "26435",
       "coop_id": null,
@@ -6031,7 +6031,7 @@
       "elev_a": 33
     },
     {
-      "id": "KFAI",
+      "id": "PAFA",
       "call": "FAI",
       "wban": "26411",
       "coop_id": "502968",
@@ -7165,7 +7165,7 @@
       "elev_a": 33
     },
     {
-      "id": "KGKN",
+      "id": "PAGK",
       "call": "GKN",
       "wban": "26425",
       "coop_id": "503465",
@@ -8173,7 +8173,7 @@
       "elev_a": null
     },
     {
-      "id": "KHNL",
+      "id": "PHNL",
       "call": "HNL",
       "wban": "22521",
       "coop_id": "511919",
@@ -8194,7 +8194,7 @@
       "elev_a": 26
     },
     {
-      "id": "KHNS",
+      "id": "PAHN",
       "call": "HNS",
       "wban": "25323",
       "coop_id": "503490",
@@ -8215,7 +8215,7 @@
       "elev_a": 33
     },
     {
-      "id": "KHOM",
+      "id": "PAHO",
       "call": "HOM",
       "wban": "25507",
       "coop_id": "503665",
@@ -8950,7 +8950,7 @@
       "elev_a": 33
     },
     {
-      "id": "KILI",
+      "id": "PAIL",
       "call": "ILI",
       "wban": "25506",
       "coop_id": "503905",
@@ -9286,7 +9286,7 @@
       "elev_a": 33
     },
     {
-      "id": "KITO",
+      "id": "PHTO",
       "call": "ITO",
       "wban": "21504",
       "coop_id": "511492",
@@ -9622,7 +9622,7 @@
       "elev_a": 26
     },
     {
-      "id": "KJNU",
+      "id": "PAJN",
       "call": "JNU",
       "wban": "25309",
       "coop_id": "504100",
@@ -9643,7 +9643,7 @@
       "elev_a": 33
     },
     {
-      "id": "KJRF",
+      "id": "PHJR",
       "call": "JRF",
       "wban": "22551",
       "coop_id": null,
@@ -9706,7 +9706,7 @@
       "elev_a": 26
     },
     {
-      "id": "KKAL",
+      "id": "PAKV",
       "call": "KAL",
       "wban": "26502",
       "coop_id": null,
@@ -9727,7 +9727,7 @@
       "elev_a": 33
     },
     {
-      "id": "KKOA",
+      "id": "PHKO",
       "call": "KOA",
       "wban": "21510",
       "coop_id": null,
@@ -9748,7 +9748,7 @@
       "elev_a": 33
     },
     {
-      "id": "KKTN",
+      "id": "PAKT",
       "call": "KTN",
       "wban": "25325",
       "coop_id": "504590",
@@ -9769,7 +9769,7 @@
       "elev_a": 26
     },
     {
-      "id": "KKVL",
+      "id": "PAVL",
       "call": "KVL",
       "wban": "26642",
       "coop_id": null,
@@ -10210,7 +10210,7 @@
       "elev_a": 33
     },
     {
-      "id": "KLHD",
+      "id": "PALH",
       "call": "LHD",
       "wban": "26491",
       "coop_id": null,
@@ -10294,7 +10294,7 @@
       "elev_a": 33
     },
     {
-      "id": "KLIH",
+      "id": "PHLI",
       "call": "LIH",
       "wban": "22536",
       "coop_id": "515580",
@@ -11050,7 +11050,7 @@
       "elev_a": 26
     },
     {
-      "id": "KMCG",
+      "id": "PAMC",
       "call": "MCG",
       "wban": "26510",
       "coop_id": "505769",
@@ -11722,7 +11722,7 @@
       "elev_a": 33
     },
     {
-      "id": "KMKK",
+      "id": "PHMK",
       "call": "MKK",
       "wban": "22534",
       "coop_id": "516534",
@@ -12184,7 +12184,7 @@
       "elev_a": 33
     },
     {
-      "id": "KMRI",
+      "id": "PAMR",
       "call": "MRI",
       "wban": "26409",
       "coop_id": null,
@@ -12856,7 +12856,7 @@
       "elev_a": 33
     },
     {
-      "id": "KNGF",
+      "id": "PHNG",
       "call": "NGF",
       "wban": "22519",
       "coop_id": null,
@@ -13276,7 +13276,7 @@
       "elev_a": 33
     },
     {
-      "id": "KNRR",
+      "id": "TJNRR",
       "call": "NRR",
       "wban": "11630",
       "coop_id": "668412",
@@ -13675,7 +13675,7 @@
       "elev_a": 33
     },
     {
-      "id": "KOGG",
+      "id": "PHOG",
       "call": "OGG",
       "wban": "22516",
       "coop_id": "512572",
@@ -13843,7 +13843,7 @@
       "elev_a": 33
     },
     {
-      "id": "KOME",
+      "id": "PAOM",
       "call": "OME",
       "wban": "26617",
       "coop_id": "506496",
@@ -14074,7 +14074,7 @@
       "elev_a": 33
     },
     {
-      "id": "KORT",
+      "id": "PAOR",
       "call": "ORT",
       "wban": "26412",
       "coop_id": "506586",
@@ -14158,7 +14158,7 @@
       "elev_a": 33
     },
     {
-      "id": "KOTZ",
+      "id": "PAOT",
       "call": "OTZ",
       "wban": "26616",
       "coop_id": "505076",
@@ -14473,7 +14473,7 @@
       "elev_a": 33
     },
     {
-      "id": "KPAQ",
+      "id": "PAAQ",
       "call": "PAQ",
       "wban": "25331",
       "coop_id": "506867",
@@ -14557,7 +14557,7 @@
       "elev_a": 33
     },
     {
-      "id": "KPBV",
+      "id": "PAPB",
       "call": "PBV",
       "wban": "25628",
       "coop_id": null,
@@ -15145,7 +15145,7 @@
       "elev_a": 26
     },
     {
-      "id": "KPOR",
+      "id": "PAPOR",
       "call": "POR",
       "wban": "26492",
       "coop_id": null,
@@ -16552,7 +16552,7 @@
       "elev_a": 26
     },
     {
-      "id": "KSCC",
+      "id": "PASC",
       "call": "SCC",
       "wban": "27406",
       "coop_id": "502316",
@@ -16825,7 +16825,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSGY",
+      "id": "PAGY",
       "call": "SGY",
       "wban": "25335",
       "coop_id": "508528",
@@ -16909,7 +16909,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSIT",
+      "id": "PASI",
       "call": "SIT",
       "wban": "25333",
       "coop_id": "508494",
@@ -17014,7 +17014,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSJU",
+      "id": "TJSJ",
       "call": "SJU",
       "wban": "11641",
       "coop_id": "668812",
@@ -17203,7 +17203,7 @@
       "elev_a": 19
     },
     {
-      "id": "KSNP",
+      "id": "PASN",
       "call": "SNP",
       "wban": "25713",
       "coop_id": "508118",
@@ -17287,7 +17287,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSOV",
+      "id": "PASO",
       "call": "SOV",
       "wban": "25516",
       "coop_id": null,
@@ -17602,7 +17602,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSTT",
+      "id": "TIST",
       "call": "STT",
       "wban": "11640",
       "coop_id": "678905",
@@ -17623,7 +17623,7 @@
       "elev_a": 26
     },
     {
-      "id": "KSTX",
+      "id": "TISX",
       "call": "STX",
       "wban": "11624",
       "coop_id": "670198",
@@ -17686,7 +17686,7 @@
       "elev_a": 33
     },
     {
-      "id": "KSWD",
+      "id": "PAWD",
       "call": "SWD",
       "wban": "26438",
       "coop_id": null,
@@ -17791,7 +17791,7 @@
       "elev_a": 33
     },
     {
-      "id": "KTAL",
+      "id": "PATA",
       "call": "TAL",
       "wban": "26529",
       "coop_id": "509014",
@@ -17980,7 +17980,7 @@
       "elev_a": 33
     },
     {
-      "id": "KTKA",
+      "id": "PATK",
       "call": "TKA",
       "wban": "26528",
       "coop_id": "508976",
@@ -19156,7 +19156,7 @@
       "elev_a": null
     },
     {
-      "id": "KYAK",
+      "id": "PAYA",
       "call": "YAK",
       "wban": "25339",
       "coop_id": "509941",
@@ -19323,5 +19323,7 @@
       "elev_p": 32,
       "elev_a": 33
     }
-  ]
+  ],
+  "prefix_fix_applied_utc": "2026-04-20T21:20:01+00:00",
+  "prefix_fix_source": "aviationweather.gov/api/data/stationinfo (AWC authoritative)"
 }
