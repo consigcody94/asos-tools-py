@@ -27,3 +27,8 @@ feedparser>=6.0
 # Kept deliberately minimal; no starlette-sessions, no sqlalchemy etc.
 fastapi>=0.110,<1.0
 uvicorn[standard]>=0.27,<1.0
+
+# --- Release #3 additions: structured METAR/TAF parsing -------------------
+# Drives the Sensor Health Grid in the drill panel + flight-category ribbon
+# on the globe.  Replaces our $-regex-only approach with a decoded JSON.
+avwx-engine>=1.9,<2.0

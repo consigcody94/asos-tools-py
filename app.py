@@ -358,6 +358,93 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     else:
         st.caption("No recent METAR available for this station.")
 
+    # --- Sensor Health Grid (avwx-engine structured parse) ---------------
+    # Decodes the METAR into per-sensor status; a quick visual summary of
+    # which specific ASOS sensors are live, flagged, or unknown right now.
+    if latest_metar:
+        try:
+            from asos_tools.metar_parse import parse_metar, sensor_health_grid
+            info = parse_metar(latest_metar, station=sid)
+            rows = sensor_health_grid(info)
+        except Exception:
+            logger.exception("sensor grid parse failed")
+            info, rows = None, []
+
+        if info and rows:
+            fc = info.get("flight_category") or "-"
+            fc_colors = {"VFR": "#22c55e", "MVFR": "#38bdf8",
+                         "IFR": "#f59e0b", "LIFR": "#dc2626"}
+            fc_color = fc_colors.get(fc, "#64748b")
+            st.markdown(
+                f"**Sensor Health Grid** &nbsp; "
+                f"<span style='background:{fc_color};color:#fff;"
+                f"padding:2px 8px;border-radius:3px;font-size:11px;"
+                f"font-weight:700;letter-spacing:0.08em;'>"
+                f"FLT CAT: {fc}</span>",
+                unsafe_allow_html=True,
+            )
+            _section_help(
+                "About the Sensor Health Grid",
+                what=(
+                    "Decodes the current METAR into a per-sensor status "
+                    "readout. Each of the ASOS's ~12 discrete sensors "
+                    "(wind, temp/dew, altimeter, visibility, ceilometer, "
+                    "precip gauge, present-weather ID, lightning, "
+                    "freezing-rain detector, RVR, SLP, and the overall "
+                    "`$` self-check) gets a green/red/grey chip based on "
+                    "what avwx-engine parses from the obs. Green = value "
+                    "present and plausible; Red = explicit failure code "
+                    "in remarks (RVRNO, PWINO, TSNO, CHINO, etc.); Grey = "
+                    "silent (either the sensor didn't report this cycle "
+                    "or it's not applicable, e.g. no ceiling when clear)."
+                ),
+                who=[
+                    "**AOMC controllers** — instantly see *which* sensor triggered the `$` flag instead of staring at remark strings.",
+                    "**Field maintenance techs** — know what part to bring to the truck roll before you leave the shop.",
+                    "**Incident investigators** — map a sensor failure to the exact START time when correlating against the Matrix Profile anomaly chart.",
+                    "**Shift supervisors** — quick triage whether a flag is a drift (Temp/Dew red, everything else green) or a total comms failure (most cells red).",
+                ],
+                how=[
+                    "Pick a station from the selectbox above; the grid updates from that station's latest METAR automatically.",
+                    "Hover any red chip to see the exact remark code (e.g. `PWINO reported`).",
+                    "Cross-reference with the `Latest METAR` block above to see the raw evidence.",
+                    "If every chip is grey, the station is MISSING — see the Status definitions expander on the Summary tab for next steps.",
+                ],
+                output=(
+                    "Sensor codes are the FAA-standard ASOS self-diagnostic "
+                    "indicators: RVRNO = runway visual range out, PWINO = "
+                    "present-weather identifier out, PNO = precip amount "
+                    "gauge out, FZRANO = freezing-rain sensor out, TSNO = "
+                    "lightning sensor out, SLPNO = sea-level pressure "
+                    "calc unavailable, VISNO = prevailing vis sensor out, "
+                    "CHINO = ceilometer out."
+                ),
+            )
+            # Render as a 4-column compact grid of chips.
+            COLS = 4
+            col_groups = st.columns(COLS)
+            for i, row in enumerate(rows):
+                ok = row["ok"]
+                if ok is True:
+                    bg, fg, sym = "#dcfce7", "#14532d", "OK"
+                elif ok is False:
+                    bg, fg, sym = "#fee2e2", "#7f1d1d", "FAIL"
+                else:
+                    bg, fg, sym = "#e2e8f0", "#334155", "--"
+                reason = row.get("reason", "")
+                with col_groups[i % COLS]:
+                    tip = f" title='{reason}'" if reason else ""
+                    st.markdown(
+                        f"<div{tip} style='background:{bg};color:{fg};"
+                        f"padding:6px 10px;border-radius:4px;"
+                        f"font-size:11px;font-weight:600;"
+                        f"margin-bottom:4px;display:flex;"
+                        f"justify-content:space-between;'>"
+                        f"<span>{row['sensor']}</span>"
+                        f"<span style='opacity:0.65;'>{sym}</span></div>",
+                        unsafe_allow_html=True,
+                    )
+
     # --- Webcams — single horizontal row, 4 thumbs side by side ----------
     # Stacking METAR above webcams (instead of splitting left/right)
     # eliminates the big grey dead-space we were seeing when one outer
@@ -1822,6 +1909,19 @@ with tab_summary:
                     except Exception:
                         logger.exception("news fetch failed")
 
+                # --- Optional radar + satellite overlay URLs ----------
+                radar_url = None
+                sat_url = None
+                try:
+                    from asos_tools.radar import (
+                        latest_conus_radar_url,
+                        latest_goes_conus_url,
+                    )
+                    radar_url = latest_conus_radar_url()
+                    sat_url = latest_goes_conus_url("GEOCOLOR")
+                except Exception:
+                    logger.exception("radar/sat URL build failed")
+
                 globe_html = build_globe_html(
                     wl,
                     station_meta=AOMC_STATIONS,
@@ -1831,12 +1931,45 @@ with tab_summary:
                     show_atmosphere=True,
                     starfield=True,
                     news_items=news,
+                    radar_overlay_url=radar_url,
+                    satellite_overlay_url=sat_url,
                 )
                 st.components.v1.html(globe_html, height=660, scrolling=False)
                 st.caption(
                     "Drag to rotate · scroll to zoom · click a point to "
                     "focus a station · hover ticker to pause. Auto-rotation "
                     "stops on interaction."
+                )
+                _section_help(
+                    "About the RADAR and SATELLITE overlays",
+                    what=(
+                        "Two toggle buttons in the globe's top-right "
+                        "control cluster layer federal-authoritative "
+                        "imagery over the ASOS station points. **RADAR** "
+                        "uses Iowa Environmental Mesonet's n0q CONUS "
+                        "composite (transparent PNG, 5-minute cadence, "
+                        "directly from the NWS NEXRAD feed). **SATELLITE** "
+                        "uses NOAA NESDIS's GOES-19 GeoColor CONUS "
+                        "latest image (5-minute cadence, day/night blended)."
+                    ),
+                    who=[
+                        "**NWS forecasters** — overlay radar to correlate station thunderstorm flags against actual echoes.",
+                        "**ATC supervisors** — at-a-glance situational awareness for which ARTCC sectors are taking weather.",
+                        "**AOMC controllers** — confirm a `$`-flagged lightning sensor is actually in a storm, not a false positive.",
+                        "**NOC duty officers** — keep the satellite layer on ambient for day/night cloud context.",
+                    ],
+                    how=[
+                        "Click **RADAR** to toggle the n0q composite; click **SATELLITE** to toggle GOES-19 GeoColor. They can be layered together.",
+                        "Layers are CONUS-only (bounds -126°E to -66°E, 24°N to 50°N). For Alaska or Hawaii, use the regional preset first — the overlay will still show if those stations are visible but the image covers lower-48 only.",
+                        "Click again to toggle off. State persists until you reload the Space.",
+                    ],
+                    output=(
+                        "Both layers refresh when the whole page refreshes "
+                        "(every cold-load pulls the most recent tile). "
+                        "Radar is transparent-PNG over the points; "
+                        "satellite is opaque JPEG at reduced opacity so "
+                        "the station dots remain visible on top."
+                    ),
                 )
 
                 # ---- Station drill panel (below the globe) --------------
@@ -2598,9 +2731,10 @@ with tab_fcst:
     )
     fcst_ck = _session_data_key()
 
-    fcst_a, fcst_b, fcst_c, fcst_d = st.tabs([
+    fcst_a, fcst_b, fcst_c, fcst_d, fcst_e = st.tabs([
         "National Hazards", "Station TAF / METAR",
         "Flight Category Rollup", "Active Alerts",
+        "Space Weather",
     ])
 
     # ---- A. National Hazards (SIGMET + AIRMET + PIREP) -----------------
@@ -2789,6 +2923,111 @@ with tab_fcst:
                       pinned=["Event"], status_col="Severity")
         else:
             st.error("CAP alerts client not installed.")
+
+    # ---- E. Space Weather (NOAA SWPC) ----------------------------------
+    with fcst_e:
+        st.markdown("**Live Space Weather**  (NOAA SWPC)")
+        _section_help(
+            "About Space Weather",
+            what=(
+                "Live geomagnetic + solar conditions pulled directly from "
+                "NOAA's Space Weather Prediction Center (SWPC). Three "
+                "datasets update continuously: **planetary Kp index** "
+                "(3-hour cadence, 0-9 scale — geomagnetic storm level), "
+                "**GOES X-ray flux** (1-minute, solar-flare classification "
+                "A/B/C/M/X), and **active SWPC alerts** (issued as events "
+                "warrant). All zero-auth federal data."
+            ),
+            who=[
+                "**NWS aviation forecasters** — incorporate storm-level Kp into overnight discussions for transoceanic ops.",
+                "**ATC supervisors** (especially Oakland / New York / Anchorage Oceanic) — HF comms degrade when Kp >= 5. This is the early-warning banner.",
+                "**Field maintenance techs** — remote Alaskan / Pacific ASOS rely on HF radio; crews on truck rolls watch this before departing.",
+                "**NOC duty officers** — unusual ASOS error patterns in Alaska sometimes correlate with geomagnetic storms affecting GPS-timed comms.",
+            ],
+            how=[
+                "Glance at **Kp** — under 5 is routine, 5-6 is watch-worthy, 7-9 triggers radio-blackout advisories.",
+                "Check **X-ray class** — M-class flares cause minor HF blackouts, X-class causes major.",
+                "Scroll the **alerts** list for SWPC-issued G/R/S-scale watches and warnings; each message is verbatim from the forecasters at SWPC.",
+                "Cross-reference a Kp spike with your Alaska / Hawaii station MISSING rate — if several go silent during a G3+ storm, that's likely comms not sensor failure.",
+            ],
+            output=(
+                "NOAA G-scale (geomagnetic): G1 minor (Kp=5) -> G5 extreme "
+                "(Kp=9). R-scale (radio blackouts): R1 minor (M1 flare) -> "
+                "R5 extreme (X20+ flare). S-scale (solar radiation): S1 -> "
+                "S5. Each has well-defined operational impacts — see "
+                "swpc.noaa.gov/noaa-scales-explanation."
+            ),
+        )
+        try:
+            from asos_tools.space_weather import space_weather_summary
+            sw = space_weather_summary()
+        except Exception:
+            logger.exception("space weather fetch failed")
+            sw = None
+
+        if not sw:
+            st.info("Space weather data temporarily unavailable.")
+        else:
+            kp = sw.get("kp") or {}
+            xr = sw.get("xray") or {}
+            alerts = sw.get("alerts") or []
+
+            kc1, kc2, kc3 = st.columns(3)
+            kp_val = kp.get("kp")
+            kp_label = kp.get("label", "unknown")
+            kp_color = (
+                "#dc2626" if (kp_val or 0) >= 7 else
+                "#f59e0b" if (kp_val or 0) >= 5 else
+                "#22c55e"
+            )
+            kc1.markdown(
+                f"<div style='padding:12px 16px;background:rgba(0,0,0,0.02);"
+                f"border-left:4px solid {kp_color};border-radius:4px;'>"
+                f"<div style='font-size:10px;letter-spacing:0.1em;"
+                f"color:#64748b;text-transform:uppercase;'>Planetary Kp</div>"
+                f"<div style='font-size:28px;font-weight:700;color:{kp_color};'>"
+                f"{kp_val if kp_val is not None else '-'}</div>"
+                f"<div style='font-size:11px;color:#334155;'>{kp_label}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            xr_class = xr.get("class", "-")
+            xr_color = (
+                "#dc2626" if xr_class and xr_class.startswith("X") else
+                "#f59e0b" if xr_class and xr_class.startswith("M") else
+                "#22c55e"
+            )
+            kc2.markdown(
+                f"<div style='padding:12px 16px;background:rgba(0,0,0,0.02);"
+                f"border-left:4px solid {xr_color};border-radius:4px;'>"
+                f"<div style='font-size:10px;letter-spacing:0.1em;"
+                f"color:#64748b;text-transform:uppercase;'>Solar X-ray</div>"
+                f"<div style='font-size:28px;font-weight:700;color:{xr_color};'>"
+                f"{xr_class or '-'}</div>"
+                f"<div style='font-size:11px;color:#334155;'>"
+                f"GOES primary · long channel</div></div>",
+                unsafe_allow_html=True,
+            )
+            kc3.markdown(
+                f"<div style='padding:12px 16px;background:rgba(0,0,0,0.02);"
+                f"border-left:4px solid #38bdf8;border-radius:4px;'>"
+                f"<div style='font-size:10px;letter-spacing:0.1em;"
+                f"color:#64748b;text-transform:uppercase;'>Active Alerts</div>"
+                f"<div style='font-size:28px;font-weight:700;color:#38bdf8;'>"
+                f"{len(alerts)}</div>"
+                f"<div style='font-size:11px;color:#334155;'>SWPC feed</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            if alerts:
+                st.markdown("**Recent SWPC alerts**")
+                for a in alerts:
+                    with st.expander(f"{a.get('id','?')} - {a.get('time_utc','')}"):
+                        st.text(a.get("message", ""))
+            st.caption(
+                "Source: services.swpc.noaa.gov - Kp 3-hour, X-ray 1-min, "
+                "alerts event-driven. Cached 3 min."
+            )
 
 
 # ===========================================================================

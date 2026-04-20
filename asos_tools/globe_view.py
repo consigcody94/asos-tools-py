@@ -138,6 +138,8 @@ def build_globe_html(
     show_atmosphere: bool = True,
     starfield: bool = True,
     news_items: Optional[list[dict]] = None,
+    radar_overlay_url: Optional[str] = None,
+    satellite_overlay_url: Optional[str] = None,
 ) -> str:
     """Return a self-contained HTML document for the 3D globe.
 
@@ -192,6 +194,12 @@ def build_globe_html(
         "dark":               bool(dark),
         "starfield":          bool(starfield),
         "height_px":          int(height_px),
+        # Overlay layers — optional; when set, rendered as a HTML/CSS
+        # plane over the globe canvas.  Mesh-projected is hard without
+        # cesium-terrain-tiles; a 2D pinned overlay is 90% of the value
+        # for a NOC dashboard.
+        "radar_overlay_url":      radar_overlay_url or "",
+        "satellite_overlay_url":  satellite_overlay_url or "",
     })
 
     # Status legend HTML - pre-rendered so we don't need to template inside JS.
@@ -337,6 +345,25 @@ _GLOBE_HTML_TEMPLATE = r"""
   .tip .name {{ color: #38bdf8; font-weight: 600; }}
   .tip .meta {{ color: #94a3b8; font-size: 10px; }}
 
+  /* Radar + satellite overlay — pinned PNG/JPG over the globe canvas.
+     CONUS-only (RADAR_BOUNDS -126 to -66 lon, 24 to 50 lat) so we render
+     as a semi-transparent image clipped to roughly the same area of the
+     globe viewport.  Position/size are tuned against the default CONUS
+     camera preset; user can toggle on/off with the buttons in .controls. */
+  .overlay-layer {{ position: absolute; top: 14%; left: 15%;
+                    width: 70%; height: 55%;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-size: contain;
+                    mix-blend-mode: screen;
+                    opacity: 0.72;
+                    pointer-events: none;
+                    transition: opacity 0.25s ease;
+                    display: none; }}
+  .overlay-layer.on {{ display: block; }}
+  #layer-radar-img {{ z-index: 20; }}
+  #layer-sat-img   {{ z-index: 15; mix-blend-mode: normal; opacity: 0.45; }}
+
   /* News ticker — auto-scrolling marquee along the bottom edge */
   .ticker {{ left: 0; right: 0; bottom: 0; height: 30px;
              background: linear-gradient(90deg,
@@ -450,6 +477,8 @@ _GLOBE_HTML_TEMPLATE = r"""
 <div class="ovl controls">
   <button class="ctl on" id="rotate-btn">AUTO-ROTATE</button>
   <button class="ctl"    id="reset-btn">RESET VIEW</button>
+  <button class="ctl"    id="layer-radar" title="Live NEXRAD radar composite (IEM n0q, 5 min)">RADAR</button>
+  <button class="ctl"    id="layer-sat"   title="GOES-19 GeoColor satellite (NESDIS, 5 min)">SATELLITE</button>
 </div>
 
 <!-- Regional preset buttons — "too many circles to go through" mitigation -->
@@ -469,6 +498,10 @@ _GLOBE_HTML_TEMPLATE = r"""
   <div class="title">Status</div>
   {legend_rows}
 </div>
+
+<!-- Optional radar/satellite overlay layers (pinned over the globe canvas) -->
+<div class="overlay-layer" id="layer-radar-img"></div>
+<div class="overlay-layer" id="layer-sat-img"></div>
 
 <div class="tip" id="tip"></div>
 
@@ -591,6 +624,40 @@ _GLOBE_HTML_TEMPLATE = r"""
         lat: p.lat, lng: p.lon, altitude: 0.95,
       }}, 900);
     }});
+
+  // ----- Radar + Satellite overlay toggles -----------------------------
+  const radarBtn = document.getElementById('layer-radar');
+  const satBtn   = document.getElementById('layer-sat');
+  const radarImg = document.getElementById('layer-radar-img');
+  const satImg   = document.getElementById('layer-sat-img');
+  function setLayer(btn, img, url) {{
+    const want = !btn.classList.contains('on');
+    btn.classList.toggle('on', want);
+    if (want && url) {{
+      img.style.backgroundImage = `url("${{url}}")`;
+      img.classList.add('on');
+    }} else {{
+      img.classList.remove('on');
+    }}
+  }}
+  if (radarBtn) {{
+    radarBtn.addEventListener('click', () => {{
+      if (!CFG.radar_overlay_url) {{
+        radarBtn.textContent = 'RADAR (unavailable)';
+        return;
+      }}
+      setLayer(radarBtn, radarImg, CFG.radar_overlay_url);
+    }});
+  }}
+  if (satBtn) {{
+    satBtn.addEventListener('click', () => {{
+      if (!CFG.satellite_overlay_url) {{
+        satBtn.textContent = 'SATELLITE (unavailable)';
+        return;
+      }}
+      setLayer(satBtn, satImg, CFG.satellite_overlay_url);
+    }});
+  }}
 
   // ----- Region preset buttons -----------------------------------------
   document.querySelectorAll('.rg-btn').forEach(btn => {{
