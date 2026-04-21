@@ -61,7 +61,8 @@ jobs:
           # authentication is no longer supported" error that comes
           # from embedding a user:token pair in the URL.
           python -m pip install --quiet "huggingface_hub>=0.27"
-          huggingface-cli login \
+          # The new `hf` CLI supersedes the deprecated `huggingface-cli`.
+          hf auth login \
             --token "${HF_TOKEN}" \
             --add-to-git-credential
 
