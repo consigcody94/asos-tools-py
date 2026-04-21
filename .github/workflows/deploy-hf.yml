@@ -42,9 +42,11 @@ jobs:
           HF_SPACE_USER: ${{ vars.HF_SPACE_USER || 'consgicody' }}
           HF_SPACE_NAME: ${{ vars.HF_SPACE_NAME || 'asos-tools' }}
         run: |
-          if [ -z "$HF_TOKEN" ]; then
+          set -euo pipefail
+
+          if [ -z "${HF_TOKEN:-}" ]; then
             echo "::error::HF_TOKEN secret is not set — cannot mirror."
-            echo "Set one with: gh secret set HF_TOKEN -R \${{ github.repository }}"
+            echo "Set one with: gh secret set HF_TOKEN -R ${GITHUB_REPOSITORY}"
             exit 1
           fi
 
@@ -52,14 +54,18 @@ jobs:
           git config user.email "deploy-bot@asos-tools.ci"
           git config user.name  "ASOS-Tools Deploy Bot"
 
-          # Credential redaction: never let the token leak into stdout/stderr.
-          # The URL is never echoed; only "mirrored to HF" on success.
-          HF_URL="https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
+          # HF deprecated URL-embedded credentials (``user:TOKEN@``) so
+          # we authenticate via the Bearer header instead.  The header
+          # is set only for the HF origin — it doesn't affect subsequent
+          # pushes to GitHub.
+          HF_URL="https://huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
+          AUTH_HEADER="Authorization: Bearer ${HF_TOKEN}"
 
           # Force-push so our GitHub main becomes the canonical HF history.
-          # HF's internal commits (if any) are discarded — this matches how
-          # every deploy worked before the link broke.
-          git push --force "$HF_URL" HEAD:main 2>&1 \
-            | sed -E "s|https://user:[^@]+@|https://user:***@|g"
+          # HF's internal commits (if any) are discarded — this matches
+          # how every deploy worked before the native link broke.  The
+          # http.extraHeader is scoped to this invocation only.
+          git -c "http.extraHeader=${AUTH_HEADER}" \
+              push --force "${HF_URL}" HEAD:main
 
           echo "::notice::Mirrored ${GITHUB_SHA::7} to ${HF_SPACE_USER}/${HF_SPACE_NAME}"
