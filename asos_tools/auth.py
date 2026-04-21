@@ -87,12 +87,22 @@ def require_access(
     if description:
         st.caption(description)
 
+    if is_demo and not os.environ.get("OWL_ALLOW_DEMO_AUTH"):
+        # Fail closed: if the admin/AOMC passcode env var is unset, the
+        # tab is locked rather than falling back to a printed hint.
+        # Deployers who explicitly want the demo passcode must set
+        # OWL_ALLOW_DEMO_AUTH=1 as an informed decision.
+        st.error(
+            f"This view is gated. The deployer must set the environment "
+            f"variable `OWL_{role.upper()}_PASSCODE` before the {role} "
+            f"tab will accept a passcode. The passcode hint is suppressed "
+            f"in this build."
+        )
+        return False
     if is_demo:
         st.info(
-            f"**Demo mode.** This public Space uses a demo passcode. "
-            f"Real deployments would set `OWL_{role.upper()}_PASSCODE` "
-            f"in the environment.  \n"
-            f"Passcode hint: `{expected}`"
+            f"Demo auth active (OWL_ALLOW_DEMO_AUTH=1). For any real "
+            f"deployment set `OWL_{role.upper()}_PASSCODE` instead."
         )
     else:
         st.caption("Enter the passcode issued by your O.W.L. administrator.")

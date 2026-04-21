@@ -30,9 +30,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
+# Prefer the pinned lockfile (requirements.lock) if present — reproducible
+# builds for federal deployments.  Falls back to the loose requirements.txt
+# for dev-time flexibility.
 COPY requirements.txt .
+COPY requirements.lock* ./
 
-RUN pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements.txt
+RUN if [ -f requirements.lock ]; then \
+        pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements.lock; \
+    else \
+        pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements.txt; \
+    fi
 
 
 # -----------------------------------------------------------------------------
@@ -99,6 +107,14 @@ EXPOSE 7860
 # enough for the proxy to route.  HF honors HEALTHCHECK in its UI.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD curl -fsS http://127.0.0.1:7860/api/health >/dev/null || exit 1
+
+# Drop to a non-root UID for the running processes.  CIS Docker Benchmark
+# 4.1 + most federal container-security scanners flag containers running
+# as root.  All nginx temp paths are already redirected to /tmp; Streamlit
+# + uvicorn run in user space; supervisord itself no longer needs root.
+RUN useradd -u 1000 -m -s /bin/sh owl \
+ && chown -R owl:owl /app /tmp/nginx /tmp/owl-cache /tmp/.streamlit
+USER owl
 
 # tini reaps zombie children + forwards SIGTERM cleanly to supervisord.
 ENTRYPOINT ["/usr/bin/tini", "--"]

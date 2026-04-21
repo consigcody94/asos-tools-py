@@ -33,6 +33,7 @@ from __future__ import annotations
 import hmac
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -57,6 +58,13 @@ app = FastAPI(
 
 # Shared state — last tick result, last error. In-memory only; persistence
 # lives in the DiskCache that the Streamlit side already writes to.
+# Serializes every read-modify-write against _STATE.  BackgroundTasks
+# runs _run_scan() on a worker thread that executes concurrently with
+# request handlers on the event loop; without a lock, the check-then-
+# enqueue in tick() is a TOCTOU and the duration-percentile bookkeeping
+# at the tail of _run_scan corrupts the rolling list on concurrent ticks.
+_STATE_LOCK = threading.Lock()
+
 _STATE: dict[str, Any] = {
     "boot_time": datetime.now(timezone.utc).isoformat(),
     "last_tick_at": None,
@@ -138,10 +146,11 @@ def _run_scan() -> None:
     """
     start = time.perf_counter()
     now = datetime.now(timezone.utc)
-
-    # Mark "in flight" so /api/health can show a scan is running.
-    _STATE["scan_in_flight"] = True
-    _STATE["scan_started_at"] = now.isoformat()
+    # scan_in_flight + scan_started_at were already set under the lock
+    # by tick() before queueing this task.  Pre-initialize duration so
+    # the `finally` block can reference it even if the try raises before
+    # the assignment below.
+    duration = 0.0
 
     try:
         # Import lazily so the FastAPI worker boots even if a data module
@@ -263,18 +272,19 @@ def _run_scan() -> None:
                   exc_msg=str(exc),
                   duration_s=round(duration, 2))
     finally:
-        _STATE["scan_in_flight"] = False
-        # Rolling p50/p95 over the last 50 durations.
-        durs: list[float] = _STATE["tick_durations"]
-        durs.append(round(duration, 2))
-        if len(durs) > 50:
-            del durs[: len(durs) - 50]
-        if durs:
-            srt = sorted(durs)
-            p50_idx = len(srt) // 2
-            p95_idx = max(0, int(len(srt) * 0.95) - 1)
-            _STATE["tick_p50_duration_s"] = srt[p50_idx]
-            _STATE["tick_p95_duration_s"] = srt[p95_idx]
+        with _STATE_LOCK:
+            _STATE["scan_in_flight"] = False
+            # Rolling p50/p95 over the last 50 durations.
+            durs: list[float] = _STATE["tick_durations"]
+            durs.append(round(duration, 2))
+            if len(durs) > 50:
+                del durs[: len(durs) - 50]
+            if durs:
+                srt = sorted(durs)
+                p50_idx = len(srt) // 2
+                p95_idx = max(0, int(len(srt) * 0.95) - 1)
+                _STATE["tick_p50_duration_s"] = srt[p50_idx]
+                _STATE["tick_p95_duration_s"] = srt[p95_idx]
 
 
 @app.post("/api/tick", status_code=202)
@@ -298,17 +308,22 @@ def tick(
     """
     _check_secret(x_owl_secret)
 
-    _STATE["tick_count_total"] += 1
-
-    if _STATE.get("scan_in_flight"):
-        _STATE["tick_count_skipped_overlap"] += 1
-        log_event("tick.skipped", reason="scan already in flight")
-        return {
-            "ok": True,
-            "queued": False,
-            "reason": "scan already in flight",
-            "started_at": _STATE.get("scan_started_at"),
-        }
+    # Atomic check-then-enqueue under the state lock.
+    with _STATE_LOCK:
+        _STATE["tick_count_total"] += 1
+        if _STATE.get("scan_in_flight"):
+            _STATE["tick_count_skipped_overlap"] += 1
+            log_event("tick.skipped", reason="scan already in flight")
+            return {
+                "ok": True,
+                "queued": False,
+                "reason": "scan already in flight",
+                "started_at": _STATE.get("scan_started_at"),
+            }
+        # Claim the slot BEFORE scheduling the background task so a
+        # second concurrent request sees scan_in_flight=True immediately.
+        _STATE["scan_in_flight"] = True
+        _STATE["scan_started_at"] = datetime.now(timezone.utc).isoformat()
 
     # --- Outage cooldown --------------------------------------------
     # When the last scan classified as an upstream outage (IEM 429'd us,
@@ -357,8 +372,15 @@ def sources() -> dict[str, Any]:
         from asos_tools.sources import SOURCES  # type: ignore[attr-defined]
         return {"sources": [s.__dict__ if hasattr(s, "__dict__") else s
                             for s in SOURCES]}
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception:  # noqa: BLE001
+        # Don't leak internal file paths / module names.
+        _log.exception("/api/sources failed")
+        import uuid as _uuid
+        err_id = _uuid.uuid4().hex[:8]
+        return JSONResponse(status_code=500, content={
+            "error": "internal error",
+            "request_id": err_id,
+        })
 
 
 # ---------------------------------------------------------------------------
@@ -375,5 +397,11 @@ def webcams_near(
         from asos_tools.webcams import cameras_near  # type: ignore[attr-defined]
         cams = cameras_near(lat, lon, radius_nm=radius_nm)
         return {"count": len(cams), "cameras": cams}
-    except Exception as e:  # noqa: BLE001
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    except Exception:  # noqa: BLE001
+        _log.exception("/api/webcams/near failed")
+        import uuid as _uuid
+        err_id = _uuid.uuid4().hex[:8]
+        return JSONResponse(status_code=500, content={
+            "error": "internal error",
+            "request_id": err_id,
+        })

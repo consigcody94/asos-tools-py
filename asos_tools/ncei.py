@@ -33,8 +33,9 @@ logger = logging.getLogger(__name__)
 __all__ = ["fetch_metars_ncei", "service_available"]
 
 
-_BASE = os.environ.get("NCEI_API_BASE",
-                       "https://www.ncei.noaa.gov/access/services/data/v1")
+from asos_tools.validation import guard_upstream_base as _guard_base
+_BASE = _guard_base("NCEI_API_BASE",
+                    "https://www.ncei.noaa.gov/access/services/data/v1")
 _UA = "O.W.L./1.0 (+github.com/consigcody94/asos-tools-py)"
 
 
@@ -100,17 +101,30 @@ def fetch_metars_ncei(
     if not data:
         return pd.DataFrame(columns=["station", "valid", "metar", "has_maintenance"])
 
-    # NCEI returns a list of hourly records per station.
+    # NCEI returns a list of hourly records per station.  The raw METAR
+    # text is in REM_METAR (Global Hourly schema), NOT "REM" or
+    # "REPORT_TYPE" (the latter is just "FM-15").  We fall through
+    # several possible field names because the schema has varied.
     rows = []
     for rec in data:
         call = rec.get("CALL_SIGN") or rec.get("STATION") or ""
         date = rec.get("DATE") or ""
-        metar = rec.get("REM") or rec.get("REPORT_TYPE") or ""
+        # Try every known key that carries the raw METAR text.
+        metar = (
+            rec.get("REM_METAR")
+            or rec.get("REMARKS")
+            or rec.get("RAW_METAR")
+            or rec.get("REM")
+            or ""
+        )
+        # Skip records with no raw text — these are heat/cold summaries.
+        if not metar:
+            continue
         try:
             ts = pd.to_datetime(date, utc=True, errors="coerce")
         except Exception:
             ts = pd.NaT
-        has_maint = "$" in (metar or "")
+        has_maint = "$" in metar
         rows.append({
             "station": (call or "").strip().upper().lstrip("K") or "",
             "valid": ts,

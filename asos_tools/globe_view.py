@@ -456,7 +456,7 @@ _GLOBE_HTML_TEMPLATE = r"""
 </div>
 
 <div class="ovl controls">
-  <button class="ctl on" id="rotate-btn">AUTO-ROTATE</button>
+  <button class="ctl" id="rotate-btn">AUTO-ROTATE</button>
   <button class="ctl"    id="reset-btn">RESET VIEW</button>
   <button class="ctl"    id="layer-radar" title="Live NEXRAD radar composite (IEM n0q, 5 min)">RADAR</button>
   <button class="ctl"    id="layer-sat"   title="GOES-19 GeoColor satellite (NESDIS, 5 min)">SATELLITE</button>
@@ -528,11 +528,14 @@ _GLOBE_HTML_TEMPLATE = r"""
     world.backgroundImageUrl(CFG.night_texture);
   }}
 
-  // Auto-rotate slowly until the user grabs.
+  // Auto-rotate slowly — default OFF in production.  If the caller
+  // explicitly passes auto_rotate=True (demo mode), we light the
+  // button up so the user knows it's active.
   if (CFG.auto_rotate) {{
     const ctrls = world.controls();
     ctrls.autoRotate = true;
     ctrls.autoRotateSpeed = 0.45;
+    document.getElementById('rotate-btn').classList.add('on');
   }}
 
   // Default camera altitude: pulled back enough to see all of N. America.

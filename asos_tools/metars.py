@@ -19,6 +19,7 @@ Example
 from __future__ import annotations
 
 import os
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -340,30 +341,31 @@ def fetch_metars(
         try:
             resp = sess.get(IEM_ENDPOINT_METAR, params=params, timeout=timeout)
 
-            # Rate-limited.
+            # Rate-limited.  Exponential backoff with jitter so multiple
+            # HF Space workers sharing an egress NAT don't re-converge on
+            # the same retry instant.  Cap at 30 s so a very-long
+            # Retry-After can't hang the UI.
             if resp.status_code == 429:
                 last_exc = requests.HTTPError(
-                    f"429 Too Many Requests from IEM", response=resp,
+                    "429 Too Many Requests from IEM", response=resp,
                 )
                 retry_after = resp.headers.get("Retry-After", "")
                 try:
                     pause = float(retry_after) if retry_after else 0.0
                 except ValueError:
                     pause = 0.0
-                # Respect server guidance if sensible, else exponential.
-                # Cap at 30 s so a very-long Retry-After doesn't hang the UI.
-                pause = max(pause, 2.0 * (attempt + 1))
+                pause = max(pause, 2.0 ** attempt) + random.uniform(0, 1.5)
                 pause = min(pause, 30.0)
                 time.sleep(pause)
                 continue
 
-            # Server-side flakiness.
+            # Server-side flakiness — also jittered.
             if 500 <= resp.status_code < 600:
                 last_exc = requests.HTTPError(
                     f"{resp.status_code} {resp.reason} from IEM",
                     response=resp,
                 )
-                time.sleep(0.8 * (attempt + 1))
+                time.sleep(0.5 * (2 ** attempt) + random.uniform(0, 0.8))
                 continue
 
             resp.raise_for_status()

@@ -1,0 +1,66 @@
+name: SBOM
+
+# Generates a CycloneDX Software Bill of Materials on every push to
+# main and on every tagged release.  Required by EO 14028 for any
+# federal-delivered software.  The SBOM is uploaded as a workflow
+# artifact + attached to releases (when a tag push triggers).
+
+on:
+  push:
+    branches: [main]
+    tags:     ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-sbom:
+    name: Generate CycloneDX SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cyclonedx-bom
+        run: pip install --no-cache-dir cyclonedx-bom
+
+      - name: Install project deps (for accurate SBOM)
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Generate SBOM (CycloneDX 1.5, JSON)
+        run: |
+          cyclonedx-py environment \
+            --of JSON \
+            --output-file owl-sbom.cdx.json
+
+      - name: Generate SBOM (CycloneDX 1.5, XML for tooling that wants it)
+        run: |
+          cyclonedx-py environment \
+            --of XML \
+            --output-file owl-sbom.cdx.xml
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: owl-sbom
+          path: |
+            owl-sbom.cdx.json
+            owl-sbom.cdx.xml
+          retention-days: 90
+
+      - name: Attach SBOM to release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            owl-sbom.cdx.json
+            owl-sbom.cdx.xml

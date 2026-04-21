@@ -290,6 +290,18 @@ Within each status, rows are sorted by severity (more missing hours first, then 
         )
 
 
+def _html_escape(s: str) -> str:
+    """HTML-escape a string for safe interpolation into raw-HTML blocks.
+
+    Streamlit's ``st.markdown(..., unsafe_allow_html=True)`` does not
+    escape interpolated values — a crafted METAR remark or station name
+    could otherwise inject ``<script>``.  Always pass user-or-METAR-
+    derived fields through this before substituting into HTML strings.
+    """
+    import html as _html
+    return _html.escape(str(s or ""), quote=True)
+
+
 def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     """Render the station-detail panel below the globe.
 
@@ -328,6 +340,13 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     bc = badge_colors.get(status, "#64748b")
 
     # --- Header row --------------------------------------------------------
+    # All interpolated values are HTML-escaped because METAR-derived text
+    # (name, probable_reason, status) could contain < > & that would break
+    # the surrounding markup or be exploited by a malicious remark string.
+    _sid_e, _name_e, _state_e, _status_e = (
+        _html_escape(sid), _html_escape(name),
+        _html_escape(state), _html_escape(status),
+    )
     st.markdown(
         f"""
         <div style="display:flex;align-items:center;gap:14px;
@@ -337,12 +356,12 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                     border-radius:4px;margin-top:8px;">
           <div style="font-family:'JetBrains Mono',ui-monospace,monospace;
                       font-size:20px;font-weight:600;color:#0f172a;">
-            {sid}
+            {_sid_e}
           </div>
-          <div style="flex:1;color:#334155;">{name} &middot; {state}</div>
+          <div style="flex:1;color:#334155;">{_name_e} &middot; {_state_e}</div>
           <span style="background:{bc};color:#fff;padding:3px 10px;
                        border-radius:3px;font-size:11px;font-weight:600;
-                       letter-spacing:0.08em;">{status}</span>
+                       letter-spacing:0.08em;">{_status_e}</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -371,7 +390,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             info, rows = None, []
 
         if info and rows:
-            fc = info.get("flight_category") or "-"
+            fc = str(info.get("flight_category") or "-")
             fc_colors = {"VFR": "#22c55e", "MVFR": "#38bdf8",
                          "IFR": "#f59e0b", "LIFR": "#dc2626"}
             fc_color = fc_colors.get(fc, "#64748b")
@@ -380,7 +399,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                 f"<span style='background:{fc_color};color:#fff;"
                 f"padding:2px 8px;border-radius:3px;font-size:11px;"
                 f"font-weight:700;letter-spacing:0.08em;'>"
-                f"FLT CAT: {fc}</span>",
+                f"FLT CAT: {_html_escape(fc)}</span>",
                 unsafe_allow_html=True,
             )
             _section_help(
@@ -399,7 +418,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                     "or it's not applicable, e.g. no ceiling when clear)."
                 ),
                 who=[
-                    "**AOMC controllers** — instantly see *which* sensor triggered the `$` flag instead of staring at remark strings.",
+                    "**AOMC controllers** — identify which specific sensor triggered the `$` flag directly from the grid, without parsing remark strings by hand.",
                     "**Field maintenance techs** — know what part to bring to the truck roll before you leave the shop.",
                     "**Incident investigators** — map a sensor failure to the exact START time when correlating against the Matrix Profile anomaly chart.",
                     "**Shift supervisors** — quick triage whether a flag is a drift (Temp/Dew red, everything else green) or a total comms failure (most cells red).",
@@ -433,14 +452,15 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                     bg, fg, sym = "#e2e8f0", "#334155", "--"
                 reason = row.get("reason", "")
                 with col_groups[i % COLS]:
-                    tip = f" title='{reason}'" if reason else ""
+                    tip = (f' title="{_html_escape(reason)}"'
+                           if reason else "")
                     st.markdown(
                         f"<div{tip} style='background:{bg};color:{fg};"
                         f"padding:6px 10px;border-radius:4px;"
                         f"font-size:11px;font-weight:600;"
                         f"margin-bottom:4px;display:flex;"
                         f"justify-content:space-between;'>"
-                        f"<span>{row['sensor']}</span>"
+                        f"<span>{_html_escape(row['sensor'])}</span>"
                         f"<span style='opacity:0.65;'>{sym}</span></div>",
                         unsafe_allow_html=True,
                     )
@@ -611,14 +631,17 @@ def _short_name(name: str) -> str:
 
 st.set_page_config(
     page_title="O.W.L. — Observation Watch Log",
-    page_icon="⬡",
+    # Use the real OWL logo PNG as the browser tab favicon instead of a
+    # Unicode glyph (which rendered as a tofu box in locked-down corp
+    # browsers + gave the app a hobbyist aesthetic).
+    page_icon="owl_logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 st.markdown("""<style>
 /* Professional typography: Inter for UI, Space Grotesk for headings */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap');
 /* Material Symbols font — Streamlit uses it internally for dropdown
    chevrons, sort arrows, tab scroll buttons, checkboxes, etc.
    Loading it explicitly so the ligature names ("check", "arrow_drop_down")
@@ -915,6 +938,35 @@ html, body, .main, section.main { scroll-behavior: auto !important; }
    so the page doesn't jump when st.image() fills the slot. */
 .stSpinner { min-height: 40px; }
 
+/* === USWDS-STYLE FEDERAL BANNER === */
+/* Sits above the ops banner.  GSA-style "official website" strip that
+   reads as government the first second the page loads. */
+.usa-banner {
+    background: #f0f0f0;
+    border-bottom: 1px solid #d0d0d0;
+    padding: 4px 0;
+    font-family: 'Public Sans', 'Source Sans Pro', 'Inter', sans-serif;
+    font-size: 11px;
+    color: #1b1b1b;
+    margin: -16px -16px 0 -16px;
+}
+.usa-banner-inner {
+    max-width: 1460px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.usa-banner-flag {
+    font-size: 13px;
+    line-height: 1;
+}
+.usa-banner-text {
+    letter-spacing: 0.01em;
+    font-weight: 500;
+}
+
 /* === OPERATIONS BANNER (top of page) === */
 .ops-banner {
     display: flex;
@@ -1023,12 +1075,13 @@ html, body, .main, section.main { scroll-behavior: auto !important; }
     margin-top: 0.2rem;
 }
 .health-pct {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-family: 'Space Grotesk', 'Public Sans', sans-serif;
+    font-size: 3.4rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
     color: #003366;
     line-height: 1;
+    font-feature-settings: 'tnum', 'lnum';
 }
 .health-detail {
     font-family: 'Inter', sans-serif;
@@ -1491,10 +1544,26 @@ if _HAVE_AOMC:
 # Status banner — system status + live clock. Use st.html() to avoid
 # markdown wrapping raw HTML in <p> tags that break flex layout.
 _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+# USWDS-style federal "official website" banner above the ops banner.
+# Renders the standard GSA wording + small flag glyph so the service
+# reads as a government tool from the first pixel.
+_uswds_banner = (
+    '<div class="usa-banner">'
+    '<div class="usa-banner-inner">'
+    '<span class="usa-banner-flag" aria-hidden="true">&#x1F1FA;&#x1F1F8;</span>'
+    '<span class="usa-banner-text">'
+    'An official NOAA / NWS / FAA operations tool. '
+    'Data: NCEI, IEM, Aviation Weather Center, NWS, FAA WeatherCams, SWPC.'
+    '</span>'
+    '</div>'
+    '</div>'
+)
+st.html(_uswds_banner)
+
 _banner_html = (
     '<div class="ops-banner">'
     '<div class="ops-banner-left">'
-    '<span class="banner-meta">ASOS NETWORK MONITORING &middot; PUBLIC ACCESS</span>'
+    '<span class="banner-meta">ASOS NETWORK MONITORING &middot; OPERATIONAL</span>'
     '</div>'
     '<div class="ops-banner-right">'
     f'<span class="status-dot" style="background:{_status_color};'
@@ -1545,9 +1614,13 @@ if _health_pct is not None and _health_total:
 # Tabs
 # ===========================================================================
 
-tab_summary, tab_aomc, tab_reports, tab_stations, tab_fcst, tab_admin = st.tabs([
-    "SUMMARY", "AOMC CONTROLLERS", "REPORTS", "STATIONS",
-    "NWS FORECASTERS", "ADMIN",
+#: Tab order deliberately puts the primary personas (AOMC controllers +
+#: NWS forecasters) adjacent to the Summary landing page, with the
+#: Reference / Reports / Admin tabs on the far right.  Title Case across
+#: all tabs for a consistent federal-aesthetic.
+tab_summary, tab_aomc, tab_fcst, tab_reports, tab_stations, tab_admin = st.tabs([
+    "Summary", "AOMC Controllers", "NWS Forecasters",
+    "Reports", "Stations", "Admin",
 ])
 
 
@@ -1895,6 +1968,76 @@ with tab_summary:
             # NASA Blue Marble texture, atmosphere glow, auto-rotate,
             # click-to-drill (postMessage to parent).  Falls back to the
             # 2D Folium map only if globe_view import failed.
+            # --- Worst 5 Right Now strip ------------------------------
+            # Five fixed-width cards above the globe surfacing the
+            # station IDs a duty officer should look at first.  Ordered
+            # by severity + minutes-since-last-report so MISSING /
+            # long-silent stations float to the top.
+            try:
+                _sev_order = ["MISSING", "NO DATA", "FLAGGED",
+                              "INTERMITTENT"]
+                _attn = wl[wl["status"].astype(str).str.upper().str.strip()
+                           .isin(_sev_order)].copy()
+                if not _attn.empty and "minutes_since_last_report" in _attn:
+                    _mins = pd.to_numeric(
+                        _attn["minutes_since_last_report"],
+                        errors="coerce").fillna(1e9)
+                    _cat = pd.Categorical(
+                        _attn["status"].astype(str).str.upper().str.strip(),
+                        categories=_sev_order, ordered=True)
+                    _attn = _attn.assign(_sev=_cat, _mins=_mins)
+                    _attn = _attn.sort_values(
+                        ["_sev", "_mins"], ascending=[True, False])
+                    _worst = _attn.head(5)
+                else:
+                    _worst = _attn.head(5)
+
+                if not _worst.empty:
+                    st.markdown("**Worst 5 Right Now**")
+                    w_cols = st.columns(min(5, len(_worst)))
+                    _badge = {
+                        "MISSING":  "#dc2626", "NO DATA":      "#fecaca",
+                        "FLAGGED":  "#f59e0b", "INTERMITTENT": "#eab308",
+                    }
+                    for i, (_, row) in enumerate(_worst.iterrows()):
+                        st_u = str(row.get("status", "")).upper().strip()
+                        bc = _badge.get(st_u, "#64748b")
+                        sid_s = _html_escape(row.get("station", ""))
+                        name_s = _html_escape(
+                            str(row.get("name", ""))[:22].title())
+                        state_s = _html_escape(row.get("state", ""))
+                        mins_v = row.get("minutes_since_last_report")
+                        try:
+                            mins_s = (f"{int(float(mins_v))} min ago"
+                                      if mins_v is not None
+                                      and pd.notna(mins_v) else "")
+                        except Exception:
+                            mins_s = ""
+                        with w_cols[i]:
+                            st.markdown(
+                                f"<div style='padding:10px 12px;"
+                                f"background:rgba(0,0,0,0.03);"
+                                f"border-left:4px solid {bc};"
+                                f"border-radius:4px;"
+                                f"font-family:Inter,sans-serif;'>"
+                                f"<div style='font-family:JetBrains Mono,"
+                                f"monospace;font-size:16px;font-weight:700;"
+                                f"color:#0f172a;'>{sid_s}</div>"
+                                f"<div style='font-size:11px;color:#334155;'>"
+                                f"{name_s} &middot; {state_s}</div>"
+                                f"<div style='font-size:10px;color:{bc};"
+                                f"font-weight:700;letter-spacing:0.08em;"
+                                f"text-transform:uppercase;margin-top:4px;'>"
+                                f"{_html_escape(st_u)}</div>"
+                                f"<div style='font-size:10px;color:#64748b;"
+                                f"margin-top:2px;'>{_html_escape(mins_s)}"
+                                f"</div></div>",
+                                unsafe_allow_html=True,
+                            )
+                    st.write("")
+            except Exception:
+                logger.exception("worst-5 strip failed")
+
             if _HAVE_GLOBE:
                 st.subheader("National ASOS Status Globe")
                 dark_mode = bool(st.session_state.get("dark_mode", True))
@@ -1926,7 +2069,10 @@ with tab_summary:
                     wl,
                     station_meta=AOMC_STATIONS,
                     height_px=620,
-                    auto_rotate=True,
+                    # auto_rotate=False by default — federal operators
+                    # find on-load rotation distracting + it burns GPU
+                    # on always-on NOC displays.  The button remains.
+                    auto_rotate=False,
                     dark=dark_mode,
                     show_atmosphere=True,
                     starfield=True,
@@ -1980,9 +2126,22 @@ with tab_summary:
                 plk = {s["id"]: s for s in AOMC_STATIONS if s.get("id")}
                 options = sorted(plk.keys())
                 # Default to the most severe flagged station if available.
+                # Severity order: MISSING > NO DATA > FLAGGED > INTERMITTENT
+                # > RECOVERED > CLEAN.  A plain `sort_values("status")` sorts
+                # alphabetically (CLEAN -> FLAGGED -> ... -> RECOVERED), so we
+                # need a categorical sort to open on the actual worst station.
                 default_idx = 0
                 try:
-                    flagged_first = wl.sort_values("status").iloc[0]
+                    _severity_order = [
+                        "MISSING", "NO DATA", "FLAGGED",
+                        "INTERMITTENT", "RECOVERED", "CLEAN",
+                    ]
+                    cat = pd.Categorical(
+                        wl["status"].astype(str).str.upper().str.strip(),
+                        categories=_severity_order, ordered=True,
+                    )
+                    wl_sorted = wl.assign(_sev=cat).sort_values("_sev")
+                    flagged_first = wl_sorted.iloc[0]
                     sid_flagged = str(flagged_first.get("station", ""))
                     if sid_flagged in options:
                         default_idx = options.index(sid_flagged)
@@ -2036,10 +2195,10 @@ with tab_summary:
             # ---- KPI metric row ----
             c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("Clean", nc)
-            c2.metric("Flagged ($)", nf)
+            c2.metric("Flagged (maintenance)", nf)
             c3.metric("Missing", nm)
             c4.metric("Recovered", nr)
-            c5.metric("Interm.", ni)
+            c5.metric("Intermittent", ni)
             st.caption(f"Last {_SCAN_HOURS}h · {len(wl)} stations · {datetime.now(timezone.utc):%H:%M:%S UTC}")
 
             st.divider()
@@ -2154,10 +2313,40 @@ with tab_aomc:
             nc = int(cts.get("CLEAN", 0))
             c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("Clean", nc)
-            c2.metric("Flagged ($)", nf)
+            c2.metric("Flagged (maintenance)", nf)
             c3.metric("Missing", nm)
             c4.metric("Recovered", nr)
-            c5.metric("Interm.", ni)
+            c5.metric("Intermittent", ni)
+
+            # --- Per-operator rollup -----------------------------------
+            # NWS / FAA / DOD / Navy each answer to a different boss.
+            # Derived from station_types ("ASOS", "ASOS,MILITARY",
+            # "ASOS,COOP", etc.) joined from the AOMC catalog.
+            try:
+                _sid_to_types = {
+                    s["id"]: (s.get("station_types") or "")
+                    for s in AOMC_STATIONS if s.get("id")
+                }
+                def _operator_of(row) -> str:
+                    types = _sid_to_types.get(row.get("station", ""), "")
+                    if "NAVY" in types:   return "Navy"
+                    if "MILITARY" in types: return "DOD"
+                    if "FAA" in types:    return "FAA"
+                    return "NWS"
+                _op_s = wl_aomc.assign(_op=wl_aomc.apply(_operator_of, axis=1))
+                _op_counts = (
+                    _op_s.groupby("_op")["status"]
+                         .value_counts().unstack(fill_value=0)
+                         .reindex(columns=["CLEAN", "FLAGGED", "MISSING",
+                                           "INTERMITTENT", "RECOVERED",
+                                           "NO DATA"], fill_value=0)
+                         .reset_index().rename(columns={"_op": "Operator"})
+                )
+                st.markdown("**Per-operator rollup**")
+                st.dataframe(_op_counts, hide_index=True,
+                             use_container_width=True)
+            except Exception:
+                logger.exception("per-operator rollup failed")
 
             sub_metars, sub_missing, sub_flags = st.tabs([
                 "METARs", "Missing METARs", "Maintenance Flags",
@@ -3253,10 +3442,12 @@ with tab_admin:
             with st.expander("What this is + who it's for", expanded=False):
                 st.markdown(
                     """
-**What it does, in plain English.** Pulls the last 1–14 days of
-1-minute data for one station, picks one sensor (temperature,
-dewpoint, wind, pressure), and finds the **most unusual 15–120 min
-window** — the "weirdest thing this sensor did all week."
+**Function.** Pulls the last 1–14 days of 1-minute data for one
+station, selects one sensor channel (temperature, dewpoint, wind, or
+pressure), and surfaces the **most statistically unusual 15–120
+minute window** in the series. Discord scoring is symmetric to the
+rest of the time series — a window with no close analogue anywhere
+else is flagged, regardless of its absolute magnitude.
 
 **The math.** *Matrix Profile* computes, for every rolling window in
 the series, the distance to its nearest lookalike elsewhere in the
@@ -3282,7 +3473,7 @@ than `$`, and with no false positives during normal diurnal cycles.
   visiting in alphabetical order.
 - **NWS forecasters** — sanity-check an outlier METAR before citing
   it in a discussion ("is 98°F at 03 UTC plausible, or is KXYZ's
-  temp sensor stuck?").
+  temp sensor reading is implausible and stuck").
 - **QA analysts** — audit a month of historical 1-min data for
   calibration drift when comparing two nearby stations.
 - **Incident investigators** — after a `$` event or missing METAR,
@@ -3429,9 +3620,12 @@ than `$`, and with no false positives during normal diurnal cycles.
                 st.warning("Source registry not loaded.")
 
         st.divider()
-        st.caption("Public demo mode — all controls open to anyone. "
-                   "For deployments requiring access control, wire "
-                   "Apprise alerts through an authenticated reverse proxy.")
+        st.caption(
+            "For gated deployments, front the service with an authenticated "
+            "reverse proxy (Entra / Okta / Login.gov via OIDC, or CAC/PIV "
+            "via mod_ssl client-certificates). Settings and alerts written "
+            "here take effect on the next scan."
+        )
 
 
 # ===========================================================================
@@ -3451,7 +3645,7 @@ _footer_html = (
     'stations (NWS / FAA / DOD).'
     '</div>'
     '<div class="fed-footer-meta">'
-    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.1.0 (Release 1) &middot; SYSTEM TIME {_now_footer} &middot; '
+    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.1.0 &middot; SYSTEM TIME {_now_footer} &middot; '
     '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> &middot; '
     '<a href="https://www.ncei.noaa.gov">NCEI</a> &middot; '
     '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> &middot; '

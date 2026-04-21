@@ -45,8 +45,11 @@ __all__ = [
     "FLIGHT_CATEGORIES",
 ]
 
-#: API base; overridable via env var for testing / mirrors.
-_BASE = os.environ.get("AWC_API_BASE", "https://aviationweather.gov/api/data")
+#: API base; overridable via env var for testing / mirrors.  Guarded
+#: against SSRF — the env var is only honored if it's a public-https URL.
+from asos_tools.validation import guard_upstream_base as _guard_base
+_BASE = _guard_base("AWC_API_BASE",
+                    "https://aviationweather.gov/api/data")
 
 #: Ordered by severity (VFR best, LIFR worst).
 FLIGHT_CATEGORIES = ("VFR", "MVFR", "IFR", "LIFR")

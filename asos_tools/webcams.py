@@ -100,7 +100,9 @@ __all__ = [
 ]
 
 
-_BASE = os.environ.get("FAA_WEATHERCAMS_BASE", "https://weathercams.faa.gov")
+from asos_tools.validation import guard_upstream_base as _guard_base
+_BASE = _guard_base("FAA_WEATHERCAMS_BASE",
+                    "https://weathercams.faa.gov")
 _CDN_BASE = "https://images.wcams-static.faa.gov"
 
 # Browser headers — the API gates on these. UA can be any modern browser
