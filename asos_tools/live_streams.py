@@ -56,10 +56,21 @@ __all__ = [
 # ---------------------------------------------------------------------------
 LIVE_STREAMS_SEED: dict[str, dict[str, Any]] = {
     # Major US hubs that have had long-running 24/7 spotter streams.
-    # These entries render a "click to embed" button rather than an
-    # always-on iframe so stale IDs don't silently break the drill panel.
+    # `channel_id` uses the `embed/live_stream?channel=...` URL pattern:
+    # when that channel has a live broadcast, it auto-embeds; when it
+    # doesn't, YouTube shows a friendly "not currently live" card
+    # instead of breaking.  This is more durable than hard-coded
+    # video IDs which rot as individual broadcasts end.
+    #
+    # `search` is the fallback text — if no channel/video is mapped
+    # the drill panel renders a one-click YouTube live-now search.
     "KLAX": {
-        "title": "LAX – live spotter stream",
+        # AirlineVideosLive+ — multiple concurrent 24/7 LAX streams,
+        # verified actively broadcasting 2026-04-21.  When one stream
+        # ends, YouTube rolls the next live broadcast on the channel.
+        "channel_id": "UCox5yCEEjk4iYbhLgyj90EQ",
+        "channel_name": "AirlineVideosLive+",
+        "title": "LAX live spotter stream (AirlineVideosLive+)",
         "search": "LAX airport live camera",
     },
     "KJFK": {
