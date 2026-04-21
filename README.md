@@ -1,3 +1,15 @@
+---
+title: O.W.L. Observation Watch Log
+emoji: 🌤️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: true
+license: mit
+short_description: Federal-grade ASOS network observation & maintenance monitor
+---
+
 <div align="center">
 
 # ASOS Tools
