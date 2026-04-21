@@ -465,16 +465,20 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                         unsafe_allow_html=True,
                     )
 
-    # --- Webcams — raw HTML grid (no st.columns / st.image wrappers) -----
-    # Two earlier iterations using `st.columns(...)` + `st.image(...)` +
-    # `st.caption(...)` produced persistent grey dead-space below each
-    # thumbnail.  Root cause: Streamlit's `stImage` wrapper adds bottom
-    # padding, AND `st.columns` matches each column's height to the
-    # tallest cell — so if one cam loads slower or has a longer caption,
-    # every other cell gets a matching grey rectangle.  Rendering the
-    # whole grid as a single <figure> grid via `st.markdown` bypasses
-    # both mechanisms: cells size exactly to their own content and there
-    # are no Streamlit component containers.
+    # --- Webcams — fixed 4:3 aspect-ratio tiles via st.html ---------------
+    # Previous attempts using st.columns + st.image kept producing grey
+    # dead-space below each thumbnail because (a) Streamlit's stImage
+    # wrapper adds bottom padding and (b) st.columns matches cell height
+    # to the tallest cell.  Even switching to a raw-HTML <figure> grid
+    # didn't fully solve it — the actual FAA image's intrinsic height
+    # didn't always fill the cell, leaving grey beneath.
+    #
+    # This version pins every cell to a fixed 4:3 box with
+    # `aspect-ratio: 4/3` + `object-fit: cover` on the <img>, so the
+    # image ALWAYS fills its container exactly.  No whitespace below
+    # the image can exist by construction — there's no space between
+    # the image edge and the caption.  st.html is used instead of
+    # st.markdown so Streamlit doesn't wrap the fragment in a <p>.
     st.markdown("**Nearest FAA WeatherCams** (within 25 NM)")
     if _HAVE_WEBCAMS and lat is not None and lon is not None:
         try:
@@ -486,8 +490,6 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             cams = []
 
         if cams:
-            # Build one <figure> per cam with the latest image + caption
-            # stacked tight.  No container padding, no height matching.
             cells = []
             n = min(4, len(cams))
             for cam in cams[:n]:
@@ -499,36 +501,38 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                 direction = _html_escape(str(cam.get("direction", "") or ""))
                 dist = _html_escape(str(cam.get("distance_nm", "?")))
                 if img_url:
-                    img_html = (
+                    media = (
                         f'<img src="{_html_escape(img_url)}" '
                         f'alt="{site}" loading="lazy" '
-                        f'style="width:100%;height:auto;display:block;'
-                        f'border-radius:4px;margin:0;"/>'
+                        f'style="display:block;width:100%;'
+                        f'aspect-ratio:4/3;object-fit:cover;'
+                        f'border-radius:4px;margin:0;padding:0;'
+                        f'vertical-align:top;"/>'
                     )
                 else:
-                    img_html = (
-                        '<div style="width:100%;aspect-ratio:4/3;'
-                        'background:#1e293b;color:#94a3b8;display:flex;'
-                        'align-items:center;justify-content:center;'
-                        'font-size:11px;border-radius:4px;">'
-                        'image unavailable</div>'
+                    media = (
+                        '<div style="display:flex;width:100%;'
+                        'aspect-ratio:4/3;background:#1e293b;'
+                        'color:#94a3b8;align-items:center;'
+                        'justify-content:center;font-size:11px;'
+                        'border-radius:4px;">image unavailable</div>'
                     )
                 cells.append(
-                    f'<figure style="margin:0;padding:0;">'
-                    f'{img_html}'
-                    f'<figcaption style="font-size:11px;color:#64748b;'
-                    f'margin:4px 0 0 0;line-height:1.3;">'
+                    f'<figure style="margin:0;padding:0;line-height:0;'
+                    f'font-size:0;">'
+                    f'{media}'
+                    f'<figcaption style="font-size:11px;line-height:1.3;'
+                    f'color:#64748b;margin:4px 0 0 0;padding:0;">'
                     f'<strong style="color:#334155;">{site}</strong> · '
                     f'{direction} · {dist} NM'
                     f'</figcaption></figure>'
                 )
-            st.markdown(
+            st.html(
                 f'<div style="display:grid;'
                 f'grid-template-columns:repeat({n}, minmax(0, 1fr));'
                 f'gap:10px;align-items:start;margin:4px 0 8px 0;">'
                 + "".join(cells)
-                + "</div>",
-                unsafe_allow_html=True,
+                + "</div>"
             )
         else:
             st.caption("No FAA WeatherCams within 25 NM of this station.")
