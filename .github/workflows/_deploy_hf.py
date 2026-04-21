@@ -32,6 +32,20 @@ def main() -> int:
         print("::error::HF_SPACE_USER / HF_SPACE_NAME env var is empty.")
         return 1
 
+    # Diagnostic — never print the token, only its length.  Helps
+    # distinguish "secret was truncated" from "secret is wrong".
+    print(f"HF_TOKEN length: {len(token)}")
+
+    # Remove HF_TOKEN from the environment before importing huggingface_hub.
+    # Some versions of the library re-read HF_TOKEN from os.environ at
+    # unexpected points (e.g. inside validator decorators) and if that
+    # read happens in a subprocess or thread it can miss the stripping
+    # we do here, resulting in "Invalid user token" errors even when
+    # an explicit `token=` is passed.  Stripping env makes the
+    # explicit constructor arg the only source of truth.
+    for k in ("HF_TOKEN", "HUGGINGFACE_HUB_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+        os.environ.pop(k, None)
+
     # Import lazily so a missing dep fails with a clearer message.
     from huggingface_hub import HfApi
 
