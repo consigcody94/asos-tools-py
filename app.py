@@ -465,10 +465,16 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                         unsafe_allow_html=True,
                     )
 
-    # --- Webcams — single horizontal row, 4 thumbs side by side ----------
-    # Stacking METAR above webcams (instead of splitting left/right)
-    # eliminates the big grey dead-space we were seeing when one outer
-    # column was much shorter than the other.
+    # --- Webcams — raw HTML grid (no st.columns / st.image wrappers) -----
+    # Two earlier iterations using `st.columns(...)` + `st.image(...)` +
+    # `st.caption(...)` produced persistent grey dead-space below each
+    # thumbnail.  Root cause: Streamlit's `stImage` wrapper adds bottom
+    # padding, AND `st.columns` matches each column's height to the
+    # tallest cell — so if one cam loads slower or has a longer caption,
+    # every other cell gets a matching grey rectangle.  Rendering the
+    # whole grid as a single <figure> grid via `st.markdown` bypasses
+    # both mechanisms: cells size exactly to their own content and there
+    # are no Streamlit component containers.
     st.markdown("**Nearest FAA WeatherCams** (within 25 NM)")
     if _HAVE_WEBCAMS and lat is not None and lon is not None:
         try:
@@ -480,22 +486,50 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             cams = []
 
         if cams:
-            # One column per camera up to 4; Streamlit distributes width
-            # evenly and each cell sizes to its own content naturally.
-            cam_cols = st.columns(min(4, len(cams)))
-            for i, cam in enumerate(cams[:4]):
-                with cam_cols[i]:
-                    try:
-                        img_url = owl_webcams.latest_image_url(cam["id"])
-                    except Exception:
-                        img_url = None
-                    if img_url:
-                        st.image(img_url, use_container_width=True)
-                    st.caption(
-                        f"**{cam.get('site_name','')}** · "
-                        f"{cam.get('direction','')} · "
-                        f"{cam.get('distance_nm','?')} NM"
+            # Build one <figure> per cam with the latest image + caption
+            # stacked tight.  No container padding, no height matching.
+            cells = []
+            n = min(4, len(cams))
+            for cam in cams[:n]:
+                try:
+                    img_url = owl_webcams.latest_image_url(cam["id"])
+                except Exception:
+                    img_url = None
+                site = _html_escape(str(cam.get("site_name", "") or ""))
+                direction = _html_escape(str(cam.get("direction", "") or ""))
+                dist = _html_escape(str(cam.get("distance_nm", "?")))
+                if img_url:
+                    img_html = (
+                        f'<img src="{_html_escape(img_url)}" '
+                        f'alt="{site}" loading="lazy" '
+                        f'style="width:100%;height:auto;display:block;'
+                        f'border-radius:4px;margin:0;"/>'
                     )
+                else:
+                    img_html = (
+                        '<div style="width:100%;aspect-ratio:4/3;'
+                        'background:#1e293b;color:#94a3b8;display:flex;'
+                        'align-items:center;justify-content:center;'
+                        'font-size:11px;border-radius:4px;">'
+                        'image unavailable</div>'
+                    )
+                cells.append(
+                    f'<figure style="margin:0;padding:0;">'
+                    f'{img_html}'
+                    f'<figcaption style="font-size:11px;color:#64748b;'
+                    f'margin:4px 0 0 0;line-height:1.3;">'
+                    f'<strong style="color:#334155;">{site}</strong> · '
+                    f'{direction} · {dist} NM'
+                    f'</figcaption></figure>'
+                )
+            st.markdown(
+                f'<div style="display:grid;'
+                f'grid-template-columns:repeat({n}, minmax(0, 1fr));'
+                f'gap:10px;align-items:start;margin:4px 0 8px 0;">'
+                + "".join(cells)
+                + "</div>",
+                unsafe_allow_html=True,
+            )
         else:
             st.caption("No FAA WeatherCams within 25 NM of this station.")
     else:
