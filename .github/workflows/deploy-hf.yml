@@ -54,18 +54,22 @@ jobs:
           git config user.email "deploy-bot@asos-tools.ci"
           git config user.name  "ASOS-Tools Deploy Bot"
 
-          # HF deprecated URL-embedded credentials (``user:TOKEN@``) so
-          # we authenticate via the Bearer header instead.  The header
-          # is set only for the HF origin — it doesn't affect subsequent
-          # pushes to GitHub.
-          HF_URL="https://huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
-          AUTH_HEADER="Authorization: Bearer ${HF_TOKEN}"
+          # HF Space push — auth via the huggingface_hub CLI, which
+          # stores the token in the git credential helper so the
+          # subsequent `git push` picks it up.  This is the pattern
+          # documented by HF for CI jobs and avoids the "password
+          # authentication is no longer supported" error that comes
+          # from embedding a user:token pair in the URL.
+          python -m pip install --quiet "huggingface_hub>=0.27"
+          huggingface-cli login \
+            --token "${HF_TOKEN}" \
+            --add-to-git-credential
 
-          # Force-push so our GitHub main becomes the canonical HF history.
-          # HF's internal commits (if any) are discarded — this matches
-          # how every deploy worked before the native link broke.  The
-          # http.extraHeader is scoped to this invocation only.
-          git -c "http.extraHeader=${AUTH_HEADER}" \
-              push --force "${HF_URL}" HEAD:main
+          HF_URL="https://huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
+
+          # Force-push so GitHub main becomes the canonical HF history.
+          # HF's internal commits (if any) are discarded — matches how
+          # every deploy worked before the native GitHub link broke.
+          git push --force "${HF_URL}" HEAD:main
 
           echo "::notice::Mirrored ${GITHUB_SHA::7} to ${HF_SPACE_USER}/${HF_SPACE_NAME}"
