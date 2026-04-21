@@ -565,97 +565,156 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
         else:
             st.caption("No active CAP alerts for this state.")
 
-    # --- LIVE COVERAGE — YouTube spotter embed + GOES-19 animated loop ---
-    # Two supplemental live-video sources beside the 5-min FAA stills:
-    #   Left  — unofficial YouTube spotter cam (if one is mapped for this
-    #           ICAO, or the user can jump to a YouTube live-search).
+    # --- LIVE COVERAGE — FAA WeatherCam loop + GOES-19 satellite loop ----
+    # Two genuinely live, authoritative federal sources side-by-side.
+    #   Left  — animated playback of the nearest FAA WeatherCam's last
+    #           5 frames, cycled client-side at 2 fps.  This mimics
+    #           weathercams.faa.gov's own playback UI and gives a
+    #           "live video" feel using the same federal still-image
+    #           network we already consume.  Real, not spotter.
     #   Right — NESDIS GOES-19 animated GIF loop of the region the
-    #           station sits in (CONUS / PR / HI / full-disk fallback).
-    # The YouTube feeds are clearly labelled NOT FAA-authoritative; the
-    # GOES loop is authoritative federal imagery.
+    #           station sits in.
+    # A small secondary link below offers YouTube Live search as a
+    # supplemental (non-authoritative) source — we used to try to
+    # iframe-embed spotter channels but most disable embedding for
+    # monetization, so embedding is no longer attempted.
     st.markdown("---")
     st.markdown("**Live Coverage**")
     live_left, live_right = st.columns([1, 1])
 
-    # --- LEFT: YouTube live embed or search-link fallback -----------------
+    # --- LEFT: Animated FAA WeatherCam loop -------------------------------
     with live_left:
         st.markdown(
             "<div style='font-size:11px;color:#94a3b8;"
             "text-transform:uppercase;letter-spacing:0.06em;"
             "font-weight:600;margin-bottom:6px;'>"
-            "Spotter Live Video "
-            "<span style='color:#b91c1c;'>&middot; UNOFFICIAL</span>"
+            "FAA WeatherCam Loop "
+            "<span style='color:#16a34a;'>&middot; FEDERAL LIVE</span>"
             "</div>",
             unsafe_allow_html=True,
         )
-        cfg = None
-        if _HAVE_LIVE_STREAMS:
+        frame_urls: list[str] = []
+        cam_label = ""
+        if _HAVE_WEBCAMS and lat is not None and lon is not None:
             try:
-                cfg = owl_live_streams.get_live_stream(sid)
+                nearby = owl_webcams.cameras_near(
+                    float(lat), float(lon), radius_nm=25.0, limit=1,
+                )
             except Exception:
-                logger.exception("live_streams lookup failed")
-                cfg = None
+                logger.exception("webcam lookup for loop failed")
+                nearby = []
+            if nearby:
+                cam0 = nearby[0]
+                cam_label = (
+                    f"{cam0.get('site_name','')} · "
+                    f"{cam0.get('direction','')} · "
+                    f"{cam0.get('distance_nm','?')} NM"
+                )
+                try:
+                    frames = owl_webcams.site_images(cam0["id"])
+                except Exception:
+                    logger.exception("site_images failed")
+                    frames = []
+                # Frames are returned newest-first; play oldest-to-newest
+                # for natural motion (e.g. clouds drifting in real-time).
+                for f in reversed(frames[:5]):
+                    if f.get("url"):
+                        frame_urls.append(f["url"])
 
-        embed = None
-        if cfg and _HAVE_LIVE_STREAMS:
-            try:
-                embed = owl_live_streams.embed_url(cfg)
-            except Exception:
-                embed = None
-
-        if embed:
-            # Aspect-ratio-pinned iframe so the cell size matches the
-            # video exactly (same trick as the webcam grid — no grey
-            # dead space below).
+        if frame_urls:
+            # Inline JS swaps the <img>'s src every 500ms.  CSP already
+            # allows `*.faa.gov` under img-src, and the script uses only
+            # inline `'unsafe-inline'` which is already granted.  We give
+            # the <img> a unique id so multiple drill panels in one
+            # Streamlit session don't cross-talk.
+            import json as _json
+            import uuid as _uuid
+            loop_id = f"owl-cam-loop-{_uuid.uuid4().hex[:8]}"
+            frames_json = _json.dumps([_html_escape(u) for u in frame_urls])
+            first_url = _html_escape(frame_urls[0])
+            n_frames = len(frame_urls)
             st.markdown(
                 f'<div style="position:relative;width:100%;'
                 f'aspect-ratio:16/9;border-radius:4px;'
                 f'overflow:hidden;background:#0f172a;">'
-                f'<iframe src="{_html_escape(embed)}" '
+                f'<img id="{loop_id}" src="{first_url}" '
+                f'alt="FAA WeatherCam loop" '
                 f'style="position:absolute;inset:0;width:100%;'
-                f'height:100%;border:0;" '
-                f'allow="autoplay; encrypted-media; picture-in-picture" '
-                f'allowfullscreen loading="lazy"></iframe></div>',
+                f'height:100%;object-fit:cover;display:block;"/>'
+                f'<div style="position:absolute;bottom:4px;right:6px;'
+                f'background:rgba(0,0,0,0.55);color:#e2e8f0;'
+                f'font-size:10px;padding:2px 6px;border-radius:3px;'
+                f'letter-spacing:0.04em;">{n_frames} frames &middot; '
+                f'~2 fps</div></div>'
+                f'<script>'
+                f'(function(){{'
+                f'var frames={frames_json};'
+                f'var img=document.getElementById("{loop_id}");'
+                f'if(!img||!frames.length)return;'
+                f'var i=0;'
+                f'frames.slice(1).forEach(function(u){{var p=new Image();p.src=u;}});'
+                f'setInterval(function(){{i=(i+1)%frames.length;'
+                f'img.src=frames[i];}},500);'
+                f'}})();'
+                f'</script>',
                 unsafe_allow_html=True,
             )
-            st.caption(_html_escape(cfg.get("title", "Live spotter stream")))
+            st.caption(
+                f"**{_html_escape(cam_label)}** · last {n_frames} frames "
+                f"from the nearest FAA WeatherCam · 10-min cadence "
+                f"(true-to-source)."
+            )
         else:
-            # No mapped live stream for this ICAO — show a placeholder
-            # tile + one-click YouTube live-search link.  The search URL
-            # filters to currently-live broadcasts only.
-            if _HAVE_LIVE_STREAMS:
-                search_q = (cfg or {}).get("search") or f"{sid} airport live cam"
-                search_url = owl_live_streams.youtube_search_url(search_q)
-            else:
+            st.markdown(
+                '<div style="display:flex;flex-direction:column;'
+                'align-items:center;justify-content:center;'
+                'width:100%;aspect-ratio:16/9;background:#0f172a;'
+                'color:#94a3b8;border-radius:4px;'
+                'border:1px dashed #334155;text-align:center;'
+                'padding:12px;">'
+                '<div style="font-size:12px;">'
+                'No FAA WeatherCam within 25 NM of this station.</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "No federal cam loop available for this station — the "
+                "GOES satellite tile remains live."
+            )
+
+        # Small secondary link — YouTube spotter search (unofficial).
+        # Previously we tried to iframe-embed spotter channels here, but
+        # most disable embedding for monetization, which made the tile
+        # read "Video unavailable".  Search-link is what actually works.
+        if _HAVE_LIVE_STREAMS:
+            try:
+                _cfg = owl_live_streams.get_live_stream(sid) or {}
+                search_q = _cfg.get("search") or f"{sid} airport live cam"
+                yt_url = owl_live_streams.youtube_search_url(search_q)
+            except Exception:
                 import urllib.parse as _up
-                search_url = (
+                yt_url = (
                     "https://www.youtube.com/results?search_query="
                     + _up.quote_plus(f"{sid} airport live cam")
                     + "&sp=EgJAAQ%253D%253D"
                 )
-            st.markdown(
-                f'<div style="display:flex;flex-direction:column;'
-                f'align-items:center;justify-content:center;'
-                f'width:100%;aspect-ratio:16/9;background:#0f172a;'
-                f'color:#94a3b8;border-radius:4px;'
-                f'border:1px dashed #334155;text-align:center;'
-                f'padding:12px;">'
-                f'<div style="font-size:12px;margin-bottom:8px;">'
-                f'No curated live stream on file for {_html_escape(sid)}.'
-                f'</div>'
-                f'<a href="{_html_escape(search_url)}" target="_blank" '
-                f'rel="noopener noreferrer" '
-                f'style="display:inline-block;background:#dc2626;'
-                f'color:white;padding:6px 14px;border-radius:4px;'
-                f'font-size:12px;font-weight:600;text-decoration:none;">'
-                f'Search YouTube Live &rarr;</a>'
-                f'</div>',
-                unsafe_allow_html=True,
+        else:
+            import urllib.parse as _up
+            yt_url = (
+                "https://www.youtube.com/results?search_query="
+                + _up.quote_plus(f"{sid} airport live cam")
+                + "&sp=EgJAAQ%253D%253D"
             )
-            st.caption(
-                "Tap to search YouTube for currently-live spotter "
-                "streams — results are unofficial, not FAA-authoritative."
-            )
+        st.markdown(
+            f'<div style="margin-top:4px;font-size:11px;color:#94a3b8;">'
+            f'Also: <a href="{_html_escape(yt_url)}" target="_blank" '
+            f'rel="noopener noreferrer" '
+            f'style="color:#60a5fa;text-decoration:none;">'
+            f'Search YouTube Live &rarr;</a> '
+            f'<span style="color:#64748b;">(unofficial spotter streams)</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
     # --- RIGHT: GOES-19 animated satellite loop ---------------------------
     with live_right:
@@ -706,35 +765,45 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     _section_help(
         "About Live Coverage",
         what=(
-            "Two supplemental live sources for the selected station: "
-            "an unofficial YouTube spotter cam (when one is mapped or "
-            "searchable) and the NESDIS GOES-19 animated satellite "
-            "loop for the station's region."
+            "Two authoritative federal live-ish sources side-by-side: "
+            "an animated loop of the nearest FAA WeatherCam's last 5 "
+            "frames (2 fps playback, 10-min data cadence) and the "
+            "NESDIS GOES-19 satellite animation for the station's "
+            "region (5-min data cadence)."
         ),
         who=[
             "**Forecasters** — cloud-motion trend from the GOES loop "
-            "is faster than waiting 30 min for the next TAF amendment.",
-            "**AOMC controllers** — cross-check a suspicious METAR "
-            "against the live satellite picture before dispatching "
-            "a truck roll.",
-            "**Ops briefers** — embed a live tower view in a "
-            "situational-awareness call without leaving OWL.",
+            "is faster than waiting 30 min for the next TAF amendment; "
+            "the WeatherCam loop shows ground-level cloud base movement.",
+            "**AOMC controllers** — eyeball the nearest cam before "
+            "dispatching a truck roll; if the loop shows clear skies "
+            "and the METAR says OVC, the sensor is the suspect.",
+            "**Ops briefers** — drop the loop into a situational-"
+            "awareness call without leaving OWL.",
         ],
         how=[
-            "**Left tile** — if a YouTube spotter stream is mapped for "
-            "this ICAO, it plays inline; otherwise click the button to "
-            "search YouTube's live-now results. These are third-party, "
-            "not FAA-authoritative.",
+            "**Left tile** — animated playback of the nearest FAA "
+            "WeatherCam (within 25 NM).  Frames swap client-side every "
+            "500 ms; each frame is the raw CDN still from FAA, so the "
+            "displayed image is always what the sensor actually "
+            "published.  If no cam is within range the tile stays blank.",
             "**Right tile** — GOES-19 animated GIF loop for the region. "
-            "For CONUS stations it's the CONUS sector; PR/USVI gets the "
-            "Puerto Rico sector; Hawaii gets the south Pacific sector.",
-            "Operators can pre-load additional YouTube IDs via the "
-            "`OWL_LIVE_STREAMS_JSON` env var (see README).",
+            "CONUS stations get the CONUS sector; PR/USVI gets the "
+            "Puerto Rico sector; Hawaii gets the south Pacific sector; "
+            "northeast/southeast/upper-Mississippi/etc. get the tighter "
+            "regional sub-sector for more zoom.",
+            "**Below left tile** — small link to YouTube's live-now "
+            "search for this ICAO.  These are unofficial spotter "
+            "streams; many have embedding disabled so we don't try to "
+            "iframe them, we just link out.",
         ],
         output=(
-            "Spotter YouTube feeds vary in framing and uptime; if a "
-            "curated feed goes dark the search-link fallback finds "
-            "alternatives. The NESDIS loop updates every 5 minutes."
+            "The FAA WeatherCam loop gives real aircraft/cloud motion "
+            "using 10-min-cadence stills (matches what "
+            "weathercams.faa.gov itself plays).  The NESDIS GOES loop "
+            "refreshes every 5 minutes.  No third-party/commercial "
+            "live video in this section — both sources are federal "
+            "authoritative."
         ),
     )
 
