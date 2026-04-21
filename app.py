@@ -127,6 +127,12 @@ except ImportError:
     _HAVE_WEBCAMS = False
 
 try:
+    from asos_tools import live_streams as owl_live_streams
+    _HAVE_LIVE_STREAMS = True
+except ImportError:
+    _HAVE_LIVE_STREAMS = False
+
+try:
     from asos_tools.ncei import fetch_metars_ncei, service_available as _ncei_avail
     _HAVE_NCEI = True
 except ImportError:
@@ -558,6 +564,179 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                 st.markdown(f"- **{event}** ({sev}) — {headline}")
         else:
             st.caption("No active CAP alerts for this state.")
+
+    # --- LIVE COVERAGE — YouTube spotter embed + GOES-19 animated loop ---
+    # Two supplemental live-video sources beside the 5-min FAA stills:
+    #   Left  — unofficial YouTube spotter cam (if one is mapped for this
+    #           ICAO, or the user can jump to a YouTube live-search).
+    #   Right — NESDIS GOES-19 animated GIF loop of the region the
+    #           station sits in (CONUS / PR / HI / full-disk fallback).
+    # The YouTube feeds are clearly labelled NOT FAA-authoritative; the
+    # GOES loop is authoritative federal imagery.
+    st.markdown("---")
+    st.markdown("**Live Coverage**")
+    live_left, live_right = st.columns([1, 1])
+
+    # --- LEFT: YouTube live embed or search-link fallback -----------------
+    with live_left:
+        st.markdown(
+            "<div style='font-size:11px;color:#94a3b8;"
+            "text-transform:uppercase;letter-spacing:0.06em;"
+            "font-weight:600;margin-bottom:6px;'>"
+            "Spotter Live Video "
+            "<span style='color:#b91c1c;'>&middot; UNOFFICIAL</span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        cfg = None
+        if _HAVE_LIVE_STREAMS:
+            try:
+                cfg = owl_live_streams.get_live_stream(sid)
+            except Exception:
+                logger.exception("live_streams lookup failed")
+                cfg = None
+
+        embed = None
+        if cfg and _HAVE_LIVE_STREAMS:
+            try:
+                embed = owl_live_streams.embed_url(cfg)
+            except Exception:
+                embed = None
+
+        if embed:
+            # Aspect-ratio-pinned iframe so the cell size matches the
+            # video exactly (same trick as the webcam grid — no grey
+            # dead space below).
+            st.markdown(
+                f'<div style="position:relative;width:100%;'
+                f'aspect-ratio:16/9;border-radius:4px;'
+                f'overflow:hidden;background:#0f172a;">'
+                f'<iframe src="{_html_escape(embed)}" '
+                f'style="position:absolute;inset:0;width:100%;'
+                f'height:100%;border:0;" '
+                f'allow="autoplay; encrypted-media; picture-in-picture" '
+                f'allowfullscreen loading="lazy"></iframe></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(_html_escape(cfg.get("title", "Live spotter stream")))
+        else:
+            # No mapped live stream for this ICAO — show a placeholder
+            # tile + one-click YouTube live-search link.  The search URL
+            # filters to currently-live broadcasts only.
+            if _HAVE_LIVE_STREAMS:
+                search_q = (cfg or {}).get("search") or f"{sid} airport live cam"
+                search_url = owl_live_streams.youtube_search_url(search_q)
+            else:
+                import urllib.parse as _up
+                search_url = (
+                    "https://www.youtube.com/results?search_query="
+                    + _up.quote_plus(f"{sid} airport live cam")
+                    + "&sp=EgJAAQ%253D%253D"
+                )
+            st.markdown(
+                f'<div style="display:flex;flex-direction:column;'
+                f'align-items:center;justify-content:center;'
+                f'width:100%;aspect-ratio:16/9;background:#0f172a;'
+                f'color:#94a3b8;border-radius:4px;'
+                f'border:1px dashed #334155;text-align:center;'
+                f'padding:12px;">'
+                f'<div style="font-size:12px;margin-bottom:8px;">'
+                f'No curated live stream on file for {_html_escape(sid)}.'
+                f'</div>'
+                f'<a href="{_html_escape(search_url)}" target="_blank" '
+                f'rel="noopener noreferrer" '
+                f'style="display:inline-block;background:#dc2626;'
+                f'color:white;padding:6px 14px;border-radius:4px;'
+                f'font-size:12px;font-weight:600;text-decoration:none;">'
+                f'Search YouTube Live &rarr;</a>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "Tap to search YouTube for currently-live spotter "
+                "streams — results are unofficial, not FAA-authoritative."
+            )
+
+    # --- RIGHT: GOES-19 animated satellite loop ---------------------------
+    with live_right:
+        st.markdown(
+            "<div style='font-size:11px;color:#94a3b8;"
+            "text-transform:uppercase;letter-spacing:0.06em;"
+            "font-weight:600;margin-bottom:6px;'>"
+            "GOES-19 Satellite Loop "
+            "<span style='color:#16a34a;'>&middot; NESDIS LIVE</span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        goes_url = None
+        try:
+            from asos_tools.radar import goes_loop_for_station
+            if lat is not None and lon is not None:
+                goes_url = goes_loop_for_station(
+                    float(lat), float(lon),
+                    band="GEOCOLOR", size="625x375",
+                )
+        except Exception:
+            logger.exception("GOES loop URL build failed")
+            goes_url = None
+
+        if goes_url:
+            # Cache-bust with minute-bucket so browsers refetch the GIF
+            # every ~5 min (NESDIS publishes a new frame that often).
+            bust = datetime.now(timezone.utc).strftime("%Y%m%d%H%M")
+            bust = bust[:-1]  # bucket to 10-min for CDN-friendliness
+            st.markdown(
+                f'<div style="position:relative;width:100%;'
+                f'aspect-ratio:16/9;border-radius:4px;'
+                f'overflow:hidden;background:#0f172a;">'
+                f'<img src="{_html_escape(goes_url)}?t={bust}" '
+                f'alt="GOES-19 animated satellite loop" '
+                f'loading="lazy" '
+                f'style="position:absolute;inset:0;width:100%;'
+                f'height:100%;object-fit:cover;display:block;"/></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                "NESDIS GOES-19 GeoColor · refreshes every 5 minutes · "
+                "authoritative NOAA satellite imagery."
+            )
+        else:
+            st.caption("GOES loop unavailable for this station's region.")
+
+    _section_help(
+        "About Live Coverage",
+        what=(
+            "Two supplemental live sources for the selected station: "
+            "an unofficial YouTube spotter cam (when one is mapped or "
+            "searchable) and the NESDIS GOES-19 animated satellite "
+            "loop for the station's region."
+        ),
+        who=[
+            "**Forecasters** — cloud-motion trend from the GOES loop "
+            "is faster than waiting 30 min for the next TAF amendment.",
+            "**AOMC controllers** — cross-check a suspicious METAR "
+            "against the live satellite picture before dispatching "
+            "a truck roll.",
+            "**Ops briefers** — embed a live tower view in a "
+            "situational-awareness call without leaving OWL.",
+        ],
+        how=[
+            "**Left tile** — if a YouTube spotter stream is mapped for "
+            "this ICAO, it plays inline; otherwise click the button to "
+            "search YouTube's live-now results. These are third-party, "
+            "not FAA-authoritative.",
+            "**Right tile** — GOES-19 animated GIF loop for the region. "
+            "For CONUS stations it's the CONUS sector; PR/USVI gets the "
+            "Puerto Rico sector; Hawaii gets the south Pacific sector.",
+            "Operators can pre-load additional YouTube IDs via the "
+            "`OWL_LIVE_STREAMS_JSON` env var (see README).",
+        ],
+        output=(
+            "Spotter YouTube feeds vary in framing and uptime; if a "
+            "curated feed goes dark the search-link fallback finds "
+            "alternatives. The NESDIS loop updates every 5 minutes."
+        ),
+    )
 
 
 def _wlabel(days: int) -> str:

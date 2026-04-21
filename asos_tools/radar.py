@@ -31,6 +31,9 @@ __all__ = [
     "latest_conus_radar_url",
     "latest_goes_conus_url",
     "latest_goes_fulldisk_url",
+    "goes_conus_loop_url",
+    "goes_sector_loop_url",
+    "goes_loop_for_station",
     "RADAR_BOUNDS",
 ]
 
@@ -85,6 +88,123 @@ def latest_goes_fulldisk_url(band: str = "GEOCOLOR") -> str:
     return (
         f"https://cdn.star.nesdis.noaa.gov/GOES19/ABI/FD/{band}/latest.jpg"
     )
+
+
+# --- GOES-19 ANIMATED LOOPS (NESDIS pre-rendered GIFs) ----------------------
+# NESDIS publishes animated GIF loops of the last N GOES-19 ABI frames at
+# stable URLs.  Cadence is 5-min for CONUS sectors, 1-min for MESO-1/2
+# sectors.  These are reliable, federal, and zero-auth — perfect for a
+# "live aviation weather footage" panel in the station drill view.
+
+#: Known NESDIS sector codes for GOES-19 ABI (east-positioned sat).
+#: Each sector has a latest JPG + an animated GIF loop.
+GOES19_SECTORS = {
+    "CONUS": "continental US",
+    "FD":    "full disk (western hemisphere)",
+    "ne":    "northeast US",
+    "umv":   "upper Mississippi valley",
+    "sp":    "south Pacific",
+    "nr":    "northern Rockies",
+    "sr":    "southern Rockies",
+    "pr":    "Puerto Rico",
+    "can":   "Caribbean",
+    "gm":    "Gulf of Mexico",
+    "taw":   "tropical Atlantic wide",
+    "eep":   "eastern equatorial Pacific",
+    "car":   "Caribbean regional",
+    "se":    "southeast US",
+    "smv":   "southern Mississippi valley",
+}
+
+
+def goes_conus_loop_url(band: str = "GEOCOLOR", size: str = "625x375") -> str:
+    """Return URL of NESDIS's animated GIF loop for GOES-19 CONUS.
+
+    Only ``625x375`` is published as a GIF animation for CONUS; larger
+    sizes (1250x750, 2500x1500, 5000x3000) exist only as single JPG
+    frames.  Keep the default at the published size to avoid 404s.
+
+    Loops ~8–12 of the most recent 5-min frames and refreshes every
+    5 minutes.  Image CSP already includes ``*.nesdis.noaa.gov``.
+    """
+    return (
+        f"https://cdn.star.nesdis.noaa.gov/GOES19/ABI/CONUS/{band}/"
+        f"GOES19-CONUS-{band}-{size}.gif"
+    )
+
+
+def goes_sector_loop_url(
+    sector: str, band: str = "GEOCOLOR", size: str = "600x600",
+) -> str:
+    """Return URL of NESDIS's animated GIF loop for a GOES-19 regional sector.
+
+    Sector must be one of ``GOES19_SECTORS``.  Regional sectors are
+    useful when the station's weather is dominated by a local feature
+    (e.g. a gulf coast low) and CONUS is too zoomed out.
+    """
+    sec_upper = sector.upper()
+    return (
+        f"https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/{sector}/"
+        f"{band}/GOES19-{sec_upper}-{band}-{size}.gif"
+    )
+
+
+def goes_loop_for_station(
+    lat: float,
+    lon: float,
+    band: str = "GEOCOLOR",
+    size: str = "625x375",
+) -> str:
+    """Pick the best GOES-19 animated loop URL for a given station lat/lon.
+
+    Rough geographic routing (good enough for a drill-panel thumbnail):
+      - CONUS lower-48  → CONUS loop (625x375)
+      - Alaska          → fall back to CONUS (GOES-19 barely sees AK;
+                          a follow-up can switch to GOES-18 West)
+      - Hawaii          → ``sp`` sector (south Pacific covers HI)
+      - Puerto Rico / USVI / Caribbean → ``pr`` sector
+      - Regional sub-sectors (NE/SE/etc) sized 600x600
+      - Otherwise       → CONUS (NESDIS does not publish FD loops as GIF)
+    """
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (TypeError, ValueError):
+        return goes_conus_loop_url(band=band, size=size)
+
+    # Puerto Rico / USVI / Caribbean
+    if 16.0 <= lat_f <= 20.0 and -68.0 <= lon_f <= -63.0:
+        return goes_sector_loop_url("pr", band=band, size="600x600")
+    # Hawaii — use south Pacific regional sector
+    if 18.0 <= lat_f <= 23.0 and -162.0 <= lon_f <= -154.0:
+        return goes_sector_loop_url("sp", band=band, size="600x600")
+    # Alaska — GOES-19 coverage is poor; fall back to CONUS for now
+    if lat_f >= 50.0 and lon_f <= -130.0:
+        return goes_conus_loop_url(band=band, size=size)
+    # Regional CONUS sub-sectors — tighter zoom than full CONUS
+    # Northeast US
+    if 36.0 <= lat_f <= 48.0 and -85.0 <= lon_f <= -65.0:
+        return goes_sector_loop_url("ne", band=band, size="600x600")
+    # Southeast US
+    if 24.0 <= lat_f <= 37.0 and -92.0 <= lon_f <= -75.0:
+        return goes_sector_loop_url("se", band=band, size="600x600")
+    # Upper Mississippi Valley
+    if 38.0 <= lat_f <= 50.0 and -100.0 <= lon_f <= -85.0:
+        return goes_sector_loop_url("umv", band=band, size="600x600")
+    # Southern Mississippi Valley
+    if 28.0 <= lat_f <= 38.0 and -100.0 <= lon_f <= -85.0:
+        return goes_sector_loop_url("smv", band=band, size="600x600")
+    # Northern Rockies
+    if 40.0 <= lat_f <= 50.0 and -120.0 <= lon_f <= -100.0:
+        return goes_sector_loop_url("nr", band=band, size="600x600")
+    # Southern Rockies
+    if 30.0 <= lat_f <= 40.0 and -120.0 <= lon_f <= -100.0:
+        return goes_sector_loop_url("sr", band=band, size="600x600")
+    # Lower-48 CONUS (fallback for anything else inside CONUS box)
+    if 24.0 <= lat_f <= 50.0 and -126.0 <= lon_f <= -66.0:
+        return goes_conus_loop_url(band=band, size=size)
+    # Everything outside — NESDIS doesn't publish FD loops, so use CONUS
+    return goes_conus_loop_url(band=band, size=size)
 
 
 def head_ok(url: str, timeout: float = 5.0) -> bool:
