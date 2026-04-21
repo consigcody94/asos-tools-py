@@ -36,7 +36,7 @@ jobs:
           lfs: true
           persist-credentials: false
 
-      - name: Push to Hugging Face
+      - name: Upload to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_USER: ${{ vars.HF_SPACE_USER || 'consgicody' }}
@@ -50,27 +50,47 @@ jobs:
             exit 1
           fi
 
-          # Configure identity for any re-refs HF creates on its side.
-          git config user.email "deploy-bot@asos-tools.ci"
-          git config user.name  "ASOS-Tools Deploy Bot"
-
-          # HF Space push — auth via the huggingface_hub CLI, which
-          # stores the token in the git credential helper so the
-          # subsequent `git push` picks it up.  This is the pattern
-          # documented by HF for CI jobs and avoids the "password
-          # authentication is no longer supported" error that comes
-          # from embedding a user:token pair in the URL.
           python -m pip install --quiet "huggingface_hub>=0.27"
-          # The new `hf` CLI supersedes the deprecated `huggingface-cli`.
-          hf auth login \
-            --token "${HF_TOKEN}" \
-            --add-to-git-credential
 
-          HF_URL="https://huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
+          # HF Space deploys via the REST API, not git.  HF's git server
+          # rejects write-role tokens with "Invalid username or password"
+          # (apparent quirk with the LFS gateway), but the same token
+          # works fine for REST.  upload_folder() sends a single commit
+          # with every tracked file; ignore_patterns excludes local dev
+          # artifacts that shouldn't ship to the Space.
+          python <<'PY'
+          import os, sys, pathlib
+          from huggingface_hub import HfApi, CommitOperationAdd, CommitOperationDelete
 
-          # Force-push so GitHub main becomes the canonical HF history.
-          # HF's internal commits (if any) are discarded — matches how
-          # every deploy worked before the native GitHub link broke.
-          git push --force "${HF_URL}" HEAD:main
+          token   = os.environ["HF_TOKEN"]
+          user    = os.environ["HF_SPACE_USER"]
+          name    = os.environ["HF_SPACE_NAME"]
+          sha     = os.environ.get("GITHUB_SHA", "local")[:7]
 
-          echo "::notice::Mirrored ${GITHUB_SHA::7} to ${HF_SPACE_USER}/${HF_SPACE_NAME}"
+          api = HfApi(token=token)
+          repo_id = f"{user}/{name}"
+
+          api.upload_folder(
+              folder_path=".",
+              repo_id=repo_id,
+              repo_type="space",
+              commit_message=f"Sync from GitHub {sha}",
+              ignore_patterns=[
+                  ".git/**",
+                  ".github/**",
+                  ".venv/**",
+                  "venv/**",
+                  "__pycache__/**",
+                  "**/__pycache__/**",
+                  "**/*.pyc",
+                  ".pytest_cache/**",
+                  ".ruff_cache/**",
+                  ".mypy_cache/**",
+                  "tests/**",
+                  "*.log",
+                  "hf_app.py",          # local diag artifact from probes
+                  "conus.html",
+              ],
+          )
+          print(f"::notice::Mirrored {sha} to {repo_id} via HF REST API")
+          PY
