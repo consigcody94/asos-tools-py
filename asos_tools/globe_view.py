@@ -275,38 +275,12 @@ _GLOBE_HTML_TEMPLATE = r"""
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>O.W.L. Globe</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   html, body {{ margin: 0; padding: 0; background: {bg_color};
-                color: #e2e8f0; font-family: 'Rajdhani', 'Inter', system-ui, sans-serif;
+                color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif;
                 overflow: hidden; height: {height_px}px; }}
   #globeViz {{ width: 100%; height: 100%; cursor: grab; }}
   #globeViz:active {{ cursor: grabbing; }}
-
-  /* Subtle scanline overlay — barely visible, adds NOC ambiance without
-     distracting from the 3D scene. */
-  body::after {{
-    content: "";
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(0, 229, 255, 0.28) 50%,
-      transparent 100%);
-    box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
-    animation: noc-scan 14s linear infinite;
-    pointer-events: none;
-    z-index: 9999;
-  }}
-  @keyframes noc-scan {{
-    0% {{ transform: translateY(0); opacity: 0; }}
-    2% {{ opacity: 1; }}
-    98% {{ opacity: 1; }}
-    100% {{ transform: translateY({height_px}px); opacity: 0; }}
-  }}
 
   /* Mobile: shrink globe, hide non-essential chrome, smaller fonts */
   @media (max-width: 760px) {{
@@ -322,116 +296,65 @@ _GLOBE_HTML_TEMPLATE = r"""
   .ovl {{ position: absolute; pointer-events: none; user-select: none;
           font-feature-settings: 'tnum', 'cv11'; }}
 
-  /* NOC corner-bracket treatment for any .noc-framed overlay card.
-     Drawn with pseudo-elements so no additional DOM nodes needed. */
-  .noc-framed {{
-    position: absolute;
-    background: linear-gradient(180deg, rgba(11, 18, 32, 0.88) 0%,
-                                         rgba(15, 26, 48, 0.82) 100%);
-    border: 1px solid rgba(0, 229, 255, 0.22);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.55),
-                inset 0 0 40px rgba(0, 229, 255, 0.03);
-  }}
-  .noc-framed::before,
-  .noc-framed::after {{
-    content: "";
-    position: absolute;
-    width: 10px; height: 10px;
-    border-color: #00e5ff;
-    border-style: solid;
-    pointer-events: none;
-    box-shadow: 0 0 8px rgba(0, 229, 255, 0.55);
-  }}
-  .noc-framed::before {{ top: -1px; left: -1px;  border-width: 1px 0 0 1px; }}
-  .noc-framed::after  {{ bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }}
-
   /* Top-left HUD card */
   .hud-card {{ top: 14px; left: 14px;
-               padding: 12px 16px; min-width: 200px; }}
-  .hud-title {{ font-family: 'Rajdhani', sans-serif;
-                font-size: 11px; letter-spacing: 0.22em;
-                color: #00e5ff; text-transform: uppercase;
-                font-weight: 700; margin-bottom: 6px;
-                text-shadow: 0 0 10px rgba(0, 229, 255, 0.45); }}
-  .hud-clock {{ font-family: 'Share Tech Mono', 'JetBrains Mono', ui-monospace, monospace;
-                font-size: 20px; color: #00e5ff; font-weight: 500;
-                letter-spacing: 0.08em;
-                text-shadow: 0 0 10px rgba(0, 229, 255, 0.55);
-                font-variant-numeric: tabular-nums; }}
-  .hud-sub   {{ font-family: 'Rajdhani', sans-serif;
-                font-size: 11px; color: #94a3b8;
-                margin-top: 6px; letter-spacing: 0.14em;
-                text-transform: uppercase; }}
+               background: rgba(2, 6, 23, 0.72);
+               border: 1px solid rgba(56, 189, 248, 0.25);
+               border-radius: 8px; padding: 10px 14px;
+               backdrop-filter: blur(6px);
+               box-shadow: 0 4px 24px rgba(0,0,0,0.4); }}
+  .hud-title {{ font-size: 11px; letter-spacing: 0.16em;
+                color: #38bdf8; text-transform: uppercase;
+                font-weight: 600; margin-bottom: 4px; }}
+  .hud-clock {{ font-family: 'JetBrains Mono', ui-monospace, monospace;
+                font-size: 18px; color: #f1f5f9; font-weight: 500; }}
+  .hud-sub   {{ font-size: 11px; color: #64748b; margin-top: 4px; }}
 
   /* Bottom-left point counter — raised above the ticker */
   .stat-card {{ bottom: 44px; left: 14px;
-                padding: 8px 14px; font-size: 11px;
-                font-family: 'Rajdhani', sans-serif;
-                letter-spacing: 0.12em; text-transform: uppercase;
-                color: #94a3b8; }}
-  .stat-card b {{ color: #00e5ff; font-family: 'Share Tech Mono', monospace;
-                  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
-                  font-weight: 400; letter-spacing: 0.08em; }}
+                background: rgba(2, 6, 23, 0.72);
+                border: 1px solid rgba(56, 189, 248, 0.25);
+                border-radius: 8px; padding: 8px 14px; font-size: 12px;
+                backdrop-filter: blur(6px); }}
+  .stat-card b {{ color: #f1f5f9; }}
 
   /* Bottom-right legend — raised above the ticker */
   .legend {{ bottom: 44px; right: 14px;
-             padding: 10px 14px; font-size: 11px;
-             min-width: 140px; pointer-events: auto; }}
-  .legend .title {{ color: #00e5ff; font-weight: 700;
-                    font-family: 'Rajdhani', sans-serif;
-                    text-transform: uppercase; letter-spacing: 0.22em;
-                    font-size: 10px; margin-bottom: 8px;
-                    text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }}
+             background: rgba(2, 6, 23, 0.78);
+             border: 1px solid rgba(56, 189, 248, 0.25);
+             border-radius: 8px; padding: 10px 14px;
+             font-size: 11px; backdrop-filter: blur(6px);
+             min-width: 130px; pointer-events: auto; }}
+  .legend .title {{ color: #38bdf8; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.1em;
+                    font-size: 10px; margin-bottom: 6px; }}
   .lg-row {{ display: flex; align-items: center; gap: 8px;
-             padding: 2px 0; color: #cbd5e1;
-             font-family: 'Rajdhani', sans-serif;
-             letter-spacing: 0.06em; }}
+             padding: 2px 0; color: #cbd5e1; }}
   .lg-dot {{ width: 9px; height: 9px; border-radius: 50%;
-             box-shadow: 0 0 6px currentColor; }}
+             box-shadow: 0 0 4px currentColor; }}
 
   /* Click tooltip */
   .tip {{ position: absolute; pointer-events: none;
-          background: rgba(11, 18, 32, 0.95);
-          border: 1px solid rgba(0, 229, 255, 0.45);
-          padding: 6px 10px;
-          font-family: 'Rajdhani', sans-serif;
+          background: rgba(2, 6, 23, 0.92);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          border-radius: 6px; padding: 6px 10px;
           font-size: 12px; color: #f1f5f9;
           transform: translate(-50%, -120%);
           white-space: nowrap; display: none;
-          box-shadow: 0 4px 18px rgba(0,0,0,0.7),
-                      0 0 12px rgba(0, 229, 255, 0.2); }}
-  .tip .name {{ color: #00e5ff; font-weight: 700;
-                text-shadow: 0 0 6px rgba(0, 229, 255, 0.45);
-                letter-spacing: 0.08em; }}
-  .tip .meta {{ color: #94a3b8; font-size: 10px;
-                letter-spacing: 0.1em; text-transform: uppercase; }}
+          box-shadow: 0 4px 18px rgba(0,0,0,0.6); }}
+  .tip .name {{ color: #38bdf8; font-weight: 600; }}
+  .tip .meta {{ color: #94a3b8; font-size: 10px; }}
 
   /* News ticker — auto-scrolling marquee along the bottom edge */
-  .ticker {{ left: 0; right: 0; bottom: 0; height: 32px;
+  .ticker {{ left: 0; right: 0; bottom: 0; height: 30px;
              background: linear-gradient(90deg,
-               rgba(11,18,32,0.95) 0%,
-               rgba(15,26,48,0.90) 50%,
-               rgba(11,18,32,0.95) 100%);
-             border-top: 1px solid rgba(0, 229, 255, 0.35);
-             box-shadow: 0 -4px 18px rgba(0, 229, 255, 0.06);
+               rgba(2,6,23,0.92) 0%,
+               rgba(2,6,23,0.82) 50%,
+               rgba(2,6,23,0.92) 100%);
+             border-top: 1px solid rgba(56, 189, 248, 0.25);
              overflow: hidden;
              backdrop-filter: blur(4px);
              pointer-events: auto; }}
-  .ticker::before {{
-    content: "LIVE FEED";
-    position: absolute; left: 0; top: 0; bottom: 0;
-    width: 92px;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(90deg, #00e5ff 0%, #0891b2 100%);
-    color: #050816;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 700; font-size: 11px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    z-index: 2;
-    box-shadow: 0 0 12px rgba(0, 229, 255, 0.55);
-  }}
   /* The inner strip contains the item list duplicated exactly once.
      Animating from 0 to -50% scrolls through the first copy while the
      second copy slides into view — when -50% is reached, the wrapping
@@ -440,8 +363,7 @@ _GLOBE_HTML_TEMPLATE = r"""
      which used to cause a visible "jump/restart" when the animation
      wrapped. */
   .tk-inner {{ display: flex; align-items: center; height: 100%;
-               white-space: nowrap; gap: 28px;
-               padding-left: 104px;
+               white-space: nowrap; gap: 26px;
                animation: tk-scroll 35s linear infinite;
                will-change: transform; }}
   .ticker:hover .tk-inner {{ animation-play-state: paused; }}
@@ -458,118 +380,79 @@ _GLOBE_HTML_TEMPLATE = r"""
                letter-spacing: 0.08em; text-transform: uppercase;
                margin-right: 8px; vertical-align: 1px; }}
 
-  /* Controls — HUD buttons with cyan frame and glow on hover */
+  /* Controls */
   .controls {{ position: absolute; top: 14px; right: 14px;
                display: flex; gap: 6px; pointer-events: auto; }}
-  .ctl {{ background: linear-gradient(180deg, rgba(15, 26, 48, 0.88) 0%,
-                                                rgba(11, 18, 32, 0.88) 100%);
-          border: 1px solid rgba(0, 229, 255, 0.35);
-          color: #94a3b8;
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.14em; text-transform: uppercase;
-          padding: 6px 12px; border-radius: 0; cursor: pointer;
+  .ctl {{ background: rgba(2, 6, 23, 0.72);
+          border: 1px solid rgba(56, 189, 248, 0.25);
+          color: #cbd5e1; font-size: 11px; font-weight: 500;
+          padding: 6px 10px; border-radius: 6px; cursor: pointer;
           backdrop-filter: blur(6px);
-          box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.05);
-          transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-          clip-path: polygon(
-            4px 0, 100% 0,
-            100% calc(100% - 4px), calc(100% - 4px) 100%,
-            0 100%, 0 4px
-          ); }}
-  .ctl:hover {{ color: #f1f5f9;
-                border-color: #00e5ff;
-                box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.18),
-                            0 0 12px rgba(0, 229, 255, 0.25);
-                text-shadow: 0 0 6px rgba(0, 229, 255, 0.5); }}
-  .ctl.on   {{ background: linear-gradient(180deg, rgba(0, 229, 255, 0.20) 0%,
-                                                     rgba(8, 145, 178, 0.25) 100%);
-               border-color: #00e5ff; color: #f1f5f9;
-               box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.15),
-                           0 0 18px rgba(0, 229, 255, 0.35);
-               text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }}
+          transition: background 0.15s, color 0.15s; }}
+  .ctl:hover {{ background: rgba(56, 189, 248, 0.16); color: #f1f5f9; }}
+  .ctl.on   {{ background: rgba(56, 189, 248, 0.22);
+               border-color: #38bdf8; color: #f1f5f9; }}
 
   /* Regional preset buttons — left side, vertical stack */
   .regions {{ position: absolute; top: 90px; left: 14px;
               display: flex; flex-direction: column; gap: 4px;
               pointer-events: auto; }}
-  .rg-title {{ color: #00e5ff; font-weight: 700;
-               font-family: 'Rajdhani', sans-serif;
-               text-transform: uppercase; letter-spacing: 0.22em;
-               font-size: 10px; margin-bottom: 4px;
-               text-shadow: 0 0 6px rgba(0, 229, 255, 0.4); }}
-  .rg-btn {{ text-align: left; min-width: 114px;
+  .rg-title {{ color: #38bdf8; font-weight: 600;
+               text-transform: uppercase; letter-spacing: 0.1em;
+               font-size: 10px; margin-bottom: 2px; }}
+  .rg-btn {{ text-align: left; min-width: 110px;
              font-size: 10.5px; padding: 5px 10px; }}
-  .rg-btn.active {{ background: linear-gradient(180deg, rgba(0, 229, 255, 0.30) 0%,
-                                                         rgba(8, 145, 178, 0.35) 100%);
-                    border-color: #00e5ff; color: #f1f5f9;
-                    box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.15),
-                                0 0 14px rgba(0, 229, 255, 0.3); }}
+  .rg-btn.active {{ background: rgba(56, 189, 248, 0.28);
+                    border-color: #38bdf8; color: #f1f5f9; }}
 
-  /* Persistent station card — shown on click (vs transient hover tooltip).
-     Gets the same noc-framed corner-bracket treatment via class below. */
-  .card {{ top: 90px; right: 14px;
+  /* Persistent station card — shown on click (vs transient hover tooltip) */
+  .card {{ position: absolute; top: 90px; right: 14px;
            width: 300px; max-width: 90vw;
-           padding: 14px 16px;
-           pointer-events: auto;
+           background: rgba(2, 6, 23, 0.92);
+           border: 1px solid rgba(56, 189, 248, 0.35);
+           border-radius: 8px; padding: 14px 16px;
+           backdrop-filter: blur(6px); pointer-events: auto;
            display: none;
-           box-shadow: 0 8px 28px rgba(0,0,0,0.7),
-                       0 0 24px rgba(0, 229, 255, 0.1); }}
+           box-shadow: 0 8px 28px rgba(0,0,0,0.6); }}
   .card.open {{ display: block; }}
-  .card .close {{ position: absolute; top: 4px; right: 8px;
+  .card .close {{ position: absolute; top: 6px; right: 8px;
                   color: #64748b; cursor: pointer; font-size: 16px;
-                  line-height: 1; padding: 2px 6px;
-                  font-family: 'Share Tech Mono', monospace; }}
-  .card .close:hover {{ color: #00e5ff;
-                        text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }}
+                  line-height: 1; padding: 2px 4px; }}
+  .card .close:hover {{ color: #f1f5f9; }}
   .card .hd {{ display: flex; align-items: baseline; gap: 8px;
                margin-bottom: 8px; }}
-  .card .cd-id {{ font-family: 'Share Tech Mono', 'JetBrains Mono', ui-monospace, monospace;
-                  font-size: 22px; font-weight: 500; color: #00e5ff;
-                  letter-spacing: 0.1em;
-                  text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }}
-  .card .cd-badge {{ padding: 2px 8px;
-                     font-family: 'Rajdhani', sans-serif;
+  .card .cd-id {{ font-family: 'JetBrains Mono', ui-monospace, monospace;
+                  font-size: 20px; font-weight: 700; color: #38bdf8; }}
+  .card .cd-badge {{ padding: 2px 8px; border-radius: 3px;
                      font-size: 10px; font-weight: 700;
-                     letter-spacing: 0.14em; text-transform: uppercase;
-                     clip-path: polygon(
-                       3px 0, 100% 0,
-                       100% calc(100% - 3px), calc(100% - 3px) 100%,
-                       0 100%, 0 3px
-                     ); }}
-  .card .cd-sub {{ font-family: 'Rajdhani', sans-serif;
-                   font-size: 11px; color: #94a3b8;
-                   margin-bottom: 10px;
-                   letter-spacing: 0.12em; text-transform: uppercase; }}
-  .card .cd-reason {{ font-family: 'Rajdhani', sans-serif;
-                      font-size: 11px; color: #cbd5e1;
-                      padding: 6px 8px; background: rgba(0, 229, 255, 0.06);
-                      border-left: 2px solid #00e5ff;
-                      margin-bottom: 10px;
-                      letter-spacing: 0.04em; }}
-  .card .cd-metar {{ font-family: 'Share Tech Mono', 'JetBrains Mono', ui-monospace, monospace;
-                     font-size: 10.5px; line-height: 1.55;
+                     letter-spacing: 0.08em; text-transform: uppercase; }}
+  .card .cd-sub {{ font-size: 12px; color: #94a3b8;
+                   margin-bottom: 10px; }}
+  .card .cd-reason {{ font-size: 11px; color: #cbd5e1;
+                      padding: 6px 8px; background: rgba(56,189,248,0.08);
+                      border-left: 2px solid #38bdf8;
+                      border-radius: 2px; margin-bottom: 10px; }}
+  .card .cd-metar {{ font-family: 'JetBrains Mono', ui-monospace, monospace;
+                     font-size: 10.5px; line-height: 1.45;
                      color: #e2e8f0;
-                     background: rgba(5, 8, 22, 0.85);
-                     border: 1px solid rgba(0, 229, 255, 0.15);
-                     padding: 8px 10px;
-                     word-break: break-all;
-                     letter-spacing: 0.04em; }}
+                     background: rgba(15, 23, 42, 0.72);
+                     padding: 8px 10px; border-radius: 4px;
+                     word-break: break-all; }}
 </style>
 </head>
 <body>
 
 <div id="globeViz"></div>
 
-<div class="ovl noc-framed hud-card">
+<div class="ovl hud-card">
   <div class="hud-title">O.W.L. NETWORK GLOBE</div>
   <div class="hud-clock" id="clock">--:--:-- UTC</div>
-  <div class="hud-sub" id="sub">{n_points} stations tracked</div>
+  <div class="hud-sub" id="sub">{n_points} stations on globe</div>
 </div>
 
-<div class="ovl noc-framed stat-card">
-  <b id="visible-count">{n_points}</b> <span style="color:#64748b;">VISIBLE</span>
-  &nbsp;&middot;&nbsp; <span id="hover-info">hover a point</span>
+<div class="ovl stat-card">
+  <b id="visible-count">{n_points}</b> visible &middot;
+  <span id="hover-info">hover a point</span>
 </div>
 
 <div class="ovl controls">
@@ -592,7 +475,7 @@ _GLOBE_HTML_TEMPLATE = r"""
   <button class="ctl rg-btn" data-lat="18"    data-lng="-66"   data-alt="0.7">CARIBBEAN</button>
 </div>
 
-<div class="ovl noc-framed legend">
+<div class="ovl legend">
   <div class="title">Status</div>
   {legend_rows}
 </div>
@@ -600,8 +483,8 @@ _GLOBE_HTML_TEMPLATE = r"""
 <div class="tip" id="tip"></div>
 
 <!-- Persistent station card shown on click -->
-<div class="card ovl noc-framed" id="card">
-  <span class="close" id="card-close">&#x2715;</span>
+<div class="card ovl" id="card">
+  <span class="close" id="card-close">X</span>
   <div class="hd">
     <span class="cd-id"    id="cd-id">----</span>
     <span class="cd-badge" id="cd-badge">---</span>
