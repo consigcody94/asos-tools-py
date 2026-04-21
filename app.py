@@ -972,35 +972,6 @@ html, body, .main, section.main { scroll-behavior: auto !important; }
    so the page doesn't jump when st.image() fills the slot. */
 .stSpinner { min-height: 40px; }
 
-/* === USWDS-STYLE FEDERAL BANNER === */
-/* Sits above the ops banner.  GSA-style "official website" strip that
-   reads as government the first second the page loads. */
-.usa-banner {
-    background: #f0f0f0;
-    border-bottom: 1px solid #d0d0d0;
-    padding: 4px 0;
-    font-family: 'Public Sans', 'Source Sans Pro', 'Inter', sans-serif;
-    font-size: 11px;
-    color: #1b1b1b;
-    margin: -16px -16px 0 -16px;
-}
-.usa-banner-inner {
-    max-width: 1460px;
-    margin: 0 auto;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.usa-banner-flag {
-    font-size: 13px;
-    line-height: 1;
-}
-.usa-banner-text {
-    letter-spacing: 0.01em;
-    font-weight: 500;
-}
-
 /* === OPERATIONS BANNER (top of page) === */
 .ops-banner {
     display: flex;
@@ -1578,22 +1549,6 @@ if _HAVE_AOMC:
 # Status banner — system status + live clock. Use st.html() to avoid
 # markdown wrapping raw HTML in <p> tags that break flex layout.
 _now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-# USWDS-style federal "official website" banner above the ops banner.
-# Renders the standard GSA wording + small flag glyph so the service
-# reads as a government tool from the first pixel.
-_uswds_banner = (
-    '<div class="usa-banner">'
-    '<div class="usa-banner-inner">'
-    '<span class="usa-banner-flag" aria-hidden="true">&#x1F1FA;&#x1F1F8;</span>'
-    '<span class="usa-banner-text">'
-    'An official NOAA / NWS / FAA operations tool. '
-    'Data: NCEI, IEM, Aviation Weather Center, NWS, FAA WeatherCams, SWPC.'
-    '</span>'
-    '</div>'
-    '</div>'
-)
-st.html(_uswds_banner)
-
 _banner_html = (
     '<div class="ops-banner">'
     '<div class="ops-banner-left">'
