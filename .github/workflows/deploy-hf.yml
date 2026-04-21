@@ -1,0 +1,65 @@
+name: Deploy to Hugging Face Space
+
+# Mirrors the GitHub main branch into the HF Space git on every push.
+# Needed because HF's native GitHub auto-sync silently dropped (the
+# Space's `linkedRepo` field went null, and syncs stopped after commit
+# 29d8b01).  This workflow removes the dependency on that link by
+# force-pushing from GitHub Actions using HF_TOKEN.
+#
+# Secret required:
+#   HF_TOKEN  — write-access HF user access token.  Set via
+#               `gh secret set HF_TOKEN -R consigcody94/asos-tools-py`.
+#
+# Variable used (optional — defaults baked in if unset):
+#   HF_SPACE_USER  — HF namespace (default: consgicody)
+#   HF_SPACE_NAME  — space slug    (default: asos-tools)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    name: Force-push main to HF Space
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          persist-credentials: false
+
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_USER: ${{ vars.HF_SPACE_USER || 'consgicody' }}
+          HF_SPACE_NAME: ${{ vars.HF_SPACE_NAME || 'asos-tools' }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is not set — cannot mirror."
+            echo "Set one with: gh secret set HF_TOKEN -R \${{ github.repository }}"
+            exit 1
+          fi
+
+          # Configure identity for any re-refs HF creates on its side.
+          git config user.email "deploy-bot@asos-tools.ci"
+          git config user.name  "ASOS-Tools Deploy Bot"
+
+          # Credential redaction: never let the token leak into stdout/stderr.
+          # The URL is never echoed; only "mirrored to HF" on success.
+          HF_URL="https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_USER}/${HF_SPACE_NAME}"
+
+          # Force-push so our GitHub main becomes the canonical HF history.
+          # HF's internal commits (if any) are discarded — this matches how
+          # every deploy worked before the link broke.
+          git push --force "$HF_URL" HEAD:main 2>&1 \
+            | sed -E "s|https://user:[^@]+@|https://user:***@|g"
+
+          echo "::notice::Mirrored ${GITHUB_SHA::7} to ${HF_SPACE_USER}/${HF_SPACE_NAME}"
