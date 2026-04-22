@@ -1820,7 +1820,7 @@ st.html(_banner_html)
 st.html(
     '<div class="ops-title">'
     '<div class="ops-title-name">O.W.L.</div>'
-    '<div class="ops-title-sub">Observation Watch Log &middot; National ASOS Operations Dashboard</div>'
+    '<div class="ops-title-sub">Observation Watch Log &middot; ASOS Operations Dashboard</div>'
     '</div>'
 )
 
@@ -2278,7 +2278,7 @@ with tab_summary:
                 logger.exception("most-recent flagged/missing strip failed")
 
             if _HAVE_GLOBE:
-                st.subheader("National ASOS Status Globe")
+                st.subheader("ASOS Status Globe")
                 dark_mode = bool(st.session_state.get("dark_mode", True))
 
                 # Pull news headlines for the bottom ticker. Feed failures
@@ -2401,7 +2401,7 @@ with tab_summary:
                     _render_drill_panel(drill_sid, plk, wl)
             elif _HAVE_FOLIUM:
                 # Fallback: 2D Folium map if Globe.gl module isn't available.
-                st.subheader("National ASOS Status Map (2D fallback)")
+                st.subheader("ASOS Status Map (2D fallback)")
                 with st.spinner("Rendering map…"):
                     fmap = build_status_map(
                         wl, AOMC_STATIONS,
@@ -3140,13 +3140,13 @@ with tab_fcst:
         ),
         who=[
             "**NWS aviation forecasters** — primary audience; build the morning hazard brief.",
-            "**ATC facility supervisors** — scan National Hazards before coordinating around weather with AOMC.",
+            "**ATC facility supervisors** — scan Active Hazards before coordinating around weather with AOMC.",
             "**Pilots / dispatchers preparing a flight** — pull the TAF + nearby PIREPs for a destination.",
             "**Emergency managers** — Active Alerts shows every NWS CAP warning in force right now.",
             "**Anyone wanting 'is KXYZ flyable right now'** — Station TAF/METAR gives the cleanest single-page answer.",
         ],
         how=[
-            "Start at **National Hazards** to see what's being watched fleet-wide.",
+            "Start at **Active Hazards** to see what's being watched fleet-wide.",
             "Switch to **Station TAF/METAR**, enter or pick an ICAO, and read current + forecast conditions.",
             "Use **Flight Category Rollup** to see how many stations are in each category right now (red flags if IFR/LIFR > baseline).",
             "Check **Active Alerts** last — filter by severity (Extreme/Severe/Moderate/Minor) to focus on actionable threats.",
@@ -3160,12 +3160,12 @@ with tab_fcst:
     fcst_ck = _session_data_key()
 
     fcst_a, fcst_b, fcst_c, fcst_d, fcst_e = st.tabs([
-        "National Hazards", "Station TAF / METAR",
+        "Active Hazards", "Station TAF / METAR",
         "Flight Category Rollup", "Active Alerts",
         "Space Weather",
     ])
 
-    # ---- A. National Hazards (SIGMET + AIRMET + PIREP) -----------------
+    # ---- A. Active Hazards (SIGMET + AIRMET + PIREP) -------------------
     with fcst_a:
         st.markdown("**Active SIGMETs & AIRMETs** (AWC)")
         if _HAVE_AWC:
@@ -3281,7 +3281,7 @@ with tab_fcst:
                 if _fc_err is not None:
                     st.error(
                         f"Rollup unavailable: {type(_fc_err).__name__}. "
-                        "Try the National Hazards or Station TAF sub-tabs "
+                        "Try the Active Hazards or Station TAF sub-tabs "
                         "— those use AWC, an independent source."
                     )
                 else:
