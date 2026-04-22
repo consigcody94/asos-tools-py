@@ -7,12 +7,12 @@ sdk: docker
 app_port: 7860
 pinned: true
 license: mit
-short_description: Federal-grade ASOS network observation & maintenance monitor
+short_description: ASOS network observation & maintenance monitor
 ---
 
 # O.W.L. — Observation Watch Log
 
-Federal-grade monitoring for the ASOS (Automated Surface Observing System)
+AOMC monitoring for the ASOS (Automated Surface Observing System)
 network — 920 NOAA / NWS / FAA / DOD stations, live maintenance-flag
 detection, missing-report surveillance, METAR/TAF/SIGMET/AIRMET/PIREP
 overlays, 926 FAA WeatherCams, NWS CAP alerts, scheduled scans, and a
@@ -43,12 +43,12 @@ restarts without any in-process APScheduler state.
 | Source | Used for | Auth | Trust |
 |---|---|---|---|
 | IEM (Iowa Environmental Mesonet) | METAR + 1-min archive | none | mirror |
-| NCEI Access Services | IEM fallback | none | federal |
-| NWS api.weather.gov | Current conditions + CAP alerts | none (UA required) | federal |
-| AWC Aviation Weather Center | METAR/TAF/SIGMET/AIRMET/PIREP | none | federal |
-| FAA WeatherCams | 926 live airport cameras | browser headers | federal |
-| NOAA / FAA / NTSB / AWC RSS | News ticker | none | federal |
-| NCEI HOMR | 920-station AOMC catalog | none | federal |
+| NCEI Access Services | IEM fallback | none | agency |
+| NWS api.weather.gov | Current conditions + CAP alerts | none (UA required) | agency |
+| AWC Aviation Weather Center | METAR/TAF/SIGMET/AIRMET/PIREP | none | agency |
+| FAA WeatherCams | 926 live airport cameras | browser headers | agency |
+| NOAA / FAA / NTSB / AWC RSS | News ticker | none | agency |
+| NCEI HOMR | 920-station AOMC catalog | none | agency |
 
 ---
 

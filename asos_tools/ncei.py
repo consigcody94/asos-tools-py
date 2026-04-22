@@ -1,11 +1,11 @@
 """NCEI (National Centers for Environmental Information) direct fallback.
 
 When IEM is down or rate-limiting us, we pull the same raw METAR data
-directly from NCEI. This is slower than IEM (authoritative federal archive
+directly from NCEI. This is slower than IEM (authoritative NCEI archive
 vs community mirror) but gives us an independent source of truth.
 
 Public endpoint: ``https://www.ncei.noaa.gov/access/services/data/v1``
-- No auth, free, federal authoritative.
+- No auth, free, NCEI authoritative.
 - Returns JSON/CSV/XML.
 
 Usage::

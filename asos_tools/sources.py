@@ -1,7 +1,7 @@
 """Source-of-truth registry for every upstream data feed O.W.L. uses.
 
 Surfaced on the Admin tab so operators can see where each number came
-from, what the refresh cadence is, and whether the source is federal
+from, what the refresh cadence is, and whether the source is an agency
 authoritative or a mirror/aggregator.
 """
 
@@ -18,7 +18,7 @@ class Source(TypedDict):
     used_for: str
     auth: str
     cadence: str
-    trust: str     # federal | mirror | aggregator | crowdsourced
+    trust: str     # agency | mirror | aggregator | crowdsourced
     notes: str
 
 
@@ -39,8 +39,8 @@ SOURCES: list[Source] = [
         "used_for": "Fallback when IEM is unavailable",
         "auth": "none",
         "cadence": "hourly",
-        "trust": "federal",
-        "notes": "Authoritative federal archive. Slower than IEM.",
+        "trust": "agency",
+        "notes": "Authoritative NCEI archive. Slower than IEM.",
     },
     {
         "name": "NWS api.weather.gov",
@@ -48,7 +48,7 @@ SOURCES: list[Source] = [
         "used_for": "Current conditions + active CAP alerts",
         "auth": "none (UA required)",
         "cadence": "real-time",
-        "trust": "federal",
+        "trust": "agency",
         "notes": ("National Weather Service public API. Requires a "
                   "descriptive User-Agent."),
     },
@@ -58,7 +58,7 @@ SOURCES: list[Source] = [
         "used_for": "METAR, TAF, SIGMET, AIRMET, PIREP, AFD",
         "auth": "none",
         "cadence": "real-time",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "FAA-supported public API. Powers Forecasters tab.",
     },
     {
@@ -67,7 +67,7 @@ SOURCES: list[Source] = [
         "used_for": "Live airport webcam still images (10-min refresh)",
         "auth": "none",
         "cadence": "10 min",
-        "trust": "federal",
+        "trust": "agency",
         "notes": ("260 FAA + 530 hosted camera sites, CONUS / Alaska / "
                   "Hawaii / Canada. Images only, no video streams."),
     },
@@ -77,7 +77,7 @@ SOURCES: list[Source] = [
         "used_for": "News ticker",
         "auth": "none",
         "cadence": "as-published",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "",
     },
     {
@@ -86,7 +86,7 @@ SOURCES: list[Source] = [
         "used_for": "News ticker",
         "auth": "none",
         "cadence": "as-published",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "",
     },
     {
@@ -95,7 +95,7 @@ SOURCES: list[Source] = [
         "used_for": "News ticker",
         "auth": "none",
         "cadence": "as-published",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "",
     },
     {
@@ -104,7 +104,7 @@ SOURCES: list[Source] = [
         "used_for": "AOMC station metadata (920 stations)",
         "auth": "none",
         "cadence": "static (baked into repo)",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "asos-stations.txt snapshot; refreshed quarterly.",
     },
     {
@@ -113,7 +113,7 @@ SOURCES: list[Source] = [
         "used_for": "Optional planned-outage correlation",
         "auth": "API key (FAA_NOTAM_KEY env var)",
         "cadence": "real-time",
-        "trust": "federal",
+        "trust": "agency",
         "notes": "Requires free registration.",
     },
 ]

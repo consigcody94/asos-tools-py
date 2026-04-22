@@ -3,7 +3,7 @@ name: OpenSSF Scorecard
 # OSSF Scorecard scores the repo on 18 supply-chain-security criteria
 # (branch protection, signed commits, pinned dependencies, SAST, etc.)
 # and publishes the results to the public Scorecard dashboard.  Passing
-# a high score is a credibility signal for any federal consumer.
+# a high score is a credibility signal for any consumer.
 #
 # Docs: https://github.com/ossf/scorecard
 

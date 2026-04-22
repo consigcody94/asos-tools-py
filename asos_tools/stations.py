@@ -307,7 +307,7 @@ def stations_by_state(state: str) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# AOMC (ASOS Operations and Monitoring Center) — federal ASOS list
+# AOMC (ASOS Operations and Monitoring Center) — agency ASOS list
 # ---------------------------------------------------------------------------
 
 _AOMC_PATH = _DATA_DIR / "aomc_stations.json"
@@ -338,7 +338,7 @@ AOMC_IDS: frozenset[str] = frozenset(s["id"] for s in AOMC_STATIONS if s.get("id
 
 
 def is_aomc(station_id: str) -> bool:
-    """True if this ICAO id is on the federal AOMC ASOS list."""
+    """True if this ICAO id is on the AOMC ASOS list."""
     if not station_id:
         return False
     return station_id.strip().upper() in AOMC_IDS

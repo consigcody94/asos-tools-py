@@ -228,7 +228,7 @@ def fetch_metars(
 
     # --------------------------------------------------------------
     # Primary source: AWC (Aviation Weather Center).  Unthrottled,
-    # JSON, fast (~1.5s per 100-station chunk), federal-authoritative.
+    # JSON, fast (~1.5s per 100-station chunk), AWC-authoritative.
     # IEM becomes a fallback below when AWC is unavailable.
     # --------------------------------------------------------------
     if os.environ.get("OWL_METAR_SOURCE", "awc").lower() != "iem":
@@ -273,7 +273,7 @@ def fetch_metars(
         if not frames:
             # ---- NCEI fallback --------------------------------------
             # Every IEM chunk came back empty (rate-limited or 5xx).
-            # Try NCEI as a federal-authoritative backup before giving
+            # Try NCEI as an authoritative backup before giving
             # up entirely.  Slower but independent of IEM.
             try:
                 from asos_tools.ncei import fetch_metars_ncei

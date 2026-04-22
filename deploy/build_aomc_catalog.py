@@ -3,7 +3,7 @@
 Source: NCEI Historical Observing Metadata Repository (HOMR)
   https://www.ncei.noaa.gov/access/homr/file/asos-stations.txt
 
-This is the authoritative federal ASOS station list maintained by NWS/FAA/DOD.
+This is the authoritative ASOS station list maintained by NWS/FAA/DOD.
 It contains the roughly 900 "true" ASOS sites (commissioned, certified, and
 operated by the government) -- as opposed to the IEM catalog which also
 includes AWOS-only sites.

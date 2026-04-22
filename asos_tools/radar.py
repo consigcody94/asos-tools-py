@@ -1,6 +1,6 @@
 """NOAA NEXRAD composite radar tile sources for the 3D globe.
 
-Two complementary free sources, both zero-auth, both federal:
+Two complementary free sources, both zero-auth, both NOAA / IEM:
 
 **IEM n0q CONUS composite** (preferred)
     Transparent PNG, known world bounds ``-126,24 → -66,50`` (CONUS), 5-min
@@ -93,7 +93,7 @@ def latest_goes_fulldisk_url(band: str = "GEOCOLOR") -> str:
 # --- GOES-19 ANIMATED LOOPS (NESDIS pre-rendered GIFs) ----------------------
 # NESDIS publishes animated GIF loops of the last N GOES-19 ABI frames at
 # stable URLs.  Cadence is 5-min for CONUS sectors, 1-min for MESO-1/2
-# sectors.  These are reliable, federal, and zero-auth — perfect for a
+# sectors.  These are reliable, NESDIS-published, and zero-auth — perfect for a
 # "live aviation weather footage" panel in the station drill view.
 
 #: Known NESDIS sector codes for GOES-19 ABI (east-positioned sat).

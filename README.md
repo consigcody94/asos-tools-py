@@ -7,7 +7,7 @@ sdk: docker
 app_port: 7860
 pinned: true
 license: mit
-short_description: Federal-grade ASOS network observation & maintenance monitor
+short_description: ASOS network observation & maintenance monitor
 ---
 
 <div align="center">

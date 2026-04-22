@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 # Prefer the pinned lockfile (requirements.lock) if present — reproducible
-# builds for federal deployments.  Falls back to the loose requirements.txt
+# builds for AOMC deployments.  Falls back to the loose requirements.txt
 # for dev-time flexibility.
 COPY requirements.txt .
 COPY requirements.lock* ./

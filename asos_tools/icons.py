@@ -9,7 +9,7 @@ The O.W.L. UI uses no emojis. Icons are rendered as inline SVG so they:
 * have zero external dependencies.
 
 Iconography is Lucide-style (24x24 viewBox, 2px stroke, round joins) —
-a minimal NOC/federal aesthetic that reads at small sizes.
+a minimal NOC aesthetic that reads at small sizes.
 
 Usage
 -----

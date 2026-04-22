@@ -1,6 +1,6 @@
 """NOAA SWPC space-weather client.
 
-All endpoints here are zero-auth, federal-authoritative, and typically
+All endpoints here are zero-auth, NOAA SWPC authoritative, and typically
 return JSON arrays.  Space weather matters to aviation because:
 
 * **Kp ≥ 5** degrades HF (high-frequency) radio comms used over oceanic

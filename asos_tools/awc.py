@@ -2,7 +2,7 @@
 
 The AWC public data API (``https://aviationweather.gov/api/data``) exposes
 METAR, TAF, SIGMET, AIRMET, PIREP, and AFD products as JSON. No auth,
-no key, free, federal-authoritative.
+no key, free, authoritative (Aviation Weather Center).
 
 All functions are network-safe:
 

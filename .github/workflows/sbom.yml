@@ -2,7 +2,7 @@ name: SBOM
 
 # Generates a CycloneDX Software Bill of Materials on every push to
 # main and on every tagged release.  Required by EO 14028 for any
-# federal-delivered software.  The SBOM is uploaded as a workflow
+# delivered software.  The SBOM is uploaded as a workflow
 # artifact + attached to releases (when a tag push triggers).
 
 on:

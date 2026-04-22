@@ -1,4 +1,4 @@
-"""ASOS Tools — operational dashboard for the federal ASOS network."""
+"""ASOS Tools — operational dashboard for the AOMC ASOS network."""
 
 from __future__ import annotations
 
@@ -566,11 +566,11 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             st.caption("No active CAP alerts for this state.")
 
     # --- LIVE COVERAGE — FAA WeatherCam loop + GOES-19 satellite loop ----
-    # Two genuinely live, authoritative federal sources side-by-side.
+    # Two genuinely live, authoritative sources side-by-side.
     #   Left  — animated playback of the nearest FAA WeatherCam's last
     #           5 frames, cycled client-side at 2 fps.  This mimics
     #           weathercams.faa.gov's own playback UI and gives a
-    #           "live video" feel using the same federal still-image
+    #           "live video" feel using the same authoritative still-image
     #           network we already consume.  Real, not spotter.
     #   Right — NESDIS GOES-19 animated GIF loop of the region the
     #           station sits in.
@@ -589,7 +589,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             "text-transform:uppercase;letter-spacing:0.06em;"
             "font-weight:600;margin-bottom:6px;'>"
             "FAA WeatherCam Loop "
-            "<span style='color:#16a34a;'>&middot; FEDERAL LIVE</span>"
+            "<span style='color:#16a34a;'>&middot; NESDIS LIVE</span>"
             "</div>",
             unsafe_allow_html=True,
         )
@@ -678,7 +678,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
                 unsafe_allow_html=True,
             )
             st.caption(
-                "No federal cam loop available for this station — the "
+                "No NESDIS cam loop available for this station — the "
                 "GOES satellite tile remains live."
             )
 
@@ -765,7 +765,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     _section_help(
         "About Live Coverage",
         what=(
-            "Two authoritative federal live-ish sources side-by-side: "
+            "Two authoritative live-ish sources side-by-side: "
             "an animated loop of the nearest FAA WeatherCam's last 5 "
             "frames (2 fps playback, 10-min data cadence) and the "
             "NESDIS GOES-19 satellite animation for the station's "
@@ -802,7 +802,7 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             "using 10-min-cadence stills (matches what "
             "weathercams.faa.gov itself plays).  The NESDIS GOES loop "
             "refreshes every 5 minutes.  No third-party/commercial "
-            "live video in this section — both sources are federal "
+            "live video in this section — both sources are NOAA / FAA / "
             "authoritative."
         ),
     )
@@ -1378,7 +1378,7 @@ html, body, .main, section.main { scroll-behavior: auto !important; }
     transition: width 0.6s ease;
 }
 
-/* === FEDERAL FOOTER === */
+/* === SYSTEM FOOTER === */
 .fed-footer {
     margin-top: 2rem;
     padding: 1rem 1.2rem;
@@ -1858,7 +1858,7 @@ if _health_pct is not None and _health_total:
 #: Tab order deliberately puts the primary personas (AOMC controllers +
 #: NWS forecasters) adjacent to the Summary landing page, with the
 #: Reference / Reports / Admin tabs on the far right.  Title Case across
-#: all tabs for a consistent federal-aesthetic.
+#: all tabs for a consistent NOC aesthetic.
 tab_summary, tab_aomc, tab_fcst, tab_reports, tab_stations, tab_admin = st.tabs([
     "Summary", "AOMC Controllers", "NWS Forecasters",
     "Reports", "Stations", "Admin",
@@ -2121,7 +2121,7 @@ with tab_summary:
         "About the Summary tab",
         what=(
             "The single-pane operational overview of the entire ASOS network. "
-            "Shows a live 4-hour scan of all 920 federally-operated stations, "
+            "Shows a live 4-hour scan of all 920 AOMC-operated stations, "
             "rendered as a 3D globe with status-colored points, a news/alerts "
             "ticker, a click-to-drill station panel, a KPI row, and a sortable "
             "table of every station currently requiring attention."
@@ -2209,32 +2209,30 @@ with tab_summary:
             # NASA Blue Marble texture, atmosphere glow, auto-rotate,
             # click-to-drill (postMessage to parent).  Falls back to the
             # 2D Folium map only if globe_view import failed.
-            # --- Worst 5 Right Now strip ------------------------------
+            # --- Most Recent Flagged or Missing strip ----------------
             # Five fixed-width cards above the globe surfacing the
             # station IDs a duty officer should look at first.  Ordered
             # by severity + minutes-since-last-report so MISSING /
             # long-silent stations float to the top.
             try:
-                _sev_order = ["MISSING", "NO DATA", "FLAGGED",
-                              "INTERMITTENT"]
+                # Filter to FLAGGED + MISSING; sort by minutes_since_last_report
+                # ASCENDING so the most recently-updated problem stations float
+                # to the top (anything that just changed status appears first).
+                _wanted = ["FLAGGED", "MISSING"]
                 _attn = wl[wl["status"].astype(str).str.upper().str.strip()
-                           .isin(_sev_order)].copy()
+                           .isin(_wanted)].copy()
                 if not _attn.empty and "minutes_since_last_report" in _attn:
                     _mins = pd.to_numeric(
                         _attn["minutes_since_last_report"],
                         errors="coerce").fillna(1e9)
-                    _cat = pd.Categorical(
-                        _attn["status"].astype(str).str.upper().str.strip(),
-                        categories=_sev_order, ordered=True)
-                    _attn = _attn.assign(_sev=_cat, _mins=_mins)
-                    _attn = _attn.sort_values(
-                        ["_sev", "_mins"], ascending=[True, False])
+                    _attn = _attn.assign(_mins=_mins)
+                    _attn = _attn.sort_values("_mins", ascending=True)
                     _worst = _attn.head(5)
                 else:
                     _worst = _attn.head(5)
 
                 if not _worst.empty:
-                    st.markdown("**Worst 5 Right Now**")
+                    st.markdown("**Most Recent — Flagged or Missing**")
                     w_cols = st.columns(min(5, len(_worst)))
                     _badge = {
                         "MISSING":  "#dc2626", "NO DATA":      "#fecaca",
@@ -2277,7 +2275,7 @@ with tab_summary:
                             )
                     st.write("")
             except Exception:
-                logger.exception("worst-5 strip failed")
+                logger.exception("most-recent flagged/missing strip failed")
 
             if _HAVE_GLOBE:
                 st.subheader("National ASOS Status Globe")
@@ -2310,7 +2308,7 @@ with tab_summary:
                     wl,
                     station_meta=AOMC_STATIONS,
                     height_px=620,
-                    # auto_rotate=False by default — federal operators
+                    # auto_rotate=False by default — operators
                     # find on-load rotation distracting + it burns GPU
                     # on always-on NOC displays.  The button remains.
                     auto_rotate=False,
@@ -2331,7 +2329,7 @@ with tab_summary:
                     "About the RADAR and SATELLITE overlays",
                     what=(
                         "Two toggle buttons in the globe's top-right "
-                        "control cluster layer federal-authoritative "
+                        "control cluster layer authoritative "
                         "imagery over the ASOS station points. **RADAR** "
                         "uses Iowa Environmental Mesonet's n0q CONUS "
                         "composite (transparent PNG, 5-minute cadence, "
@@ -2488,7 +2486,7 @@ with tab_aomc:
     st.markdown("### AOMC Controller Workstation")
     st.caption(
         "ASOS Operations and Monitoring Center view — intended for "
-        "controllers responsible for the 920 federally-operated stations."
+        "controllers responsible for the 920 AOMC-operated stations."
     )
     _section_help(
         "About the AOMC Controllers tab",
@@ -3050,7 +3048,7 @@ with tab_reports:
 # ===========================================================================
 
 with tab_stations:
-    st.subheader("AOMC Federal Station Directory")
+    st.subheader("AOMC Station Directory")
     st.caption(
         f"{len(AOMC_STATIONS)} stations from NCEI HOMR — "
         "NWS / FAA / DOD operated ASOS sites."
@@ -3058,7 +3056,7 @@ with tab_stations:
     _section_help(
         "About the Stations tab",
         what=(
-            "The master directory of every federally-operated ASOS station "
+            "The master directory of every AOMC-operated ASOS station "
             "in the network. Each row is pulled from NCEI HOMR (NOAA's "
             "authoritative Historical Observing Metadata Repository). "
             "Fields include ICAO call, NCDC/WBAN IDs, operator (NWS/FAA/DOD), "
@@ -3154,7 +3152,7 @@ with tab_fcst:
             "Check **Active Alerts** last — filter by severity (Extreme/Severe/Moderate/Minor) to focus on actionable threats.",
         ],
         output=(
-            "Everything in this tab comes from the federal Aviation Weather "
+            "Everything in this tab comes from the Aviation Weather "
             "Center (aviationweather.gov) and NWS api.weather.gov — no "
             "scraping, all authoritative primary sources, refreshed live."
         ),
@@ -3366,7 +3364,7 @@ with tab_fcst:
                 "(3-hour cadence, 0-9 scale — geomagnetic storm level), "
                 "**GOES X-ray flux** (1-minute, solar-flare classification "
                 "A/B/C/M/X), and **active SWPC alerts** (issued as events "
-                "warrant). All zero-auth federal data."
+                "warrant). All zero-auth NOAA / FAA / NWS data."
             ),
             who=[
                 "**NWS aviation forecasters** — incorporate storm-level Kp into overnight discussions for transoceanic ops.",
@@ -3484,7 +3482,7 @@ with tab_admin:
             "**System administrators** — primary audience; own the service health.",
             "**Ops engineers / DevOps** — watch scheduler, cache stats, and tick metrics here.",
             "**Incident responders** — use Anomaly Detection to find the precursor to a reported issue.",
-            "**Compliance auditors** — use Data Sources to prove every data point has a federal / authoritative origin.",
+            "**Compliance auditors** — use Data Sources to prove every data point has an authoritative origin (NCEI / NWS / FAA / IEM).",
         ],
         how=[
             "Walk the sub-tabs left-to-right: Alerts -> Scheduler -> Cache -> Anomaly -> Data Sources.",
@@ -3819,13 +3817,13 @@ than `$`, and with no false positives during normal diurnal cycles.
                 "About Data Sources",
                 what=(
                     "The public registry of every upstream feed O.W.L. "
-                    "consumes, with their trust tier (federal authoritative / "
-                    "federal mirror / academic) and update cadence. Used for "
+                    "consumes, with their trust tier (agency authoritative / "
+                    "agency mirror / academic) and update cadence. Used for "
                     "transparency — any statistic in the app can be traced "
                     "back to a source row here."
                 ),
                 who=[
-                    "**Compliance auditors** — prove every number has a federal / authoritative origin.",
+                    "**Compliance auditors** — prove every number has an authoritative origin (NCEI / NWS / FAA / IEM).",
                     "**Users who want to verify a specific METAR** — click through to the source feed for the raw data.",
                     "**Admins evaluating outage impact** — see at a glance which features depend on which upstream source.",
                     "**Researchers citing O.W.L. data** — get the exact URL for the footnote.",
@@ -3836,9 +3834,9 @@ than `$`, and with no false positives during normal diurnal cycles.
                     "Cross-reference the **Used for** column with whichever O.W.L. feature you're auditing.",
                 ],
                 output=(
-                    "Three trust tiers: **federal** (the authoritative "
+                    "Three trust tiers: **agency** (the authoritative "
                     "source, usually NOAA/NWS/FAA/NCEI); **mirror** (a "
-                    "reliable non-federal copy, e.g. IEM); **academic** "
+                    "reliable non-agency copy, e.g. IEM); **academic** "
                     "(university research services). No commercial or "
                     "scraped sources are in the pipeline."
                 ),
@@ -3882,7 +3880,7 @@ _footer_html = (
     'Iowa Environmental Mesonet (mesonet.agron.iastate.edu) &rsaquo; '
     'O.W.L. processing layer. '
     '<strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository '
-    f'(HOMR) asos-stations.txt &mdash; {len(AOMC_STATIONS):,} federally-operated AOMC '
+    f'(HOMR) asos-stations.txt &mdash; {len(AOMC_STATIONS):,} AOMC-tracked '
     'stations (NWS / FAA / DOD).'
     '</div>'
     '<div class="fed-footer-meta">'
