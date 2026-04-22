@@ -171,6 +171,7 @@ def _run_scan() -> None:
         #   NO DATA                          -> uncategorized
         flagged = 0
         status_counts: dict[str, int] = {}
+        scan_rows: list[dict[str, Any]] = []
         attention_states = {"MISSING", "FLAGGED", "INTERMITTENT"}
         if wl is not None and not wl.empty and "status" in wl.columns:
             # Normalize just in case the enum ever drifts in case.
@@ -178,7 +179,20 @@ def _run_scan() -> None:
             flagged = int(s.isin(attention_states).sum())
             # Full histogram for debugging via /api/health.
             status_counts = {k: int(v) for k, v in s.value_counts().items()}
+            # Cache a slim per-station projection for /api/scan-results.
+            # Keep the column set tight so payload stays under ~200 KB
+            # even with 920 rows; UI joins back to its baked catalog
+            # for name/state/lat/lon (avoids re-shipping the catalog).
+            cols_keep = [c for c in (
+                "station", "status", "minutes_since_last_report",
+                "probable_reason", "latest_metar",
+            ) if c in wl.columns]
+            wl_slim = wl[cols_keep].copy()
+            wl_slim["status"] = s.values
+            scan_rows = wl_slim.to_dict(orient="records")
         _STATE["status_counts"] = status_counts
+        _STATE["latest_scan_rows"] = scan_rows
+        _STATE["latest_scan_at"] = datetime.now(timezone.utc).isoformat()
 
         # ---- Circuit breaker: detect IEM-wide outage ------------------
         # If EVERY station classified as MISSING, the upstream (IEM)
@@ -381,6 +395,37 @@ def sources() -> dict[str, Any]:
             "error": "internal error",
             "request_id": err_id,
         })
+
+
+# ---------------------------------------------------------------------------
+# GET /api/scan-results
+# ---------------------------------------------------------------------------
+@app.get("/api/scan-results")
+def scan_results() -> dict[str, Any]:
+    """Return the latest cached watchlist as a JSON list of per-station rows.
+
+    Public, no auth.  Each row contains the slim projection cached by the
+    background scan: ``{station, status, minutes_since_last_report,
+    probable_reason, latest_metar}``.
+
+    Consumed by the Azure Next.js frontend to color-code the 918-point
+    globe and surface the per-station drill panel.  When no scan has run
+    yet (boot before first /api/tick), returns an empty ``rows`` list and
+    a ``never_scanned`` hint so the UI can render a neutral state instead
+    of pretending all stations are MISSING.
+    """
+    with _STATE_LOCK:
+        rows = list(_STATE.get("latest_scan_rows") or [])
+        scanned_at = _STATE.get("latest_scan_at")
+        in_flight = bool(_STATE.get("scan_in_flight"))
+    return {
+        "ok": True,
+        "row_count": len(rows),
+        "scanned_at": scanned_at,
+        "scan_in_flight": in_flight,
+        "never_scanned": not bool(scanned_at),
+        "rows": rows,
+    }
 
 
 # ---------------------------------------------------------------------------
