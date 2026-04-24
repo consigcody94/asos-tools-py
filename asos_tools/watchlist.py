@@ -61,6 +61,11 @@ WATCHLIST_COLUMNS = [
 #: Preferred ordering for the ``status`` column in displays.
 STATUS_ORDER = ["MISSING", "FLAGGED", "INTERMITTENT", "RECOVERED", "CLEAN", "NO DATA"]
 
+#: A station is MISSING only after this many minutes of silence.  Earlier
+#: gaps within the scan window degrade the station to INTERMITTENT but do
+#: not on their own trigger MISSING when a recent METAR has come through.
+MISSING_SILENCE_MIN = 120
+
 
 def _expected_hourly_buckets(
     start: datetime,
@@ -155,9 +160,6 @@ def build_watchlist(
     rows: list[dict] = []
     seen_ids: set[str] = set()
 
-    def _latest_expected_bucket() -> datetime | None:
-        return expected_buckets[-1] if expected_buckets else None
-
     if not metars.empty:
         for raw_stn, sub in metars.groupby("station"):
             sub = sub.sort_values("valid")
@@ -202,27 +204,6 @@ def build_watchlist(
             if missing_count > 4:
                 missing_hours_label += f", +{missing_count - 4} more"
 
-            # Is the *most recent* expected hour missing? That's a signal
-            # the station has gone silent right now.
-            latest_bucket = _latest_expected_bucket()
-            latest_bucket_missing = (
-                latest_bucket is not None and latest_bucket not in covered_buckets
-            )
-
-            # --- Classification (priority order) ---
-            if latest_bucket_missing or missing_count > 0:
-                status = "MISSING"
-            elif latest_is_flagged:
-                status = "FLAGGED"
-            elif flagged == 0:
-                status = "CLEAN"
-            else:
-                tail = sub.tail(2)
-                if (~tail["has_maintenance"]).all() and len(tail) >= 2:
-                    status = "RECOVERED"
-                else:
-                    status = "INTERMITTENT"
-
             mins_since_flag: float | None = None
             if pd.notna(latest_flag_time):
                 delta = end - latest_flag_time.to_pydatetime()
@@ -232,6 +213,26 @@ def build_watchlist(
             if pd.notna(latest_time):
                 delta = end - latest_time.to_pydatetime()
                 mins_since_report = round(delta.total_seconds() / 60.0, 1)
+
+            # --- Classification (priority order) ---
+            # MISSING means the station has been silent for >= 2h.  Earlier
+            # gaps within the scan window do not, on their own, mark a
+            # station MISSING when a recent METAR has come through — those
+            # surface as INTERMITTENT instead.
+            if mins_since_report is None or mins_since_report >= MISSING_SILENCE_MIN:
+                status = "MISSING"
+            elif latest_is_flagged:
+                status = "FLAGGED"
+            elif flagged == 0 and missing_count == 0:
+                status = "CLEAN"
+            elif flagged == 0:
+                status = "INTERMITTENT"
+            else:
+                tail = sub.tail(2)
+                if (~tail["has_maintenance"]).all() and len(tail) >= 2 and missing_count == 0:
+                    status = "RECOVERED"
+                else:
+                    status = "INTERMITTENT"
 
             lookup_id = "K" + stn if ("K" + stn) in meta_map else stn
             meta = meta_map.get(lookup_id, {})
