@@ -1760,6 +1760,22 @@ with st.sidebar:
             st.session_state.dark_mode = not st.session_state.dark_mode
             st.rerun()
 
+    # ---- Sidebar credit — "Made by Cody Churchwell" --------------------
+    st.divider()
+    st.markdown(
+        '<div style="font-size:0.72rem;color:#64748b;line-height:1.5;'
+        'text-align:center;padding:4px 0;">'
+        'Made by <a href="mailto:cto@sentinelowl.org" '
+        'style="color:#38bdf8;text-decoration:none;font-weight:600;">'
+        'Cody Churchwell</a><br/>'
+        '<span style="color:#94a3b8;">CTO, Sentinel OWL</span><br/>'
+        '<span style="font-size:0.68rem;">v1.2.0 &middot; '
+        '<a href="https://github.com/consigcody94/asos-tools-py" '
+        'style="color:#64748b;text-decoration:none;">source</a>'
+        '</span></div>',
+        unsafe_allow_html=True,
+    )
+
     # Apply dark overrides if toggled on.
     if st.session_state.get("dark_mode"):
         st.markdown("""<style>
