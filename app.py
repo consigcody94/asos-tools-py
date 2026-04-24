@@ -565,25 +565,26 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
         else:
             st.caption("No active CAP alerts for this state.")
 
-    # --- LIVE COVERAGE — FAA WeatherCam loop + GOES-19 satellite loop ----
-    # Two genuinely live, authoritative sources side-by-side.
-    #   Left  — animated playback of the nearest FAA WeatherCam's last
-    #           5 frames, cycled client-side at 2 fps.  This mimics
-    #           weathercams.faa.gov's own playback UI and gives a
-    #           "live video" feel using the same authoritative still-image
-    #           network we already consume.  Real, not spotter.
-    #   Right — NESDIS GOES-19 animated GIF loop of the region the
-    #           station sits in.
+    # --- LIVE COVERAGE — FAA WeatherCam · NEXRAD radar · GOES-19 satellite
+    # Three genuinely live, authoritative sources side-by-side.
+    #   Cam    — animated playback of the nearest FAA WeatherCam's last
+    #            5 frames, cycled client-side at 2 fps. Mimics
+    #            weathercams.faa.gov's own playback UI using the same
+    #            authoritative still-image network we already consume.
+    #   Radar  — NWS RIDGE animated GIF loop of the nearest WSR-88D
+    #            site's base reflectivity (5-min cadence, ~10 frames).
+    #   Sat    — NESDIS GOES-19 animated GIF loop of the region the
+    #            station sits in.
     # A small secondary link below offers YouTube Live search as a
     # supplemental (non-authoritative) source — we used to try to
     # iframe-embed spotter channels but most disable embedding for
     # monetization, so embedding is no longer attempted.
     st.markdown("---")
     st.markdown("**Live Coverage**")
-    live_left, live_right = st.columns([1, 1])
+    live_cam, live_radar, live_sat = st.columns([1, 1, 1])
 
     # --- LEFT: Animated FAA WeatherCam loop -------------------------------
-    with live_left:
+    with live_cam:
         st.markdown(
             "<div style='font-size:11px;color:#94a3b8;"
             "text-transform:uppercase;letter-spacing:0.06em;"
@@ -716,8 +717,66 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
             unsafe_allow_html=True,
         )
 
+    # --- MIDDLE: NWS RIDGE NEXRAD radar loop (nearest WSR-88D) ------------
+    with live_radar:
+        st.markdown(
+            "<div style='font-size:11px;color:#94a3b8;"
+            "text-transform:uppercase;letter-spacing:0.06em;"
+            "font-weight:600;margin-bottom:6px;'>"
+            "NEXRAD Radar Loop "
+            "<span style='color:#16a34a;'>&middot; NWS LIVE</span>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        radar_url = None
+        radar_label = ""
+        try:
+            from asos_tools.radar import (
+                nearest_wsr88d,
+                station_radar_loop_url,
+                wsr88d_sites,
+            )
+            if lat is not None and lon is not None:
+                radar_url = station_radar_loop_url(float(lat), float(lon))
+                near = nearest_wsr88d(float(lat), float(lon))
+                if near:
+                    meta = wsr88d_sites().get(near, {})
+                    nm = meta.get("name") or ""
+                    radar_label = f"{near} · {nm}" if nm else near
+        except Exception:
+            logger.exception("NEXRAD loop URL build failed")
+            radar_url = None
+
+        if radar_url:
+            # Cache-bust every ~10 minutes so browsers pick up new frames
+            # without constantly re-downloading the ~800 KB GIF.
+            r_bust = datetime.now(timezone.utc).strftime("%Y%m%d%H%M")[:-1]
+            st.markdown(
+                f'<div style="position:relative;width:100%;'
+                f'aspect-ratio:16/9;border-radius:4px;'
+                f'overflow:hidden;background:#0f172a;">'
+                f'<img src="{_html_escape(radar_url)}?t={r_bust}" '
+                f'alt="NWS NEXRAD radar loop" '
+                f'loading="lazy" '
+                f'style="position:absolute;inset:0;width:100%;'
+                f'height:100%;object-fit:cover;display:block;"/></div>',
+                unsafe_allow_html=True,
+            )
+            if radar_label and "CONUS" not in radar_url:
+                st.caption(
+                    f"**{_html_escape(radar_label)}** · NWS RIDGE base "
+                    f"reflectivity · ~10 frames · 5-min cadence."
+                )
+            else:
+                st.caption(
+                    "NWS CONUS composite · station is outside any "
+                    "WSR-88D's effective range."
+                )
+        else:
+            st.caption("NEXRAD loop unavailable for this station.")
+
     # --- RIGHT: GOES-19 animated satellite loop ---------------------------
-    with live_right:
+    with live_sat:
         st.markdown(
             "<div style='font-size:11px;color:#94a3b8;"
             "text-transform:uppercase;letter-spacing:0.06em;"
@@ -765,45 +824,54 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
     _section_help(
         "About Live Coverage",
         what=(
-            "Two authoritative live-ish sources side-by-side: "
-            "an animated loop of the nearest FAA WeatherCam's last 5 "
-            "frames (2 fps playback, 10-min data cadence) and the "
-            "NESDIS GOES-19 satellite animation for the station's "
-            "region (5-min data cadence)."
+            "Three authoritative live-ish sources side-by-side: an "
+            "animated loop of the nearest FAA WeatherCam's last 5 frames "
+            "(2 fps playback, 10-min data cadence), the NWS RIDGE "
+            "animated radar loop from the nearest WSR-88D (5-min "
+            "cadence), and the NESDIS GOES-19 satellite animation for "
+            "the station's region (5-min cadence)."
         ),
         who=[
-            "**Forecasters** — cloud-motion trend from the GOES loop "
-            "is faster than waiting 30 min for the next TAF amendment; "
-            "the WeatherCam loop shows ground-level cloud base movement.",
+            "**Forecasters** — the WSR-88D loop shows precip motion and "
+            "intensity at the station now; the GOES loop shows cloud "
+            "motion trend; the WeatherCam loop shows ground-level cloud "
+            "base movement.",
             "**AOMC controllers** — eyeball the nearest cam before "
             "dispatching a truck roll; if the loop shows clear skies "
-            "and the METAR says OVC, the sensor is the suspect.",
-            "**Ops briefers** — drop the loop into a situational-"
-            "awareness call without leaving OWL.",
+            "and the METAR says OVC, the sensor is the suspect. Cross-"
+            "check with radar — a `$`-flagged present-weather sensor "
+            "in an empty-radar scene is a false-positive red flag.",
+            "**Ops briefers** — drop any of the loops into a "
+            "situational-awareness call without leaving OWL.",
         ],
         how=[
             "**Left tile** — animated playback of the nearest FAA "
-            "WeatherCam (within 25 NM).  Frames swap client-side every "
+            "WeatherCam (within 25 NM). Frames swap client-side every "
             "500 ms; each frame is the raw CDN still from FAA, so the "
             "displayed image is always what the sensor actually "
-            "published.  If no cam is within range the tile stays blank.",
+            "published. If no cam is within range the tile stays blank.",
+            "**Middle tile** — NWS RIDGE base-reflectivity animated "
+            "GIF from the nearest WSR-88D site (served direct from "
+            "radar.weather.gov). Stations outside any radar's ~400 km "
+            "effective range fall back to the CONUS composite.",
             "**Right tile** — GOES-19 animated GIF loop for the region. "
             "CONUS stations get the CONUS sector; PR/USVI gets the "
             "Puerto Rico sector; Hawaii gets the south Pacific sector; "
             "northeast/southeast/upper-Mississippi/etc. get the tighter "
             "regional sub-sector for more zoom.",
             "**Below left tile** — small link to YouTube's live-now "
-            "search for this ICAO.  These are unofficial spotter "
+            "search for this ICAO. These are unofficial spotter "
             "streams; many have embedding disabled so we don't try to "
             "iframe them, we just link out.",
         ],
         output=(
             "The FAA WeatherCam loop gives real aircraft/cloud motion "
             "using 10-min-cadence stills (matches what "
-            "weathercams.faa.gov itself plays).  The NESDIS GOES loop "
-            "refreshes every 5 minutes.  No third-party/commercial "
-            "live video in this section — both sources are NOAA / FAA / "
-            "authoritative."
+            "weathercams.faa.gov itself plays). The NWS RIDGE loop "
+            "refreshes every 5 minutes. The NESDIS GOES loop also "
+            "refreshes every 5 minutes. No third-party/commercial "
+            "live video in this section — all three sources are NOAA / "
+            "FAA / authoritative."
         ),
     )
 

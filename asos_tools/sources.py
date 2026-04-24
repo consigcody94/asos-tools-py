@@ -62,6 +62,26 @@ SOURCES: list[Source] = [
         "notes": "FAA-supported public API. Powers Forecasters tab.",
     },
     {
+        "name": "NWS RIDGE NEXRAD",
+        "url": "https://radar.weather.gov/ridge/standard",
+        "used_for": "Per-station WSR-88D base-reflectivity animated loops",
+        "auth": "none",
+        "cadence": "5 min",
+        "trust": "agency",
+        "notes": ("159 WSR-88D sites bundled at `data/wsr88d_sites.json`. "
+                  "Nearest-neighbor pick; CONUS composite fallback."),
+    },
+    {
+        "name": "NESDIS GOES-19",
+        "url": "https://cdn.star.nesdis.noaa.gov/GOES19",
+        "used_for": "GOES-19 CONUS + sector animated GIF loops, latest stills",
+        "auth": "none",
+        "cadence": "5 min (CONUS), 1 min (MESO)",
+        "trust": "agency",
+        "notes": ("Pre-rendered loops per sector (NE/SE/UMV/SMV/NR/SR/"
+                  "PR/SP/CONUS). Zero-auth, CSP-allowed."),
+    },
+    {
         "name": "FAA WeatherCams",
         "url": "https://weathercams.faa.gov",
         "used_for": "Live airport webcam still images (10-min refresh)",

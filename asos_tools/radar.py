@@ -18,8 +18,12 @@ the IEM CONUS mosaic doesn't cover them.
 
 from __future__ import annotations
 
+import json
 import logging
+import math
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -34,6 +38,11 @@ __all__ = [
     "goes_conus_loop_url",
     "goes_sector_loop_url",
     "goes_loop_for_station",
+    "wsr88d_sites",
+    "nearest_wsr88d",
+    "ridge_loop_url",
+    "ridge_still_url",
+    "station_radar_loop_url",
     "RADAR_BOUNDS",
 ]
 
@@ -205,6 +214,120 @@ def goes_loop_for_station(
         return goes_conus_loop_url(band=band, size=size)
     # Everything outside — NESDIS doesn't publish FD loops, so use CONUS
     return goes_conus_loop_url(band=band, size=size)
+
+
+# --- NEXRAD WSR-88D RIDGE per-site radar loops ------------------------------
+# NWS publishes per-radar animated GIF loops at radar.weather.gov — about
+# 10 most-recent base reflectivity frames, refreshed every 5 minutes. These
+# are zero-auth, no key, CSP-allowed via *.noaa.gov and give the drill panel
+# a station-scoped radar view (vs. the CONUS composite on the globe).
+
+_WSR88D_DATA_PATH = Path(__file__).parent / "data" / "wsr88d_sites.json"
+
+
+@lru_cache(maxsize=1)
+def wsr88d_sites() -> dict[str, dict]:
+    """Return the bundled WSR-88D site catalog — ``{id: {name, lat, lon}}``.
+
+    Sourced from ``api.weather.gov/radar/stations?stationType=WSR-88D`` and
+    baked into the repo so runtime is offline-safe. 159 sites across CONUS,
+    Alaska, Hawaii, Puerto Rico, Guam, and CONUS overseas.
+    """
+    try:
+        with _WSR88D_DATA_PATH.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        logger.exception("wsr88d_sites catalog load failed")
+        return {}
+
+
+def nearest_wsr88d(lat: float, lon: float) -> Optional[str]:
+    """Return the ICAO id of the WSR-88D site nearest to ``(lat, lon)``.
+
+    Uses spherical-law-of-cosines great-circle distance (plenty accurate at
+    WSR-88D spacing, ~230 km between neighbors in CONUS). Returns ``None``
+    if no catalog is available or coords are garbage.
+    """
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+    except (TypeError, ValueError):
+        return None
+    sites = wsr88d_sites()
+    if not sites:
+        return None
+    lat_r = math.radians(lat_f)
+    lon_r = math.radians(lon_f)
+    best_id = None
+    best_d = float("inf")
+    for sid, meta in sites.items():
+        try:
+            slat = math.radians(float(meta["lat"]))
+            slon = math.radians(float(meta["lon"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+        # Great-circle distance (unit sphere — we only need relative order).
+        cos_d = (
+            math.sin(lat_r) * math.sin(slat)
+            + math.cos(lat_r) * math.cos(slat) * math.cos(lon_r - slon)
+        )
+        cos_d = max(-1.0, min(1.0, cos_d))
+        d = math.acos(cos_d)
+        if d < best_d:
+            best_d = d
+            best_id = sid
+    return best_id
+
+
+def ridge_loop_url(site_id: str) -> str:
+    """NWS RIDGE animated loop GIF for a WSR-88D site (base reflectivity).
+
+    ``https://radar.weather.gov/ridge/standard/{SITE}_loop.gif`` — ~10 frames,
+    5-min cadence, public, CSP-allowed.
+    """
+    return f"https://radar.weather.gov/ridge/standard/{site_id.upper()}_loop.gif"
+
+
+def ridge_still_url(site_id: str) -> str:
+    """NWS RIDGE latest single-frame GIF for a WSR-88D site."""
+    return f"https://radar.weather.gov/ridge/standard/{site_id.upper()}_0.gif"
+
+
+def station_radar_loop_url(
+    lat: Optional[float],
+    lon: Optional[float],
+    *,
+    max_km: float = 400.0,
+) -> Optional[str]:
+    """Pick the best NEXRAD loop URL for a station.
+
+    Returns the RIDGE per-site loop for the nearest WSR-88D within
+    ``max_km``; falls back to the CONUS composite loop when coords fall
+    outside any radar's effective coverage (or when catalog load fails).
+    Returns ``None`` if coordinates cannot be parsed at all.
+    """
+    try:
+        lat_f = float(lat)  # type: ignore[arg-type]
+        lon_f = float(lon)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    site_id = nearest_wsr88d(lat_f, lon_f)
+    if not site_id:
+        return "https://radar.weather.gov/ridge/standard/CONUS_0.gif"
+    # Sanity-check distance to avoid pointing an Alaska station at a
+    # CONUS radar. 1 degree ≈ 111 km.
+    meta = wsr88d_sites().get(site_id, {})
+    try:
+        slat = float(meta["lat"])
+        slon = float(meta["lon"])
+        dlat = (lat_f - slat) * 111.0
+        dlon = (lon_f - slon) * 111.0 * math.cos(math.radians((lat_f + slat) / 2))
+        km = math.hypot(dlat, dlon)
+    except (KeyError, TypeError, ValueError):
+        km = 0.0
+    if km > max_km:
+        return "https://radar.weather.gov/ridge/standard/CONUS_0.gif"
+    return ridge_loop_url(site_id)
 
 
 def head_ok(url: str, timeout: float = 5.0) -> bool:
