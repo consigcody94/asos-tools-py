@@ -80,6 +80,13 @@ print(df[["valid", "tmpf", "dwpf", "precip"]].head())
 | **Dashboard-style report generator** (dark theme, wind roses, annotated)        | ✅ |
 | **Bulk ZIP download** of reports for a whole area/group                         | ✅ |
 | **Streamlit web dashboard** (deployed on Hugging Face Spaces)                   | ✅ |
+| **Per-station NWS NEXRAD radar loops** &mdash; nearest WSR-88D RIDGE animated GIF | ✅ |
+| **GOES-19 East + GOES-18 West satellite loops** &mdash; regional sector auto-routing | ✅ |
+| **Site Hazards drill panel** &mdash; USGS quakes, NHC tropical, NDBC buoy cross-check, NOTAMs | ✅ |
+| **AWC AFD** (Area Forecast Discussion) per WFO                                  | ✅ |
+| **AWC SIGMETs / AIRMETs / PIREPs** in Forecasters tab                           | ✅ |
+| **NWS CAP alerts** (api.weather.gov) with event / severity filters              | ✅ |
+| **NOAA SWPC space weather** (Kp index, X-ray flux, alerts)                      | ✅ |
 | K-prefix station IDs (`KORD`, `KJFK`) handled automatically                     | ✅ |
 | Missing-value sentinels (`M`) coerced to `NaN`                                  | ✅ |
 | Timezone-aware UTC `pandas.Timestamp`                                           | ✅ |
@@ -244,6 +251,7 @@ df = fetch_1min("KBOS", t0, t1, variables=["tmpf", "precip"])
 
 ## How it works
 
+### Core 1-min / METAR path (library + reports)
 ```
           ┌──────────────────┐
           │   Your Python    │
@@ -264,6 +272,31 @@ df = fetch_1min("KBOS", t0, t1, variables=["tmpf", "precip"])
           │  asos-1min-pg2/  │
           └──────────────────┘
 ```
+
+### Dashboard data sources (all public, no auth unless noted)
+
+The OWL Streamlit dashboard (`app.py`) blends thirteen authoritative
+public feeds. Every one is surfaced in the UI &mdash; nothing sits on a
+shelf.
+
+| Source | Module | Used for | Auth |
+|---|---|---|---|
+| Iowa Environmental Mesonet (IEM) | `fetch.py`, `metars.py` | 1-min + METAR + station catalog | none |
+| NCEI Access Services | `ncei.py` | IEM fallback + authoritative archive | none |
+| NWS `api.weather.gov` | `nws.py`, `alerts_feed.py` | Current conditions + active CAP alerts | UA required |
+| AWC Aviation Weather Center | `awc.py` | METAR / TAF / SIGMET / AIRMET / PIREP / **AFD** | none |
+| NWS RIDGE NEXRAD | `radar.py` | Per-station WSR-88D animated radar loops (159 sites) | none |
+| NESDIS GOES-19 East | `radar.py` | Satellite loops — CONUS + NE/SE/UMV/SMV/NR/SR/PR sectors | none |
+| NESDIS GOES-18 West | `radar.py` | Satellite loops — AK / HI / PNW / PSW (Pacific coverage) | none |
+| USGS Earthquake Hazards | `earthquakes.py` | Per-site quake correlation (M2.5+ within 300 km, 24h) | none |
+| NOAA NHC `CurrentStorms.json` | `tropical.py` | Active tropical cyclones + 500 km station proximity | none |
+| NOAA NDBC buoys | `buoys.py` | Coastal ASOS cross-check (402 met-enabled stations) | none |
+| FAA WeatherCams | `webcams.py` | Nearest-cam animated loops | browser headers |
+| NOAA SWPC | `space_weather.py` | Kp / X-ray flux / geomagnetic alerts | none |
+| FAA NOTAM API | `notams.py` | Planned-outage correlation (optional) | client_id + secret |
+
+Off-limits (internal federal / commercial): WMSCR, NWSTG direct,
+AOMC, EMRS/Oracle BI, NLDN.
 
 The NCEI archive lives at [`www.ncei.noaa.gov/data/automated-surface-observing-system-one-minute-pg1/access/YYYY/MM/asos-1min-pg1-KXXX-YYYYMM.dat`](https://www.ncei.noaa.gov/data/automated-surface-observing-system-one-minute-pg1/access/). IEM re-exposes it with a query interface; this package builds the query, streams the CSV, coerces dtypes, and returns a DataFrame.
 
@@ -329,11 +362,20 @@ Current status: **28 passing, 0 failing.**
 - [x] ~~Live demo on Hugging Face Spaces~~ → [consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools)
 - [x] ~~Full ASOS station catalog~~ → 2,929 sites bundled
 - [x] ~~Custom date range + bulk ZIP export~~
+- [x] ~~Per-station NEXRAD radar loops~~ → 159 WSR-88D sites bundled at `data/wsr88d_sites.json`
+- [x] ~~GOES-18 West satellite coverage~~ → AK / HI / PNW / PSW routing in `goes_loop_for_station()`
+- [x] ~~USGS earthquake correlation~~ → M2.5+ within 300 km, per-station drill + network rollup
+- [x] ~~NHC tropical cyclone overlay~~ → `CurrentStorms.json`-driven storm list + 500 km station proximity
+- [x] ~~NDBC buoy cross-check~~ → 402 met-enabled buoys, realtime2 feed parser
+- [x] ~~AWC AFD (Area Forecast Discussion) per WFO~~ → Forecasters → Regional Discussion sub-tab
+- [x] ~~FAA NOTAM per-station correlation~~ → key-gated via `FAA_NOTAM_CLIENT_ID` / `_SECRET`
 - [ ] `fetch_5min` &mdash; direct NCEI HTTPS pull of the 5-minute archive
 - [ ] Nearest-N stations to a point / within a bounding box
 - [ ] Optional on-disk Parquet cache for repeat queries
 - [ ] Package on PyPI
 - [ ] Field-level comparison in `build_comparison_report` (tmpf/pres distributions for flagged vs clean subsets)
+- [ ] SPC convective outlooks + watches on the globe
+- [ ] GLM lightning overlay (currently covered indirectly via GOES GeoColor blend)
 
 ## Contributing
 
@@ -346,12 +388,18 @@ pytest
 
 PRs welcome. See [Roadmap](#roadmap) for open work.
 
+## Author
+
+**Cody Churchwell** &mdash; [`cto@sentinelowl.org`](mailto:cto@sentinelowl.org) &mdash; CTO, Sentinel OWL.
+Maintainer of this repository and the O.W.L. (Observation Watch Log)
+dashboard deployed at [consgicody/asos-tools](https://huggingface.co/spaces/consgicody/asos-tools).
+
 ## Credits & lineage
 
 - Original MATLAB toolkit and 5-minute workflow design &mdash; **Daniel Hueholt**, North Carolina State University, [Environment Analytics](http://www.environmentanalytics.com) (2020). This project started as a Python port and diverged substantially (1-min data, date-range queries, maintenance-flag tracking, dashboard reports, web UI).
 - ASOS 1-minute CSV + METAR services &mdash; [**Iowa Environmental Mesonet**](https://mesonet.agron.iastate.edu/), Daryl Herzmann and contributors.
 - Raw 1-minute archive &mdash; [**NOAA / NCEI**](https://www.ncei.noaa.gov/).
-- Python package, dashboard reports, Streamlit app, and HF Space deploy &mdash; this repository.
+- Python package, dashboard reports, Streamlit app, HF Space deploy, and the thirteen-source O.W.L. ops-monitoring UI &mdash; **Cody Churchwell** / this repository.
 
 ## License
 

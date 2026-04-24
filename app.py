@@ -1053,6 +1053,37 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
         if not had_any:
             st.caption("No earthquakes, tropical systems, or buoy data within range.")
 
+    _section_help(
+        "About Site Hazards",
+        what=(
+            "Four authoritative public feeds scoped to THIS station's "
+            "coordinates: USGS earthquakes within 300 km (last 24 h, "
+            "M2.5+), NHC active tropical cyclones within 500 km, the "
+            "nearest NDBC met-enabled buoy (within 200 km) with its "
+            "latest realtime2 observation, and active FAA NOTAMs (when "
+            "the FAA developer credentials are configured). Each block "
+            "self-hides when it has nothing to report."
+        ),
+        who=[
+            "**AOMC controllers** — before dispatching a truck roll for a MISSING site, check quakes + NOTAMs. A M4+ shake or an equipment-U/S NOTAM explains the outage without a field visit.",
+            "**NWS forecasters** — confirm an ASOS wind/pressure oddity by comparing to the nearest NDBC buoy; if the buoy agrees, the sensor is fine and the airmass is the story.",
+            "**Tropical-season ops** — hurricane within 500 km surfaces here automatically with a direct link to the NHC public advisory / forecast cone.",
+            "**Incident responders** — the earthquake timestamps + distance let you reconstruct whether a seismic event was plausibly upstream of a sensor failure.",
+        ],
+        how=[
+            "Click the **Site Hazards** expander. If no hazards are in range, you see a one-line 'nothing to report' footer (the common quiet-case).",
+            "**USGS quakes** — sorted by distance; click a URL for the full USGS event page (ShakeMap, DYFI, moment tensor).",
+            "**NHC storms** — the Advisory URL is the full NHC public bulletin. `Class` shows TD/TS/HU/MH classification.",
+            "**Nearest buoy** — four metrics (wind, gust, pressure, air/water temp) plus the observation timestamp. Compare against the station METAR shown at the top of the drill.",
+            "**FAA NOTAMs** — only populated when `FAA_NOTAM_CLIENT_ID` + `FAA_NOTAM_CLIENT_SECRET` env vars are set; otherwise you see a configure-me hint.",
+        ],
+        output=(
+            "Sources: `earthquake.usgs.gov` (CC0), `nhc.noaa.gov/"
+            "CurrentStorms.json`, `ndbc.noaa.gov/data/realtime2`, FAA "
+            "NOTAM API. All public, no scraping, no commercial mirrors."
+        ),
+    )
+
 
 def _wlabel(days: int) -> str:
     return f"{days} day{'s' if days != 1 else ''}"
@@ -2370,12 +2401,17 @@ with tab_summary:
             "Shows a live 4-hour scan of all 920 AOMC-operated stations, "
             "rendered as a 3D globe with status-colored points, a news/alerts "
             "ticker, a click-to-drill station panel, a KPI row, and a sortable "
-            "table of every station currently requiring attention."
+            "table of every station currently requiring attention. Drilling "
+            "into a station opens the full **Live Coverage** triple "
+            "(FAA WeatherCam + NWS NEXRAD + GOES-19/18 satellite) and a "
+            "**Site Hazards** block that correlates the station against "
+            "USGS earthquakes, NHC tropical systems, the nearest NDBC buoy, "
+            "and active FAA NOTAMs."
         ),
         who=[
             "**NOC duty officers** — glance at the gauge + KPI row, spot the worst stations on the globe, drill into one in under 5 seconds.",
-            "**AOMC controllers** — triage which stations need attention this shift before moving to the detailed Controllers tab.",
-            "**NWS forecasters** — confirm a specific station is healthy before citing its METAR in a discussion.",
+            "**AOMC controllers** — triage which stations need attention this shift; cross-check sensor failures against Site Hazards (quakes / NOTAMs) before dispatching.",
+            "**NWS forecasters** — confirm a specific station is healthy before citing its METAR in a discussion; compare with the nearest NDBC buoy for coastal sanity checks.",
             "**Leadership / briefers** — export the summary KPIs for shift-change briefings.",
             "**First-time visitors** — the tab to open first to orient yourself.",
         ],
@@ -2383,7 +2419,7 @@ with tab_summary:
             "Check the **Network Health** gauge for the overall % clean.",
             "Use the **REGION** buttons (CONUS / Northeast / West / Alaska / etc.) on the globe to zoom to an area of interest.",
             "Hover a point for a quick tooltip, or **click it** for a persistent card with the latest METAR + status reason.",
-            "Use the **Drill into a station** selectbox below the globe to open the full station panel (METAR + webcams + CAP alerts).",
+            "Use the **Drill into a station** selectbox below the globe to open the full station panel (METAR + webcams + Live Coverage triple + Site Hazards).",
             "Open the **Status definitions** expander if any status label is unclear.",
             "Scroll to the **Stations Requiring Attention** table to see every non-clean station, worst-first.",
         ],
@@ -3377,30 +3413,38 @@ with tab_fcst:
     _section_help(
         "About the NWS Forecasters tab",
         what=(
-            "A four-pane aviation weather ops console. Pane 1 shows national "
-            "hazards (SIGMETs, AIRMETs, G-AIRMETs, TFRs). Pane 2 gives a "
-            "side-by-side METAR + TAF view for any station. Pane 3 rolls up "
-            "the entire AOMC fleet by flight category (VFR/MVFR/IFR/LIFR). "
-            "Pane 4 shows active NWS CAP alerts nationwide, filterable by "
-            "severity."
+            "A six-pane aviation weather ops console. **Active Hazards** "
+            "shows national aviation hazards (SIGMETs, AIRMETs, PIREPs) "
+            "plus NHC active tropical cyclones. **Station TAF/METAR** "
+            "gives a side-by-side current + forecast view for any ICAO. "
+            "**Flight Category Rollup** aggregates the AOMC fleet by "
+            "VFR/MVFR/IFR/LIFR. **Active Alerts** shows every live NWS "
+            "CAP alert plus the PAGER-significant USGS earthquakes list. "
+            "**Regional Discussion** surfaces the WFO forecaster's Area "
+            "Forecast Discussion (AFD) narrative. **Space Weather** "
+            "shows NOAA SWPC Kp / X-ray / geomagnetic alerts."
         ),
         who=[
-            "**NWS aviation forecasters** — primary audience; build the morning hazard brief.",
-            "**ATC facility supervisors** — scan Active Hazards before coordinating around weather with AOMC.",
-            "**Pilots / dispatchers preparing a flight** — pull the TAF + nearby PIREPs for a destination.",
-            "**Emergency managers** — Active Alerts shows every NWS CAP warning in force right now.",
+            "**NWS aviation forecasters** — primary audience; build the morning hazard brief from Active Hazards + AFD.",
+            "**ATC facility supervisors** — scan Active Hazards + CAP alerts before coordinating around weather with AOMC.",
+            "**Pilots / dispatchers preparing a flight** — pull the TAF + nearby PIREPs + current AFD for destination/alternate planning.",
+            "**Emergency managers** — Active Alerts shows every NWS CAP warning in force *and* flags PAGER-significant seismic events.",
+            "**AOMC shift briefers** — the AFD is the single best narrative explainer of the operational picture for a region.",
             "**Anyone wanting 'is KXYZ flyable right now'** — Station TAF/METAR gives the cleanest single-page answer.",
         ],
         how=[
-            "Start at **Active Hazards** to see what's being watched fleet-wide.",
+            "Start at **Active Hazards** to see what's being watched fleet-wide (including active hurricanes / tropical storms).",
             "Switch to **Station TAF/METAR**, enter or pick an ICAO, and read current + forecast conditions.",
             "Use **Flight Category Rollup** to see how many stations are in each category right now (red flags if IFR/LIFR > baseline).",
-            "Check **Active Alerts** last — filter by severity (Extreme/Severe/Moderate/Minor) to focus on actionable threats.",
+            "Open **Active Alerts** — filter CAP alerts by severity; scroll down for the PAGER-significant earthquake list.",
+            "Pop into **Regional Discussion** and enter a WFO (OKX, LWX, BMX, SEW, AFC, HFO, etc.) to read the forecaster's narrative.",
+            "Check **Space Weather** before operating trans-oceanic / Alaska airspace — Kp ≥ 5 degrades HF comms.",
         ],
         output=(
-            "Everything in this tab comes from the Aviation Weather "
-            "Center (aviationweather.gov) and NWS api.weather.gov — no "
-            "scraping, all authoritative primary sources, refreshed live."
+            "All data comes from authoritative public sources: Aviation "
+            "Weather Center (`aviationweather.gov`), NWS `api.weather.gov`, "
+            "NHC `CurrentStorms.json`, USGS Earthquake Hazards, and NOAA "
+            "SWPC — no scraping, no commercial mirrors, refreshed live."
         ),
     )
     fcst_ck = _session_data_key()
@@ -3670,6 +3714,35 @@ with tab_fcst:
     # ---- E. Regional Discussion — AWC AFD ------------------------------
     with fcst_e:
         st.markdown("**Area Forecast Discussion** (AWC `/fcstdisc`)")
+        _section_help(
+            "About Regional Discussion (AFD)",
+            what=(
+                "The Area Forecast Discussion is the narrative product a "
+                "NWS Weather Forecast Office (WFO) issues roughly three "
+                "times a day to explain *why* the current and upcoming "
+                "forecasts look the way they do — which models agree, "
+                "where the uncertainty lives, what the forecaster is "
+                "watching. It is the single best way to build mental "
+                "model context for a region before a shift brief."
+            ),
+            who=[
+                "**AOMC shift briefers** — start the brief by reading the AFD for every region with flagged or MISSING stations; you'll often find the explanation (e.g. 'front stalled over CWA X' → ceilometer flagging as expected).",
+                "**NWS forecasters** from adjacent CWAs — fastest way to ingest a neighbor's thinking before handing off.",
+                "**Trans-oceanic / Alaska / Pacific ops** — AFD from AFC (Anchorage), HFO (Honolulu), or AJK (Juneau) gives terrain-specific micro-forecasts no model output captures.",
+                "**Emergency managers** — AFDs routinely call out which watches/warnings are imminent before they're officially posted.",
+            ],
+            how=[
+                "Enter a 3-letter WFO code (OKX, LWX, BMX, MPX, FFC, SEW, AFC, HFO, …) — it auto-promotes to the 4-letter ICAO (KOKX, KLWX, …) the AWC API expects.",
+                "The most recent AFD renders in a monospace code block; scroll to read the full narrative (KEY MESSAGES, SHORT TERM, LONG TERM, AVIATION, MARINE, HYDROLOGY sections).",
+                "Common WFO codes: OKX (NYC) · LWX (Washington, DC) · BMX (Birmingham) · FFC (Atlanta) · MPX (Twin Cities) · SEW (Seattle) · PDT (Pendleton) · SLC (Salt Lake) · AFC (Anchorage) · HFO (Honolulu).",
+            ],
+            output=(
+                "Source: `aviationweather.gov/api/data/fcstdisc?cwa=<ICAO>"
+                "&format=raw`. Text/plain response from the AWC proxy of "
+                "the original WFO-issued product. No scraping, no "
+                "reformatting, refreshed on every text-input change."
+            ),
+        )
         st.caption(
             "The WFO forecaster's narrative — why the forecast looks "
             "the way it does, what the models are showing, where the "
@@ -4236,15 +4309,16 @@ _footer_html = (
     '<div class="fed-footer">'
     '<div class="fed-footer-cite">'
     '<strong>Data Source Chain:</strong> '
-    'NOAA / NCEI ASOS METAR archive &rsaquo; '
-    'Iowa Environmental Mesonet (mesonet.agron.iastate.edu) &rsaquo; '
+    'NOAA / NCEI &rsaquo; IEM &rsaquo; NWS api.weather.gov &rsaquo; AWC &rsaquo; '
+    'NWS RIDGE NEXRAD &rsaquo; NESDIS GOES-19 / GOES-18 &rsaquo; USGS &rsaquo; '
+    'NHC &rsaquo; NDBC &rsaquo; SWPC &rsaquo; FAA WeatherCams &rsaquo; FAA NOTAM &rsaquo; '
     'O.W.L. processing layer. '
-    '<strong>Station Catalog:</strong> NCEI Historical Observing Metadata Repository '
-    f'(HOMR) asos-stations.txt &mdash; {len(AOMC_STATIONS):,} AOMC-tracked '
-    'stations (NWS / FAA / DOD).'
+    '<strong>Station Catalog:</strong> NCEI HOMR asos-stations.txt &mdash; '
+    f'{len(AOMC_STATIONS):,} AOMC-tracked stations (NWS / FAA / DOD).'
     '</div>'
     '<div class="fed-footer-meta">'
-    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.1.0 &middot; SYSTEM TIME {_now_footer} &middot; '
+    f'O.W.L. &mdash; OBSERVATION WATCH LOG &middot; v1.2.0 &middot; SYSTEM TIME {_now_footer} &middot; '
+    'Maintainer: <a href="mailto:cto@sentinelowl.org">Cody Churchwell</a> &middot; '
     '<a href="https://github.com/consigcody94/asos-tools-py">SOURCE</a> &middot; '
     '<a href="https://www.ncei.noaa.gov">NCEI</a> &middot; '
     '<a href="https://www.weather.gov/asos/asostech">ASOS DOCS</a> &middot; '
