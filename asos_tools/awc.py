@@ -290,13 +290,38 @@ def fetch_pirep(*, age_hours: float = 2, format_: str = "json",
 
 
 def fetch_afd(*, cwa: Optional[str] = None,
-              format_: str = "json") -> list[dict]:
-    """Return Area Forecast Discussions (optionally narrowed by CWA code)."""
-    params: dict = {"format": format_}
-    if cwa:
-        params["cwa"] = cwa
-    data = _get("afd", params)
-    return data if isinstance(data, list) else []
+              format_: str = "raw") -> list[dict]:
+    """Return the Area Forecast Discussion for a WFO.
+
+    The AWC endpoint is ``/fcstdisc`` and expects the CWA's **4-letter
+    ICAO** (e.g. ``KOKX``, ``KLWX``, ``KBMX``). Three-letter codes (``OKX``)
+    are auto-promoted by prepending ``K``.
+
+    The upstream returns plain text, not JSON — so this bypasses ``_get``.
+    Returns ``[{"cwa": "KOKX", "text": "...", "rawAFD": "..."}]`` on success
+    (single-item list for uniform iteration at the call site). Empty on
+    failure or empty response.
+    """
+    if not cwa:
+        return []
+    icao = cwa.strip().upper()
+    if len(icao) == 3:
+        icao = "K" + icao
+    url = f"{_BASE.rstrip('/')}/fcstdisc"
+    try:
+        r = requests.get(url, params={"cwa": icao, "format": format_},
+                         timeout=15.0,
+                         headers={"User-Agent": "O.W.L./1.0 (+github.com/consigcody94/asos-tools-py)"})
+        if r.status_code != 200:
+            logger.warning("AWC fcstdisc %s returned %s", icao, r.status_code)
+            return []
+        text = (r.text or "").strip()
+    except Exception:
+        logger.exception("AWC fcstdisc failed for %s", icao)
+        return []
+    if not text or text.startswith('{"status":"error"'):
+        return []
+    return [{"cwa": icao, "text": text, "rawAFD": text}]
 
 
 def flight_category(

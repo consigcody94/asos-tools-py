@@ -38,6 +38,9 @@ __all__ = [
     "goes_conus_loop_url",
     "goes_sector_loop_url",
     "goes_loop_for_station",
+    "goes18_conus_loop_url",
+    "goes18_sector_loop_url",
+    "goes18_latest_sector_url",
     "wsr88d_sites",
     "nearest_wsr88d",
     "ridge_loop_url",
@@ -158,22 +161,63 @@ def goes_sector_loop_url(
     )
 
 
+# --- GOES-18 West (replaces GOES-17) — covers Pacific, AK, HI, West CONUS ---
+# NESDIS publishes the same latest-jpg + animated-gif pattern as GOES-19.
+# Sector set differs: ``ak`` (1000x1000), ``hi``/``pnw``/``psw`` (600x600),
+# ``wus`` isn't published as a GIF, CONUS same as east at 625x375.
+
+def goes18_conus_loop_url(band: str = "GEOCOLOR", size: str = "625x375") -> str:
+    """Animated GIF for GOES-18 CONUS — same coverage as GOES-19 CONUS but
+    with a west-biased viewing angle that reads western US storms better."""
+    return (
+        f"https://cdn.star.nesdis.noaa.gov/GOES18/ABI/CONUS/{band}/"
+        f"GOES18-CONUS-{band}-{size}.gif"
+    )
+
+
+def goes18_sector_loop_url(
+    sector: str, band: str = "GEOCOLOR", size: str = "600x600",
+) -> str:
+    """Animated GIF for a GOES-18 regional sector.
+
+    Alaska (``ak``) ships at 1000x1000; HI / PNW / PSW at 600x600.
+    """
+    sec_upper = sector.upper()
+    return (
+        f"https://cdn.star.nesdis.noaa.gov/GOES18/ABI/SECTOR/{sector}/"
+        f"{band}/GOES18-{sec_upper}-{band}-{size}.gif"
+    )
+
+
+def goes18_latest_sector_url(sector: str, band: str = "GEOCOLOR") -> str:
+    """Latest single-frame JPG for a GOES-18 sector."""
+    return (
+        f"https://cdn.star.nesdis.noaa.gov/GOES18/ABI/SECTOR/{sector}/"
+        f"{band}/latest.jpg"
+    )
+
+
 def goes_loop_for_station(
     lat: float,
     lon: float,
     band: str = "GEOCOLOR",
     size: str = "625x375",
 ) -> str:
-    """Pick the best GOES-19 animated loop URL for a given station lat/lon.
+    """Pick the best GOES animated loop URL for a given station lat/lon.
 
-    Rough geographic routing (good enough for a drill-panel thumbnail):
-      - CONUS lower-48  → CONUS loop (625x375)
-      - Alaska          → fall back to CONUS (GOES-19 barely sees AK;
-                          a follow-up can switch to GOES-18 West)
-      - Hawaii          → ``sp`` sector (south Pacific covers HI)
-      - Puerto Rico / USVI / Caribbean → ``pr`` sector
-      - Regional sub-sectors (NE/SE/etc) sized 600x600
-      - Otherwise       → CONUS (NESDIS does not publish FD loops as GIF)
+    Routing picks **GOES-19 East** for CONUS/PR/Caribbean and **GOES-18
+    West** for Alaska / Hawaii / Pacific NW / Pacific SW. GOES-19 sector
+    coverage is tighter in the east; GOES-18 fills the gap west of the
+    Rockies and over the Pacific.
+
+      - Puerto Rico / USVI / Caribbean → GOES-19 ``pr`` sector
+      - Alaska                         → GOES-18 ``ak`` sector (1000x1000)
+      - Hawaii                         → GOES-18 ``hi`` sector (600x600)
+      - Pacific Northwest              → GOES-18 ``pnw`` sector (600x600)
+      - Pacific Southwest              → GOES-18 ``psw`` sector (600x600)
+      - Northeast / Southeast / MS Valley / Rockies → GOES-19 regional
+      - Lower-48 fallback              → GOES-19 CONUS loop (625x375)
+      - Far-offshore / outside CONUS   → GOES-19 CONUS (no FD GIF exists)
     """
     try:
         lat_f = float(lat)
@@ -184,12 +228,18 @@ def goes_loop_for_station(
     # Puerto Rico / USVI / Caribbean
     if 16.0 <= lat_f <= 20.0 and -68.0 <= lon_f <= -63.0:
         return goes_sector_loop_url("pr", band=band, size="600x600")
-    # Hawaii — use south Pacific regional sector
+    # Hawaii — GOES-18 dedicated HI sector
     if 18.0 <= lat_f <= 23.0 and -162.0 <= lon_f <= -154.0:
-        return goes_sector_loop_url("sp", band=band, size="600x600")
-    # Alaska — GOES-19 coverage is poor; fall back to CONUS for now
+        return goes18_sector_loop_url("hi", band=band, size="600x600")
+    # Alaska — GOES-18 dedicated AK sector (1000x1000 is the published size)
     if lat_f >= 50.0 and lon_f <= -130.0:
-        return goes_conus_loop_url(band=band, size=size)
+        return goes18_sector_loop_url("ak", band=band, size="1000x1000")
+    # Pacific Northwest — GOES-18 PNW covers WA/OR/ID/MT west
+    if 40.0 <= lat_f <= 50.0 and -130.0 <= lon_f <= -116.0:
+        return goes18_sector_loop_url("pnw", band=band, size="600x600")
+    # Pacific Southwest — GOES-18 PSW covers CA/NV/AZ/UT west
+    if 30.0 <= lat_f <= 40.0 and -125.0 <= lon_f <= -114.0:
+        return goes18_sector_loop_url("psw", band=band, size="600x600")
     # Regional CONUS sub-sectors — tighter zoom than full CONUS
     # Northeast US
     if 36.0 <= lat_f <= 48.0 and -85.0 <= lon_f <= -65.0:

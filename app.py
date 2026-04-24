@@ -875,6 +875,184 @@ def _render_drill_panel(sid: str, plk: dict, wl) -> None:
         ),
     )
 
+    # --- SITE HAZARDS — quakes · tropical · buoy · NOTAM ------------------
+    # Authoritative public feeds, all scoped to THIS station's coordinates.
+    # Each sub-block self-hides when it has nothing to report, so the
+    # section collapses to a single "No regional hazards" line in the
+    # common quiet case. A single expander houses them all so a forecaster
+    # doing bulk review isn't slowed by four extra blocks per site.
+    st.markdown("---")
+    with st.expander("Site Hazards — earthquakes · tropical · buoys · NOTAMs",
+                     expanded=False):
+        had_any = False
+
+        # --- Recent earthquakes within 300 km ----------------------------
+        try:
+            from asos_tools.earthquakes import quakes_near
+            q_hits = (
+                quakes_near(float(lat), float(lon),
+                            radius_km=300.0, min_mag=2.5, feed="day")
+                if lat is not None and lon is not None else []
+            )
+        except Exception:
+            logger.exception("USGS quake lookup failed")
+            q_hits = []
+        if q_hits:
+            had_any = True
+            st.markdown("**USGS earthquakes (last 24 h, M2.5+ within 300 km)**")
+            q_rows = []
+            for q in q_hits[:10]:
+                t_ms = q.get("time_ms")
+                when = (
+                    datetime.fromtimestamp(t_ms / 1000, tz=timezone.utc)
+                    .strftime("%Y-%m-%d %H:%MZ") if t_ms else ""
+                )
+                q_rows.append({
+                    "Mag":      q.get("mag"),
+                    "Place":    q.get("place", "")[:70],
+                    "When":     when,
+                    "Dist km":  q.get("distance_km"),
+                    "Depth km": q.get("depth_km"),
+                    "URL":      q.get("url", ""),
+                })
+            st.dataframe(pd.DataFrame(q_rows), hide_index=True,
+                         use_container_width=True, height=min(260, 40 + 35 * len(q_rows)))
+            st.caption(
+                "Correlate recent quakes with sudden sensor dropouts — "
+                "a M4+ shake within ~100 km is plausible cause for a "
+                "MISSING classification."
+            )
+
+        # --- NHC active tropical systems within 500 km -------------------
+        try:
+            from asos_tools.tropical import stations_under_watch
+            storms = (
+                stations_under_watch(float(lat), float(lon), radius_km=500.0)
+                if lat is not None and lon is not None else []
+            )
+        except Exception:
+            logger.exception("NHC tropical lookup failed")
+            storms = []
+        if storms:
+            had_any = True
+            st.markdown("**NHC tropical systems (within 500 km)**")
+            s_rows = []
+            for s in storms:
+                s_rows.append({
+                    "ID":       s.get("id") or "",
+                    "Name":     s.get("name") or "",
+                    "Class":    s.get("class_label") or "",
+                    "Wind kt":  s.get("intensity_kt") or "",
+                    "Pres mb":  s.get("pressure_mb") or "",
+                    "Dist km":  s.get("distance_km"),
+                    "Movement": s.get("movement") or "",
+                    "Advisory": s.get("public_advisory") or "",
+                })
+            st.dataframe(pd.DataFrame(s_rows), hide_index=True,
+                         use_container_width=True)
+            st.caption(
+                "Active systems from NHC CurrentStorms.json. Advisory "
+                "links open the full NHC public bulletin."
+            )
+
+        # --- Nearest NDBC buoy cross-check -------------------------------
+        try:
+            from asos_tools.buoys import observations_near
+            buoy_pack = (
+                observations_near(float(lat), float(lon), max_km=200.0)
+                if lat is not None and lon is not None else None
+            )
+        except Exception:
+            logger.exception("NDBC lookup failed")
+            buoy_pack = None
+        if buoy_pack and buoy_pack.get("buoy"):
+            had_any = True
+            b = buoy_pack["buoy"]
+            obs = buoy_pack.get("obs") or {}
+            st.markdown(
+                f"**Nearest NDBC buoy** — `{b['id']}` · "
+                f"{_html_escape(b.get('name',''))} · "
+                f"{b.get('distance_km')} km"
+            )
+            if obs:
+                bc1, bc2, bc3, bc4 = st.columns(4)
+                bc1.metric(
+                    "Wind",
+                    f"{obs.get('wind_kt','—')} kt @ "
+                    f"{obs.get('wind_dir_deg','—')}°"
+                    if obs.get('wind_kt') is not None else "—",
+                )
+                bc2.metric(
+                    "Gust",
+                    f"{obs.get('gust_kt','—')} kt"
+                    if obs.get('gust_kt') is not None else "—",
+                )
+                bc3.metric(
+                    "Pres",
+                    f"{obs.get('pres_inhg','—')} inHg"
+                    if obs.get('pres_inhg') is not None else "—",
+                )
+                bc4.metric(
+                    "Air / Water",
+                    f"{obs.get('air_f','—')}°F / {obs.get('water_f','—')}°F"
+                    if obs.get('air_f') is not None else "—",
+                )
+                st.caption(
+                    f"Observed {obs.get('yy','')}-{obs.get('mm','')}-"
+                    f"{obs.get('dd','')} {obs.get('hh','')}:"
+                    f"{obs.get('mn','')}Z · realtime2 feed · "
+                    "cross-check against the station METAR above."
+                )
+            else:
+                st.caption(
+                    "Buoy catalog match found but realtime2 feed is "
+                    "currently unreachable — retry later."
+                )
+
+        # --- FAA NOTAMs (key-gated) --------------------------------------
+        try:
+            from asos_tools.notams import summarize_for_drill, is_configured
+            notam_info = summarize_for_drill(sid)
+        except Exception:
+            logger.exception("FAA NOTAM lookup failed")
+            notam_info = {"configured": False, "count": 0, "items": []}
+        if notam_info.get("configured"):
+            if notam_info.get("count"):
+                had_any = True
+                st.markdown(
+                    f"**FAA NOTAMs** · {notam_info['count']} active · "
+                    f"{notam_info.get('equipment_out', 0)} equipment-U/S · "
+                    f"{notam_info.get('asos_related', 0)} weather-related"
+                )
+                n_rows = []
+                for n in notam_info.get("items", []):
+                    n_rows.append({
+                        "Number":  n.get("number") or "",
+                        "Type":    n.get("type") or "",
+                        "Class":   n.get("classification") or "",
+                        "Start":   n.get("effective_start") or "",
+                        "End":     n.get("effective_end") or "",
+                        "Text":    (n.get("text") or "")[:180],
+                    })
+                if n_rows:
+                    st.dataframe(pd.DataFrame(n_rows), hide_index=True,
+                                 use_container_width=True)
+                st.caption(
+                    "Correlate MISSING or FLAGGED classifications with "
+                    "active equipment-U/S or weather-related NOTAMs "
+                    "before dispatching a truck roll."
+                )
+        else:
+            st.caption(
+                "FAA NOTAM feed not configured — set "
+                "`FAA_NOTAM_CLIENT_ID` + `FAA_NOTAM_CLIENT_SECRET` "
+                "env vars to enable per-station NOTAM correlation "
+                "(free FAA developer account)."
+            )
+
+        if not had_any:
+            st.caption("No earthquakes, tropical systems, or buoy data within range.")
+
 
 def _wlabel(days: int) -> str:
     return f"{days} day{'s' if days != 1 else ''}"
@@ -3227,10 +3405,10 @@ with tab_fcst:
     )
     fcst_ck = _session_data_key()
 
-    fcst_a, fcst_b, fcst_c, fcst_d, fcst_e = st.tabs([
+    fcst_a, fcst_b, fcst_c, fcst_d, fcst_e, fcst_f = st.tabs([
         "Active Hazards", "Station TAF / METAR",
         "Flight Category Rollup", "Active Alerts",
-        "Space Weather",
+        "Regional Discussion", "Space Weather",
     ])
 
     # ---- A. Active Hazards (SIGMET + AIRMET + PIREP) -------------------
@@ -3277,6 +3455,37 @@ with tab_fcst:
                 st.caption("No PIREPs in the last 2 hours.")
         else:
             st.error("AWC client not installed.")
+
+        st.divider()
+        st.markdown("**Active tropical systems** (NHC CurrentStorms.json)")
+        try:
+            from asos_tools.tropical import fetch_active_storms
+            storms = fetch_active_storms()
+        except Exception:
+            logger.exception("NHC fetch failed")
+            storms = []
+        if storms:
+            tr_rows = []
+            for s in storms:
+                tr_rows.append({
+                    "ID":        s.get("id") or "",
+                    "Name":      s.get("name") or "",
+                    "Class":     s.get("class_label") or "",
+                    "Wind kt":   s.get("intensity_kt") or "",
+                    "Pres mb":   s.get("pressure_mb") or "",
+                    "Lat":       s.get("lat"),
+                    "Lon":       s.get("lon"),
+                    "Movement":  s.get("movement") or "",
+                    "Advisory":  s.get("public_advisory") or "",
+                })
+            _grid(pd.DataFrame(tr_rows), height=220, key="fc_nhc",
+                  pinned=["ID"], status_col="Class")
+            st.caption(
+                "Source: `nhc.noaa.gov/CurrentStorms.json`. Advisory URLs "
+                "link to the full NHC public bulletin and forecast cone."
+            )
+        else:
+            st.success("No active tropical systems (Atlantic / Pacific).")
 
     # ---- B. Station TAF / METAR lookup ---------------------------------
     with fcst_b:
@@ -3420,8 +3629,91 @@ with tab_fcst:
         else:
             st.error("CAP alerts client not installed.")
 
-    # ---- E. Space Weather (NOAA SWPC) ----------------------------------
+        st.divider()
+        st.markdown(
+            "**Significant earthquakes (last 7 days)** — USGS PAGER-significant"
+        )
+        try:
+            from asos_tools.earthquakes import fetch_recent_quakes
+            sig_q = fetch_recent_quakes("significant")
+        except Exception:
+            logger.exception("USGS significant-quake fetch failed")
+            sig_q = []
+        if sig_q:
+            q_rows = []
+            for q in sig_q[:50]:
+                t_ms = q.get("time_ms")
+                when = (
+                    datetime.fromtimestamp(t_ms / 1000, tz=timezone.utc)
+                    .strftime("%Y-%m-%d %H:%MZ") if t_ms else ""
+                )
+                q_rows.append({
+                    "Mag":      q.get("mag"),
+                    "Place":    q.get("place", "")[:80],
+                    "When":     when,
+                    "Depth km": q.get("depth_km"),
+                    "Tsunami":  "Yes" if q.get("tsunami") else "",
+                    "Alert":    q.get("alert") or "",
+                    "URL":      q.get("url", ""),
+                })
+            _grid(pd.DataFrame(q_rows), height=340, key="fc_usgs",
+                  pinned=["Mag"], status_col="Alert")
+            st.caption(
+                "Source: `earthquake.usgs.gov/earthquakes/feed/v1.0/"
+                "summary/significant_week.geojson`. A site-specific "
+                "proximity filter is in the Stations drill panel's "
+                "Site Hazards section."
+            )
+        else:
+            st.success("No PAGER-significant earthquakes in the last 7 days.")
+
+    # ---- E. Regional Discussion — AWC AFD ------------------------------
     with fcst_e:
+        st.markdown("**Area Forecast Discussion** (AWC `/fcstdisc`)")
+        st.caption(
+            "The WFO forecaster's narrative — why the forecast looks "
+            "the way it does, what the models are showing, where the "
+            "uncertainty is. Not a product most pilots read; heavy value "
+            "for NWS ops and AOMC shift briefs."
+        )
+        afd_cwa = st.text_input(
+            "CWA (3-letter WFO, e.g. OKX, LWX, BMX — or 4-letter KOKX)",
+            "OKX", key="fcst_afd_cwa",
+            help=("NWS Weather Forecast Office identifier. 3-letter codes "
+                  "are auto-promoted (OKX → KOKX). Each WFO issues an AFD "
+                  "roughly three times daily."),
+        ).strip().upper()
+        if afd_cwa and re.fullmatch(r"[A-Z]{3,4}", afd_cwa):
+            if _HAVE_AWC:
+                try:
+                    with st.spinner(f"Fetching AFD for {afd_cwa}…"):
+                        afds = owl_awc.fetch_afd(cwa=afd_cwa)
+                except Exception:
+                    logger.exception("AWC AFD fetch failed")
+                    afds = []
+                if afds:
+                    latest = afds[0]
+                    icao_used = latest.get("cwa") or afd_cwa
+                    st.markdown(f"**Issuing office:** `{icao_used}`")
+                    st.code(
+                        latest.get("rawAFD") or latest.get("text") or
+                        "(AFD text unavailable)",
+                        language="text",
+                    )
+                else:
+                    st.warning(
+                        f"No AFD returned for `{afd_cwa}`. Valid examples: "
+                        "OKX (NYC), LWX (Washington), BMX (Birmingham), "
+                        "FFC (Atlanta), MPX (Twin Cities), SEW (Seattle), "
+                        "AFC (Anchorage), HFO (Honolulu)."
+                    )
+            else:
+                st.error("AWC client not installed.")
+        elif afd_cwa:
+            st.error("Invalid CWA — must be 3 or 4 letters.")
+
+    # ---- F. Space Weather (NOAA SWPC) ----------------------------------
+    with fcst_f:
         st.markdown("**Live Space Weather**  (NOAA SWPC)")
         _section_help(
             "About Space Weather",

@@ -82,6 +82,56 @@ SOURCES: list[Source] = [
                   "PR/SP/CONUS). Zero-auth, CSP-allowed."),
     },
     {
+        "name": "NESDIS GOES-18 West",
+        "url": "https://cdn.star.nesdis.noaa.gov/GOES18",
+        "used_for": "GOES-18 AK / HI / PNW / PSW sector loops (west Pacific coverage)",
+        "auth": "none",
+        "cadence": "5 min (CONUS), 1 min (MESO)",
+        "trust": "agency",
+        "notes": ("Alaska sector ships at 1000x1000; HI/PNW/PSW at 600x600. "
+                  "Used for stations GOES-19 undercovers."),
+    },
+    {
+        "name": "USGS Earthquake Hazards",
+        "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary",
+        "used_for": "Real-time quake feeds — site-proximity correlation for sensor dropouts",
+        "auth": "none",
+        "cadence": "~1 min",
+        "trust": "agency",
+        "notes": ("GeoJSON summary feeds: all_hour, 2.5_day, all_day, "
+                  "2.5_week, significant_week. CC0 data."),
+    },
+    {
+        "name": "NOAA NHC CurrentStorms",
+        "url": "https://www.nhc.noaa.gov/CurrentStorms.json",
+        "used_for": "Active tropical cyclones (Atlantic + East/Central Pacific)",
+        "auth": "none",
+        "cadence": "as advisories issue",
+        "trust": "agency",
+        "notes": ("Empty in off-season. Records include ATCF ID, position, "
+                  "intensity, cone/track shapefile URLs, public advisory link."),
+    },
+    {
+        "name": "NOAA NDBC buoys",
+        "url": "https://www.ndbc.noaa.gov/data/realtime2",
+        "used_for": "Marine met obs — coastal ASOS cross-check (wind / pressure / temp)",
+        "auth": "none",
+        "cadence": "10–30 min per station",
+        "trust": "agency",
+        "notes": ("~402 met-enabled buoys + CMAN stations bundled at "
+                  "`data/ndbc_met_stations.json`."),
+    },
+    {
+        "name": "AWC fcstdisc (AFD)",
+        "url": "https://aviationweather.gov/api/data/fcstdisc",
+        "used_for": "Area Forecast Discussion — WFO forecaster narrative",
+        "auth": "none",
+        "cadence": "~3x daily per WFO",
+        "trust": "agency",
+        "notes": ("Text/plain response; requires 4-letter ICAO CWA. Surfaced "
+                  "in Forecasters -> Regional Discussion sub-tab."),
+    },
+    {
         "name": "FAA WeatherCams",
         "url": "https://weathercams.faa.gov",
         "used_for": "Live airport webcam still images (10-min refresh)",
@@ -130,10 +180,12 @@ SOURCES: list[Source] = [
     {
         "name": "FAA NOTAM API",
         "url": "https://external-api.faa.gov/notamapi/v1/notams",
-        "used_for": "Optional planned-outage correlation",
-        "auth": "API key (FAA_NOTAM_KEY env var)",
+        "used_for": "Per-station NOTAM correlation for MISSING / FLAGGED sites",
+        "auth": "client_id + client_secret (FAA_NOTAM_CLIENT_ID / FAA_NOTAM_CLIENT_SECRET)",
         "cadence": "real-time",
         "trust": "agency",
-        "notes": "Requires free registration.",
+        "notes": ("Optional source — surfaced in drill-panel Site Hazards "
+                  "when configured, otherwise shows a 'configure credentials' "
+                  "hint. Free registration at FAA developer portal."),
     },
 ]
